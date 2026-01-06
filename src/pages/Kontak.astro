@@ -1,0 +1,506 @@
+---
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+import "../styles/global.css";
+
+const {
+  title = "Kontak DPMPTSP Kota Surabaya",
+  description = "Hubungi Dinas Penanaman Modal dan Pelayanan Terpadu Satu Pintu Kota Surabaya",
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="id" class="scroll-smooth">
+  <head>
+    <meta charset="utf-8" />
+    <title>{title}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta name="author" content="DPMPTSP Kota Surabaya" />
+    <meta name="theme-color" content="#1e40af" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+  </head>
+
+  <body class="font-sans bg-gray-50 text-gray-800 antialiased">
+    <Header />
+
+    <main class="min-h-screen bg-gray-50">
+        <!-- Hero Section -->
+<section class="relative overflow-hidden bg-blue-800 py-20">
+  <!-- Gelombang lingkaran dekoratif -->
+  <div class="absolute -top-20 -left-16 w-64 h-64 bg-yellow-400 rounded-full opacity-30 animate-pulse-slow"></div>
+  <div class="absolute -bottom-16 -right-24 w-96 h-96 bg-yellow-400 rounded-full opacity-20 animate-pulse-slow"></div>
+
+  <div class="container mx-auto px-4 text-center relative z-10 text-white">
+    <h1 class="text-4xl md:text-5xl font-bold mb-4">Kontak & Pengaduan</h1>
+    <p class="text-xl opacity-90 max-w-3xl mx-auto">
+      Layanan pengaduan dan saluran komunikasi untuk memberikan pelayanan terbaik kepada masyarakat Surabaya
+      <div class="mt-8">
+            <a href="#pengaduan-sec" class="inline-flex items-center bg-yellow-400 text-blue-800 font-bold px-6 py-3 rounded-lg hover:bg-yellow-300 transition duration-300 mr-4">
+                <i class="fas fa-headset mr-2"></i> Ajukan Pengaduan
+            </a>
+            <a href="#kontak-sec" class="inline-flex items-center bg-white text-blue-600 font-bold px-6 py-3 rounded-lg hover:bg-gray-100 transition duration-300">
+                <i class="fas fa-phone mr-2"></i> Hubungi Kami
+            </a>
+      </div>
+    </p>
+  </div>
+</section>
+
+<div class="container mx-auto px-4">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-blue-800 mb-4">Inovasi Pelayanan Tim Organisasi</h2>
+                <p class="text-gray-600 max-w-2xl mx-auto">Berbagai terobosan kreatif untuk meningkatkan kualitas pelayanan publik di Kota Surabaya</p>
+            </div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                <!-- Sidebar Navigasi -->
+                <div class="lg:col-span-1">
+                    <div class="bg-white rounded-2xl shadow-custom p-6 sticky top-24">
+                        <h3 class="text-lg font-bold text-blue-800 mb-6">Daftar Inovasi</h3>
+                        <div class="space-y-2 overflow-y-auto max-h-[500px] tab-nav">
+                            <button class="tab-btn w-full text-left px-4 py-3 rounded-lg bg-blue-600 text-white font-medium transition duration-300" data-tab="takon-sobat">
+                                <i class="fas fa-comments mr-3"></i> TAKON SOBAT
+                            </button>
+                            <button class="tab-btn w-full text-left px-4 py-3 rounded-lg bg-gray-100 hover:bg-blue-50 text-gray-700 font-medium transition duration-300" data-tab="soto-panas">
+                                <i class="fas fa-exclamation-triangle mr-3"></i> SOTO PANAS
+                            </button>
+                            <button class="tab-btn w-full text-left px-4 py-3 rounded-lg bg-gray-100 hover:bg-blue-50 text-gray-700 font-medium transition duration-300" data-tab="pesona-buaya">
+                                <i class="fas fa-handshake mr-3"></i> PESONA BUAYA
+                            </button>
+                            <button class="tab-btn w-full text-left px-4 py-3 rounded-lg bg-gray-100 hover:bg-blue-50 text-gray-700 font-medium transition duration-300" data-tab="wani-ngurus-izin">
+                                <i class="fas fa-file-alt mr-3"></i> WANI NGURUS IZIN
+                            </button>
+                            <button class="tab-btn w-full text-left px-4 py-3 rounded-lg bg-gray-100 hover:bg-blue-50 text-gray-700 font-medium transition duration-300" data-tab="workshop-pelayanan-prima">
+                                <i class="fas fa-graduation-cap mr-3"></i> WORKSHOP PELAYANAN PRIMA
+                            </button>
+                            <button class="tab-btn w-full text-left px-4 py-3 rounded-lg bg-gray-100 hover:bg-blue-50 text-gray-700 font-medium transition duration-300" data-tab="mpp-virtual">
+                                <i class="fas fa-laptop-house mr-3"></i> MPP VIRTUAL
+                            </button>
+                            <button class="tab-btn w-full text-left px-4 py-3 rounded-lg bg-gray-100 hover:bg-blue-50 text-gray-700 font-medium transition duration-300" data-tab="peta-potensi">
+                                <i class="fas fa-map-marked-alt mr-3"></i> PETA POTENSI INVESTASI
+                            </button>
+                            <button class="tab-btn w-full text-left px-4 py-3 rounded-lg bg-gray-100 hover:bg-blue-50 text-gray-700 font-medium transition duration-300" data-tab="lapis-lupis">
+                                <i class="fas fa-chart-line mr-3"></i> LAPIS LUPIS
+                            </button>
+                            <button class="tab-btn w-full text-left px-4 py-3 rounded-lg bg-gray-100 hover:bg-blue-50 text-gray-700 font-medium transition duration-300" data-tab="ais">
+                                <i class="fas fa-award mr-3"></i> AIS
+                            </button>
+                            <button class="tab-btn w-full text-left px-4 py-3 rounded-lg bg-gray-100 hover:bg-blue-50 text-gray-700 font-medium transition duration-300" data-tab="klinik-investasi">
+                                <i class="fas fa-stethoscope mr-3"></i> KLINIK INVESTASI
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Konten Utama -->
+                <div class="lg:col-span-3">
+                    <!-- TAKON SOBAT Tab -->
+                    <div id="takon-sobat" class="tab-content block">
+                        <div class="bg-white rounded-2xl shadow-custom p-8">
+                            <div class="flex items-center mb-6">
+                                <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center mr-4">
+                                    <i class="fas fa-comments text-white text-xl"></i>
+                                </div>
+                                <h3 class="text-2xl font-bold text-blue-800">TAKON SOBAT</h3>
+                            </div>
+                            
+                            <div class="inovasi-content">
+                                <img src="gambar/TAKON-SOBATapik.png" alt="takon-sobat" class="w-full rounded-xl mb-6">
+                                
+                                <div class="mb-6">
+                                    <h1>Nama Inovasi:</h1>
+                                    <p class="text-lg font-bold text-blue-700">Takon Sobat (Tanya Konsultasi Perizinan Solusi dijawab melalui Whatsapp)</p>
+                                </div>
+                                
+                                <div class="mb-6">
+                                    <h2>Informasi Umum</h2>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div class="bg-blue-50 p-4 rounded-lg">
+                                            <p class="font-semibold">Perangkat Daerah:</p>
+                                            <p>Dinas Penanaman Modal dan Pelayanan Terpadu Satu Pintu</p>
+                                        </div>
+                                        <div class="bg-blue-50 p-4 rounded-lg">
+                                            <p class="font-semibold">Tahun Usulan:</p>
+                                            <p>2024</p>
+                                        </div>
+                                        <div class="bg-blue-50 p-4 rounded-lg">
+                                            <p class="font-semibold">Tahapan Inovasi:</p>
+                                            <p>Penerapan</p>
+                                        </div>
+                                        <div class="bg-blue-50 p-4 rounded-lg">
+                                            <p class="font-semibold">Jenis Inovasi:</p>
+                                            <p>Digital</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-6">
+                                    <h2>Rancang Bangun</h2>
+                                    <p class="text-justify">Di era digital seperti saat ini, masyarakat membutuhkan akses yang lebih mudah dan cepat untuk mengurus perizinan. Surabaya, sebagai salah satu kota terbesar di Indonesia, tidak terkecuali menghadapi tantangan ini. Banyak masyarakat Surabaya yang menghadapi kesulitan dalam memahami prosedur dan persyaratan yang diperlukan dalam mengurus berbagai jenis perizinan seperti, Izin Mendirikan Bangunan (IMB) / Persetujuan Bangunan Gedung (PBG), Nomor Induk Berusaha (NIB), izin edar, dan lainnya.</p>
+                                    <p class="text-justify">Inovasi TAKON SOBAT (TAnya KOnsultasi PerizinaN SOlusi DijawaB Melalui WhATsapp) hadir sebagai solusi kelengkapan administrasi perizinan. Dengan WhatsApp sebagai media populer, inovasi ini memudahkan masyarakat berkonsultasi secara langsung dan realtime.</p>
+                                </div>
+                                
+                                <div class="mb-6">
+                                    <h2>Tujuan</h2>
+                                    <p class="text-justify">TAKON SOBAT bertujuan menjadi sarana masyarakat berkonsultasi dan memperoleh informasi langsung. Dengan akses yang mudah dan responsif melalui WhatsApp, pengalaman warga mengurus perizinan menjadi positif, mudah, dan didukung sepenuhnya kapan saja dan di mana saja.</p>
+                                </div>
+                                
+                                <div class="mb-6">
+                                    <h2>Manfaat</h2>
+                                    <ul class="list-disc pl-5 space-y-2">
+                                        <li>Kemudahan akses dan penghematan waktu: tanpa perlu datang ke UPTSA.</li>
+                                        <li>Peningkatan transparansi: informasi akurat meminimalisir kesalahan proses perizinan.</li>
+                                        <li>Efisiensi pelayanan: mengurangi antrian dan waktu tunggu dengan konsultasi digital.</li>
+                                    </ul>
+                                </div>
+                                
+                                <div class="mb-6">
+                                    <h2>Hasil</h2>
+                                    <p class="text-justify">Sejak diluncurkan, sebanyak 3.481 pemohon telah berkonsultasi melalui TAKON SOBAT dan seluruh permasalahan terselesaikan. Masyarakat terbantu dalam pengurusan perizinan tanpa perlu tatap muka langsung.</p>
+                                </div>
+                                
+                                <div class="link-box">
+                                    <p class="font-bold">LINK URL :</p>
+                                    <a href="https://api.whatsapp.com/send/?phone=6285234982434&amp;text=Pertanyaan+dari+sumber+website&amp;type=phone_number&amp;app_absent=0" class="text-blue-700 hover:text-blue-900 font-medium inline-flex items-center" target="_blank">
+                                        <i class="fab fa-whatsapp mr-2 text-green-500"></i> TAKON SOBAT
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- SOTO PANAS Tab -->
+                    <div id="soto-panas" class="tab-content hidden">
+                        <div class="bg-white rounded-2xl shadow-custom p-8">
+                            <div class="flex items-center mb-6">
+                                <div class="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center mr-4">
+                                    <i class="fas fa-exclamation-triangle text-blue-800 text-xl"></i>
+                                </div>
+                                <h3 class="text-2xl font-bold text-blue-800">SOTO PANAS</h3>
+                            </div>
+                            
+                            <div class="inovasi-content">
+                                <img src="gambar/sotopanas.png" alt="takon-sobat" class="w-full rounded-xl mb-6">
+                                <div class="mb-6">
+                                    <h1>Nama Inovasi:</h1>
+                                    <p class="text-lg font-bold text-blue-700">Soto Panas (Sistem Online Terpadu Laporan Pengaduan Masyarakat)</p>
+                                </div>
+                                
+                                <div class="mb-6">
+                                    <h2>Informasi Umum</h2>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div class="bg-blue-50 p-4 rounded-lg">
+                                            <p class="font-semibold">Perangkat Daerah:</p>
+                                            <p>Dinas Penanaman Modal dan Pelayanan Terpadu Satu Pintu</p>
+                                        </div>
+                                        <div class="bg-blue-50 p-4 rounded-lg">
+                                            <p class="font-semibold">Tahun Usulan:</p>
+                                            <p>2024</p>
+                                        </div>
+                                        <div class="bg-blue-50 p-4 rounded-lg">
+                                            <p class="font-semibold">Tahapan Inovasi:</p>
+                                            <p>Penerapan</p>
+                                        </div>
+                                        <div class="bg-blue-50 p-4 rounded-lg">
+                                            <p class="font-semibold">Jenis Inovasi:</p>
+                                            <p>Digital</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-6">
+                                    <h2>Rancang Bangun</h2>
+                                    <p class="text-justify">Seiring dengan kemajuan teknologi dan informasi saat ini, maka Pemerintah sebagai Penyelenggara Pelayanan Publik dituntut untuk dapat memenuhi harapan dan keinginan masyarakat dalam melakukan pelayanan.</p>
+                                    <p class="text-justify">Sistem Online Terpadu Laporan Pengaduan Masyarakat hadir untuk mengakomodir data keluhan dari berbagai unit pelayanan dan media, sehingga mampu membentuk laporan rekapitulasi terintegrasi yang cepat dan efisien.</p>
+                                </div>
+                                
+                                <div class="mb-6">
+                                    <h2>Tujuan</h2>
+                                    <ul class="list-disc pl-5 space-y-2">
+                                        <li>Rekap monitoring dengan keterangan tanggap respon terlambat/tepat waktu</li>
+                                        <li>Rekap yang menampilkan petugas/penanggung jawab pengaduan</li>
+                                        <li>Rekap dalam format yang dapat didokumentasikan dalam bentuk softfile (digital) dan/atau hardfile (fisik)</li>
+                                        <li>Melakukan standardisasi format data agar mudah dikelola</li>
+                                    </ul>
+                                </div>
+                                
+                                <div class="mb-6">
+                                    <h2>Hasil</h2>
+                                    <ul class="list-disc pl-5 space-y-2">
+                                        <li>Pengaduan masyarakat dapat disampaikan melalui sistem online terpadu yang terintegrasi dengan unit-unit pelayanan terpadu</li>
+                                        <li>Koordinasi dan respon pengaduan yang baik dan tepat waktu dapat meningkatkan kepuasan masyarakat</li>
+                                        <li>Manajemen pengaduan dapat berjalan tertib</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- PESONA BUAYA Tab -->
+                    <div id="pesona-buaya" class="tab-content hidden">
+                        <div class="bg-white rounded-2xl shadow-custom p-8">
+                            <div class="flex items-center mb-6">
+                                <div class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mr-4">
+                                    <i class="fas fa-handshake text-white text-xl"></i>
+                                </div>
+                                <h3 class="text-2xl font-bold text-blue-800">PESONA BUAYA</h3>
+                            </div>
+                            
+                            <div class="inovasi-content">
+                                <img src="gambar/PESONA-BUAYA.png" alt="pesona-buaya" class="w-full rounded-xl mb-6">
+                                
+                                <div class="mb-6">
+                                    <h1>Nama Inovasi:</h1>
+                                    <p class="text-lg font-bold text-blue-700">Pesona Buaya (Pendampingan Sinergi dan Sosialisasi Perizinan Berusaha untuk UMK Surabaya)</p>
+                                </div>
+                                
+                                <div class="mb-6">
+                                    <h2>Rancang Bangun</h2>
+                                    <p class="text-justify">PESONA BUAYA dimulai sebagai respon terhadap terbitnya PP No. 5 Tahun 2021 yang mengubah sistem perizinan dari SSW ke OSS RBA. Tantangan teknis membuat UMK kesulitan memahami dan memenuhi persyaratan legalitas.</p>
+                                    <p class="text-justify">Tahun 2021 inovasi bernama <strong>#GampangNgurusNIB</strong> berfokus pada edukasi melalui media sosial dan mendapatkan penghargaan Walikota Surabaya di INOVBOYO 2022. Tahun 2023 nama diubah menjadi <strong>PESONA BUAYA</strong>, dan cakupan diperluas hingga izin penunjang lain.</p>
+                                </div>
+                                
+                                <div class="mb-6">
+                                    <h2>Tujuan</h2>
+                                    <p class="text-justify">Memberikan kemudahan perizinan kepada pelaku UMK secara cepat dan tepat serta mendukung pengembangan usaha mereka melalui upgrading skill. Inovasi ini diharapkan menciptakan pelaku usaha yang legal dan kompeten untuk mendorong ekonomi kerakyatan.</p>
+                                </div>
+                                
+                                <div class="mb-6">
+                                    <h2>Hasil</h2>
+                                    <ul class="list-disc pl-5 space-y-2">
+                                        <li>Tahun 2021: 295 pelaku usaha mengikuti pendampingan.</li>
+                                        <li>Tahun 2022: 4.432 pelaku usaha mengikuti program PESONA BUAYA.</li>
+                                        <li>Tahun 2023: 7.300 peserta tercatat mengikuti pendampingan.</li>
+                                        <li>Tahun 2024: 7.713 peserta aktif mengikuti inovasi ini.</li>
+                                        <li>Inovasi terbukti membantu peningkatan jumlah NIB UMK yang diterbitkan serta memberikan informasi perizinan dan strategi usaha secara berkelanjutan.</li>
+                                    </ul>
+                                </div>
+                                
+                                <div class="link-box">
+                                    <p class="font-bold">LINK URL :</p>
+                                    <a href="https://www.instagram.com/pesonabuaya/" class="text-blue-700 hover:text-blue-900 font-medium inline-flex items-center" target="_blank">
+                                        <i class="fab fa-instagram mr-2 text-pink-500"></i> PESONA BUAYA
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Default message for other tabs -->
+                    <div id="default-inovasi-tab" class="tab-content hidden">
+                        <div class="bg-white rounded-2xl shadow-custom p-8">
+                            <div class="text-center py-12">
+                                <div class="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                                    <i class="fas fa-lightbulb text-blue-600 text-3xl"></i>
+                                </div>
+                                <h3 class="text-2xl font-bold text-blue-800 mb-4">Pilih Inovasi untuk Melihat Detail</h3>
+                                <p class="text-gray-700 max-w-md mx-auto">Pilih salah satu inovasi dari menu di sebelah kiri untuk melihat informasi lengkap tentang inovasi pelayanan DPM-PTSP Surabaya.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+      <!-- Kontak Section -->
+    <section class="py-16 bg-white">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-12">
+                <div class="flex items-center justify-center mb-6">
+                    <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center mr-4">
+                        <i class="fas fa-lightbulb text-white text-xl"></i>
+                    </div>
+                    <h2 class="text-3xl font-bold text-blue-800">Inovasi Layanan</h2>
+                </div>
+                <p class="text-gray-600 max-w-2xl mx-auto">Berbagai inovasi layanan yang dikembangkan untuk meningkatkan kualitas pelayanan kepada masyarakat</p>
+            </div>
+            
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+                <!-- Lapis Lupis -->
+                <a href="https://www.instagram.com/dpmptspsby" target="_blank" class="innovation-card">
+                    <div class="bg-white rounded-xl p-4 text-center border border-gray-200 hover:border-yellow-400 transition duration-300">
+                        <img src="https://epmal.surabaya.go.id/simpedal/assets2/lapis_lupis_baru.png" alt="Lapis Lupis" class="w-full h-24 object-contain mb-4">
+                        <h4 class="font-bold text-blue-800">Lapis Lupis</h4>
+                    </div>
+                </a>
+                
+                <!-- MPP Virtual -->
+                <a href="https://www.instagram.com/dpmptspsby" target="_blank" class="innovation-card">
+                    <div class="bg-white rounded-xl p-4 text-center border border-gray-200 hover:border-yellow-400 transition duration-300">
+                        <img src="https://mpp.surabaya.go.id/mppvirtual/skin/Image_7DB3C373_7065_34DE_41BA_CF5206137DED.png?v=1696700959324" alt="MPP Virtual" class="w-full h-24 object-contain mb-4">
+                        <h4 class="font-bold text-blue-800">MPP Virtual</h4>
+                    </div>
+                </a>
+                
+                <!-- Pesona Buaya -->
+                <a href="https://www.instagram.com/dpmptspsby" target="_blank" class="innovation-card">
+                    <div class="bg-white rounded-xl p-4 text-center border border-gray-200 hover:border-yellow-400 transition duration-300">
+                        <img src="https://epmal.surabaya.go.id/simpedal/assets2/Pesona%20Buaya.png" alt="Pesona Buaya" class="w-full h-24 object-contain mb-4">
+                        <h4 class="font-bold text-blue-800">Pesona Buaya</h4>
+                    </div>
+                </a>
+                
+                <!-- WPP -->
+                <a href="https://www.instagram.com/dpmptspsby" target="_blank" class="innovation-card">
+                    <div class="bg-white rounded-xl p-4 text-center border border-gray-200 hover:border-yellow-400 transition duration-300">
+                        <img src="https://epmal.surabaya.go.id/simpedal/assets2/WPP.png" alt="WPP" class="w-full h-24 object-contain mb-4">
+                        <h4 class="font-bold text-blue-800">WPP</h4>
+                    </div>
+                </a>
+                
+                <!-- Takon Sobat -->
+                <a href="https://www.instagram.com/dpmptspsby" target="_blank" class="innovation-card">
+                    <div class="bg-white rounded-xl p-4 text-center border border-gray-200 hover:border-yellow-400 transition duration-300">
+                        <img src="https://epmal.surabaya.go.id/simpedal/assets2/TAKON-SOBAT.png" alt="Takon Sobat" class="w-full h-24 object-contain mb-4">
+                        <h4 class="font-bold text-blue-800">Takon Sobat</h4>
+                    </div>
+                </a>
+                
+                <!-- Wani Ngurus Izin -->
+                <a href="https://www.instagram.com/dpmptspsby" target="_blank" class="innovation-card">
+                    <div class="bg-white rounded-xl p-4 text-center border border-gray-200 hover:border-yellow-400 transition duration-300">
+                        <img src="https://epmal.surabaya.go.id/simpedal/assets2/Wani%20Ngurus%20Izin.jpeg" alt="Wani Ngurus Izin" class="w-full h-24 object-contain mb-4">
+                        <h4 class="font-bold text-blue-800">Wani Ngurus Izin</h4>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    
+    </main>
+
+    <!-- JavaScript untuk interaksi -->
+    <script>
+        // Update tahun di footer
+        document.getElementById('currentYear').textContent = new Date().getFullYear();
+
+        // Toggle Mobile Menu
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const menuIcon = mobileMenuButton.querySelector('i');
+
+        mobileMenuButton.addEventListener('click', () => {
+            if (mobileMenu.style.maxHeight === '0px' || mobileMenu.style.maxHeight === '') {
+                mobileMenu.style.maxHeight = mobileMenu.scrollHeight + 'px';
+                menuIcon.classList.remove('fa-bars');
+                menuIcon.classList.add('fa-times');
+                menuIcon.style.transform = 'rotate(90deg)';
+            } else {
+                mobileMenu.style.maxHeight = '0px';
+                menuIcon.classList.remove('fa-times');
+                menuIcon.classList.add('fa-bars');
+                menuIcon.style.transform = 'rotate(0deg)';
+            }
+        });
+
+        // Mobile Dropdown Toggle with Smooth Animation
+        const dropdownButtons = document.querySelectorAll('.mobile-dropdown-btn');
+
+        dropdownButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const content = button.nextElementSibling;
+                const icon = button.querySelector('i');
+
+                if (content.style.maxHeight === '0px' || content.style.maxHeight === '') {
+                    content.style.maxHeight = content.scrollHeight + 'px';
+                    icon.style.transform = 'rotate(180deg)';
+                } else {
+                    content.style.maxHeight = '0px';
+                    icon.style.transform = 'rotate(0deg)';
+                }
+            });
+        });
+
+        // Artikel Nested Dropdown (Desktop) - Close when not hovering
+        const artikelWrapper = document.querySelector('.artikel-wrapper');
+        const artikelContent = document.querySelector('.artikel-content');
+        const artikelChevron = document.querySelector('.artikel-chevron');
+
+        if (artikelWrapper && artikelContent) {
+            artikelWrapper.addEventListener('mouseenter', () => {
+                artikelContent.style.maxHeight = '200px';
+                artikelContent.style.opacity = '1';
+                if (artikelChevron) {
+                    artikelChevron.style.transform = 'rotate(180deg)';
+                }
+            });
+
+            artikelWrapper.addEventListener('mouseleave', () => {
+                artikelContent.style.maxHeight = '0px';
+                artikelContent.style.opacity = '0';
+                if (artikelChevron) {
+                    artikelChevron.style.transform = 'rotate(0deg)';
+                }
+            });
+        }
+
+        
+        // Tab Navigation Functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const tabButtons = document.querySelectorAll('.tab-btn');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            // Show first tab by default
+            if (tabContents.length > 0) {
+                tabContents.forEach((content, index) => {
+                    if (index === 0) {
+                        content.classList.remove('hidden');
+                        content.classList.add('block');
+                    } else {
+                        content.classList.add('hidden');
+                        content.classList.remove('block');
+                    }
+                });
+            }
+            
+            // Add click event to tab buttons
+            tabButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const tabId = this.getAttribute('data-tab');
+                    
+                    // Update active button styling
+                    tabButtons.forEach(btn => {
+                        btn.classList.remove('bg-blue-600', 'text-white');
+                        btn.classList.add('bg-gray-100', 'hover:bg-blue-50', 'text-gray-700');
+                    });
+                    
+                    this.classList.remove('bg-gray-100', 'hover:bg-blue-50', 'text-gray-700');
+                    this.classList.add('bg-blue-600', 'text-white');
+                    
+                    // Show selected tab content
+                    tabContents.forEach(content => {
+                        content.classList.add('hidden');
+                        content.classList.remove('block');
+                    });
+                    
+                    const selectedTab = document.getElementById(tabId);
+                    if (selectedTab) {
+                        selectedTab.classList.remove('hidden');
+                        selectedTab.classList.add('block');
+                    }
+                });
+            });
+            
+            // Scroll animations
+            function animateOnScroll() {
+                const elements = document.querySelectorAll('.animate-fadeInUp');
+                
+                elements.forEach(element => {
+                    const elementPosition = element.getBoundingClientRect().top;
+                    const screenPosition = window.innerHeight / 1.2;
+                    
+                    if (elementPosition < screenPosition) {
+                        element.classList.add('animate__animated', 'animate__fadeInUp');
+                    }
+                });
+            }
+            
+            // Run animations on scroll
+            window.addEventListener('scroll', animateOnScroll);
+            window.addEventListener('load', animateOnScroll);
+        });
+    </script>
+    <Footer />
+  </body>
+</html>

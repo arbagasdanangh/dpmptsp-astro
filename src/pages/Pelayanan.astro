@@ -1,0 +1,404 @@
+---
+// src/pages/pelayanan.astro
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+import "../styles/global.css";
+
+const {
+  title = "Pelayanan DPMPTSP Kota Surabaya",
+  description = "Daftar layanan yang tersedia di DPMPTSP Kota Surabaya",
+} = Astro.props;
+
+// Contoh data layanan (bisa ditambah / diubah)
+const layanan = [
+  {
+    name: "Perizinan Usaha",
+    img: "https://epmal.surabaya.go.id/simpedal/assets2/Perizinan.png",
+    link: "#",
+  },
+  {
+    name: "Pelaporan Pajak",
+    img: "https://epmal.surabaya.go.id/simpedal/assets2/Pajak.png",
+    link: "#",
+  },
+  {
+    name: "Wani Ngurus Izin",
+    img: "https://epmal.surabaya.go.id/simpedal/assets2/Wani%20Ngurus%20Izin.jpeg",
+    link: "#",
+  },
+  {
+    name: "MPP Virtual",
+    img: "https://mpp.surabaya.go.id/mppvirtual/skin/Image_7DB3C373_7065_34DE_41BA_CF5206137DED.png?v=1696700959324",
+    link: "#",
+  },
+  {
+    name: "Takon Sobat",
+    img: "https://epmal.surabaya.go.id/simpedal/assets2/TAKON-SOBAT.png",
+    link: "#",
+  },
+];
+---
+
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <title>{title}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta name="author" content="DPMPTSP Kota Surabaya" />
+    <meta name="theme-color" content="#1e40af" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+  </head>
+
+  <body class="font-sans bg-gray-50 text-gray-800 antialiased">
+    <Header />
+
+    <main class="min-h-screen bg-gray-50">
+      <!-- Hero Section -->
+      <section class="relative overflow-hidden bg-blue-800 py-20">
+        <div class="container mx-auto px-4 text-center relative z-10 text-white">
+          <h1 class="text-4xl md:text-5xl font-bold mb-4">Pelayanan DPMPTSP</h1>
+          <p class="text-xl opacity-90 max-w-3xl mx-auto">
+            Temukan berbagai layanan yang tersedia untuk mendukung masyarakat Surabaya
+          </p>
+        </div>
+      </section>
+
+      <section id="stdjenis-sec" class="py-16 bg-white">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-12">
+                <div class="flex items-center justify-center mb-6">
+                    <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center mr-4">
+                        <i class="fas fa-clipboard-check text-white text-xl"></i>
+                    </div>
+                    <h2 class="text-3xl font-bold text-blue-800">Standar Jenis Pelayanan</h2>
+                </div>
+                <p class="text-gray-600 max-w-2xl mx-auto">Informasi lengkap tentang standar, prosedur, dan jenis pelayanan yang disediakan oleh DPM-PTSP Surabaya</p>
+            </div>
+            
+            <!-- Tab Navigation -->
+            <div class="mb-8">
+                <div class="flex flex-wrap justify-center gap-4 mb-8">
+                    <button class="tab-button px-6 py-3 bg-gray-100 hover:bg-blue-50 text-gray-700 font-medium rounded-lg transition duration-300 active" data-tab="standar">
+                        <i class="fas fa-star mr-2"></i> Standar Pelayanan
+                    </button>
+                    <button class="tab-button px-6 py-3 bg-gray-100 hover:bg-blue-50 text-gray-700 font-medium rounded-lg transition duration-300" data-tab="prosedur">
+                        <i class="fas fa-list-ol mr-2"></i> Prosedur Pelayanan
+                    </button>
+                    <button class="tab-button px-6 py-3 bg-gray-100 hover:bg-blue-50 text-gray-700 font-medium rounded-lg transition duration-300" data-tab="waktu">
+                        <i class="fas fa-clock mr-2"></i> Waktu Pelayanan
+                    </button>
+                    <button class="tab-button px-6 py-3 bg-gray-100 hover:bg-blue-50 text-gray-700 font-medium rounded-lg transition duration-300" data-tab="biaya">
+                        <i class="fas fa-money-bill-wave mr-2"></i> Biaya Pelayanan
+                    </button>
+                </div>
+                
+                <!-- Tab Content -->
+                <div class="tab-content">
+                    <!-- Standar Pelayanan Tab -->
+                    <div id="standar" class="tab-pane active">
+                        <div class="bg-white rounded-2xl shadow-custom p-8">
+                            <div class="mb-8">
+                                <h3 class="text-2xl font-bold text-blue-800 mb-6">Standar Pelayanan DPM-PTSP</h3>
+                                <p class="text-gray-700 mb-6">
+                                    DPM-PTSP Kota Surabaya berkomitmen untuk memberikan pelayanan terbaik dengan standar yang jelas dan transparan. Berikut adalah standar pelayanan yang kami terapkan:
+                                </p>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                                    <div class="bg-blue-50 p-6 rounded-xl">
+                                        <div class="flex items-center mb-4">
+                                            <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center mr-4">
+                                                <i class="fas fa-bolt text-white text-xl"></i>
+                                            </div>
+                                            <h4 class="text-lg font-bold text-blue-800">Cepat</h4>
+                                        </div>
+                                        <p class="text-gray-700">Proses pelayanan yang efisien dengan waktu penyelesaian yang ditetapkan sesuai standar.</p>
+                                    </div>
+                                    
+                                    <div class="bg-yellow-50 p-6 rounded-xl">
+                                        <div class="flex items-center mb-4">
+                                            <div class="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center mr-4">
+                                                <i class="fas fa-check-circle text-blue-800 text-xl"></i>
+                                            </div>
+                                            <h4 class="text-lg font-bold text-blue-800">Tepat</h4>
+                                        </div>
+                                        <p class="text-gray-700">Informasi yang akurat dan pelayanan sesuai dengan prosedur yang berlaku.</p>
+                                    </div>
+                                    
+                                    <div class="bg-blue-50 p-6 rounded-xl">
+                                        <div class="flex items-center mb-4">
+                                            <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center mr-4">
+                                                <i class="fas fa-smile text-white text-xl"></i>
+                                            </div>
+                                            <h4 class="text-lg font-bold text-blue-800">Ramah</h4>
+                                        </div>
+                                        <p class="text-gray-700">Pelayanan dengan sikap sopan dan penuh perhatian kepada masyarakat.</p>
+                                    </div>
+                                    
+                                    <div class="bg-yellow-50 p-6 rounded-xl">
+                                        <div class="flex items-center mb-4">
+                                            <div class="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center mr-4">
+                                                <i class="fas fa-lock text-blue-800 text-xl"></i>
+                                            </div>
+                                            <h4 class="text-lg font-bold text-blue-800">Terbuka</h4>
+                                        </div>
+                                        <p class="text-gray-700">Transparansi dalam proses dan biaya pelayanan.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Embedded Standar Layanan -->
+                            <div class="mt-8">
+                                <h4 class="text-xl font-bold text-blue-800 mb-4">Dokumen Standar Pelayanan Terlengkap</h4>
+                                
+                                <!-- Tab sederhana -->
+                                <div class="flex mb-4 space-x-2">
+                                    <button id="btn-ssw" class="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium" onclick="showFrame('ssw')">
+                                        SSW
+                                    </button>
+                                    <button id="btn-oss" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300" onclick="showFrame('oss')">
+                                        OSS
+                                    </button>
+                                </div>
+                                
+                                <!-- Container iframe -->
+                                <div id="iframe-container" class="border border-gray-300 rounded-lg overflow-hidden">
+                                    <!-- ssw iframe -->
+                                    <iframe  id="ssw-frame" src="https://sswalfa.surabaya.go.id/info/daftar-perizinan" style="width:100%; height:800px" frameborder="0">
+                                    </iframe>
+
+                                    <iframe  id="oss-frame" src="https://oss.go.id/id/kbli" style="width:100%; height:800px; display:none;" frameborder="0">
+                                    </iframe>
+                                </div>
+                                
+                                <div class="mt-2 text-sm text-gray-600">
+                                    <span id="link-text">SSW: Surabaya Single Window</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Prosedur Pelayanan Tab -->
+                    <div id="prosedur" class="tab-pane hidden">
+                        <div class="bg-white rounded-2xl shadow-custom p-8">
+                            <h3 class="text-2xl font-bold text-blue-800 mb-6">Prosedur Pelayanan</h3>
+                            <p class="text-gray-700 mb-8">
+                                Berikut adalah prosedur lengkap untuk mengajukan perizinan dan pelayanan di DPM-PTSP Surabaya:
+                            </p>
+                            
+                            <div class="space-y-6">
+                                <div class="flex items-start">
+                                    <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center mr-4 flex-shrink-0">
+                                        <span class="text-white font-bold">1</span>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-lg font-bold text-blue-800 mb-2">Konsultasi Awal</h4>
+                                        <p class="text-gray-700">Konsultasikan kebutuhan perizinan Anda dengan tim kami melalui klinik investasi atau secara online.</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-start">
+                                    <div class="w-10 h-10 bg-yellow-400 rounded-full flex items-center justify-center mr-4 flex-shrink-0">
+                                        <span class="text-blue-800 font-bold">2</span>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-lg font-bold text-blue-800 mb-2">Persiapan Dokumen</h4>
+                                        <p class="text-gray-700">Siapkan dokumen persyaratan sesuai dengan jenis perizinan yang diajukan.</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-start">
+                                    <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center mr-4 flex-shrink-0">
+                                        <span class="text-white font-bold">3</span>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-lg font-bold text-blue-800 mb-2">Pengajuan Permohonan</h4>
+                                        <p class="text-gray-700">Ajukan permohonan melalui sistem online (OSS/SSW) atau langsung di kantor DPM-PTSP.</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-start">
+                                    <div class="w-10 h-10 bg-yellow-400 rounded-full flex items-center justify-center mr-4 flex-shrink-0">
+                                        <span class="text-blue-800 font-bold">4</span>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-lg font-bold text-blue-800 mb-2">Verifikasi &amp; Evaluasi</h4>
+                                        <p class="text-gray-700">Tim kami akan melakukan verifikasi dan evaluasi terhadap dokumen dan permohonan.</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-start">
+                                    <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center mr-4 flex-shrink-0">
+                                        <span class="text-white font-bold">5</span>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-lg font-bold text-blue-800 mb-2">Persetujuan &amp; Terbit</h4>
+                                        <p class="text-gray-700">Setelah semua persyaratan terpenuhi, izin akan disetujui dan diterbitkan.</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-start">
+                                    <div class="w-10 h-10 bg-yellow-400 rounded-full flex items-center justify-center mr-4 flex-shrink-0">
+                                        <span class="text-blue-800 font-bold">6</span>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-lg font-bold text-blue-800 mb-2">Pengambilan Izin</h4>
+                                        <p class="text-gray-700">Izin dapat diambil langsung di kantor atau melalui sistem digital sesuai pilihan.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Waktu Pelayanan Tab -->
+                    <div id="waktu" class="tab-pane hidden">
+                        <div class="bg-white rounded-2xl shadow-custom p-8">
+                            <h3 class="text-2xl font-bold text-blue-800 mb-6">Waktu Pelayanan</h3>
+                            
+                            <div class="mb-8">
+                                <h4 class="text-xl font-bold text-blue-800 mb-4">Jam Operasional</h4>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div class="bg-blue-50 p-6 rounded-xl">
+                                        <div class="flex items-center mb-4">
+                                            <i class="fas fa-clock text-blue-600 text-2xl mr-4"></i>
+                                            <h5 class="font-bold text-blue-800">Hari Kerja</h5>
+                                        </div>
+                                        <p class="text-gray-700">Senin - Jumat</p>
+                                        <p class="text-gray-700 font-medium">08:00 - 16:00 WIB</p>
+                                    </div>
+                                    
+                                    <div class="bg-yellow-50 p-6 rounded-xl">
+                                        <div class="flex items-center mb-4">
+                                            <i class="fas fa-calendar-times text-yellow-500 text-2xl mr-4"></i>
+                                            <h5 class="font-bold text-blue-800">Hari Libur</h5>
+                                        </div>
+                                        <p class="text-gray-700">Sabtu, Minggu &amp; Hari Libur Nasional</p>
+                                        <p class="text-gray-700 font-medium">Tutup</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <h4 class="text-xl font-bold text-blue-800 mb-4">Waktu Penyelesaian Perizinan</h4>
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full bg-white border border-gray-200 rounded-lg">
+                                        <thead>
+                                            <tr class="bg-blue-600 text-white">
+                                                <th class="py-3 px-4 text-left">Jenis Perizinan</th>
+                                                <th class="py-3 px-4 text-left">Waktu Penyelesaian</th>
+                                                <th class="py-3 px-4 text-left">Keterangan</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr class="border-b border-gray-200 hover:bg-gray-50">
+                                                <td class="py-3 px-4">Izin Usaha Mikro</td>
+                                                <td class="py-3 px-4 font-medium">1-3 Hari Kerja</td>
+                                                <td class="py-3 px-4">Proses cepat dengan dokumen minimal</td>
+                                            </tr>
+                                            <tr class="border-b border-gray-200 hover:bg-gray-50">
+                                                <td class="py-3 px-4">Izin Usaha Kecil</td>
+                                                <td class="py-3 px-4 font-medium">3-5 Hari Kerja</td>
+                                                <td class="py-3 px-4">Dengan verifikasi dokumen lengkap</td>
+                                            </tr>
+                                            <tr class="border-b border-gray-200 hover:bg-gray-50">
+                                                <td class="py-3 px-4">Izin Usaha Menengah</td>
+                                                <td class="py-3 px-4 font-medium">5-7 Hari Kerja</td>
+                                                <td class="py-3 px-4">Termasuk verifikasi lapangan</td>
+                                            </tr>
+                                            <tr class="hover:bg-gray-50">
+                                                <td class="py-3 px-4">Izin Usaha Besar</td>
+                                                <td class="py-3 px-4 font-medium">7-14 Hari Kerja</td>
+                                                <td class="py-3 px-4">Dengan koordinasi lintas sektor</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Biaya Pelayanan Tab -->
+                    <div id="biaya" class="tab-pane hidden">
+                        <div class="bg-white rounded-2xl shadow-custom p-8">
+                            <h3 class="text-2xl font-bold text-blue-800 mb-6">Biaya Pelayanan</h3>
+                            
+                            <div class="mb-8">
+                                <h4 class="text-xl font-bold text-blue-800 mb-4">Prinsip Biaya Pelayanan</h4>
+                                <p class="text-gray-700 mb-6">
+                                    DPM-PTSP Kota Surabaya menerapkan prinsip transparansi dalam biaya pelayanan. Semua biaya telah ditetapkan sesuai peraturan yang berlaku dan tidak ada biaya tersembunyi.
+                                </p>
+                                
+                                <div class="bg-green-50 p-6 rounded-xl mb-6">
+                                    <div class="flex items-center mb-4">
+                                        <i class="fas fa-exclamation-triangle text-green-600 text-2xl mr-4"></i>
+                                        <h5 class="text-lg font-bold text-green-800">Penting!</h5>
+                                    </div>
+                                    <p class="text-green-800">
+                                        DPM-PTSP Surabaya <span class="font-bold">TIDAK MENARIK BIAYA TAMBAHAN</span> di luar ketentuan resmi. Laporkan jika ada petugas yang meminta biaya di luar ketentuan.
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <h4 class="text-xl font-bold text-blue-800 mb-6">Contoh Biaya Perizinan</h4>
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    <div class="border border-gray-200 rounded-xl p-6">
+                                        <h5 class="font-bold text-blue-800 mb-3">Izin Usaha Mikro</h5>
+                                        <div class="text-2xl font-bold text-yellow-500 mb-2">Gratis</div>
+                                        <p class="text-gray-600 text-sm">Untuk usaha dengan modal hingga Rp 50 juta</p>
+                                    </div>
+                                    
+                                    <div class="border border-gray-200 rounded-xl p-6">
+                                        <h5 class="font-bold text-blue-800 mb-3">Izin Usaha Kecil</h5>
+                                        <div class="text-2xl font-bold text-blue-600 mb-2">Rp 100.000</div>
+                                        <p class="text-gray-600 text-sm">Untuk usaha dengan modal Rp 50 juta - 500 juta</p>
+                                    </div>
+                                    
+                                    <div class="border border-gray-200 rounded-xl p-6">
+                                        <h5 class="font-bold text-blue-800 mb-3">Izin Usaha Menengah</h5>
+                                        <div class="text-2xl font-bold text-blue-600 mb-2">Rp 500.000</div>
+                                        <p class="text-gray-600 text-sm">Untuk usaha dengan modal Rp 500 juta - 10 miliar</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-8 p-6 bg-blue-50 rounded-xl">
+                                    <p class="text-gray-700">
+                                        <i class="fas fa-info-circle text-blue-600 mr-2"></i>
+                                        <span>Untuk informasi biaya lengkap sesuai dengan jenis perizinan, silakan konsultasi dengan tim kami atau kunjungi halaman standar pelayanan.</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    </main>
+<script is:inline>
+            function showFrame(type) {
+            if(type === 'ssw') {
+                document.getElementById('ssw-frame').style.display = 'block';
+                document.getElementById('oss-frame').style.display = 'none';
+                
+                // Update button style
+                document.getElementById('btn-ssw').className = 'px-4 py-2 bg-blue-600 text-white rounded-lg font-medium';
+                document.getElementById('btn-oss').className = 'px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300';
+                
+                // Update link text
+                document.getElementById('link-text').textContent = 'SSW: Surabaya Single Window';
+            } 
+            else if(type === 'oss') {
+                document.getElementById('oss-frame').style.display = 'block';
+                document.getElementById('ssw-frame').style.display = 'none';
+                
+                // Update button style
+                document.getElementById('btn-oss').className = 'px-4 py-2 bg-blue-600 text-white rounded-lg font-medium';
+                document.getElementById('btn-ssw').className = 'px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300';
+                
+                // Update link text
+                document.getElementById('link-text').textContent = 'OSS: Online Single Submission';
+            }
+        }
+</script>
