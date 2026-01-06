@@ -3,18 +3,6 @@ import MainLayout from "../layouts/MainLayout.astro";
 
 import { isRenderTemplateResult } from "astro/runtime/server/render/astro/render-template.js";
 import "../styles/global.css";
-import { db } from "../lib/db.js";
-
-let twdata = [];
- 
-try {
-  const [rows] = await db.execute(
-    "SELECT tw_option, file_path FROM twdata ORDER BY id DESC"
-  );
-  twdata = rows;
-} catch (err) {
-  console.error("DB error:", err);
-}
 ---
 
 <MainLayout title="DPMPTSP Kota Surabaya">
@@ -180,135 +168,21 @@ try {
     </section>
 
   <!-- Kinerja Investasi Section -->
-  <section id="Kinerja" class="py-16 bg-white">
-    <div class="container mx-auto px-4">
-      <div class="text-center mb-12">
-        <h2 class="text-3xl font-bold text-blue-800 mb-4">
-          Kinerja Investasi
-        </h2>
-        <p class="text-gray-600 max-w-2xl mx-auto">
-          Pantau perkembangan dan capaian investasi di Kota Surabaya
-        </p>
-      </div>
-
-      <div class="max-w-4xl mx-auto">
-        <div class="bg-white rounded-2xl shadow-custom p-8 mb-8">
-          <div class="flex items-center mb-6">
-            <div class="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center mr-4">
-              <i class="fas fa-chart-line text-blue-800 text-xl"></i>
-            </div>
-            <h3 class="text-2xl font-bold text-blue-800">
-              Laporan Kinerja Investasi
-            </h3>
-          </div>
-
-          <p class="text-gray-700 mb-6">
-            Pilih periode Triwulan untuk melihat laporan kinerja investasi di Kota Surabaya.
-          </p>
-
-          <!-- COMBOBOX -->
-          <div class="flex flex-col md:flex-row items-center mb-8">
-            <label class="text-gray-700 font-medium mb-2 md:mb-0 md:mr-4">
-              Pilih Triwulan:
-            </label>
-
-            <div class="relative w-full md:w-64">
-              <select
-                id="kinerjaSelect"
-                class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none text-gray-700"
-              >
-                <option value="">Pilih Periode Triwulan</option>
-
-                {twdata.map((item) => (
-                  <option value={item.file_path}>
-                    {item.tw_option}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <!-- KETERANGAN -->
-          <div
-            id="keteranganKinerja"
-            class="bg-blue-50 p-4 rounded-lg mb-6"
-          >
-            <p class="text-blue-800 font-medium flex items-center">
-              <i class="fas fa-info-circle text-blue-600 mr-2"></i>
-              <span>Silakan pilih periode Triwulan.</span>
-            </p>
-          </div>
-
-          <!-- PDF VIEWER -->
-          <div id="pdfViewerContainer" class="hidden">
-            <div class="flex justify-between items-center mb-4">
-              <h4 class="text-lg font-bold text-blue-800">
-                Laporan Kinerja Investasi
-              </h4>
-
-              <a
-                id="downloadPdf"
-                href="#"
-                target="_blank"
-                class="inline-flex items-center bg-yellow-400 text-blue-800 font-medium px-4 py-2 rounded-lg hover:bg-yellow-300 transition"
-              >
-                <i class="fas fa-download mr-2"></i>
-                Download PDF
-              </a>
-            </div>
-
-            <object
-              id="pdfViewer"
-              type="application/pdf"
-              width="100%"
-              height="780px"
-              class="rounded-lg"
-            ></object>
-          </div>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          <div class="bg-gradient-to-r from-blue-600 to-blue-800 rounded-2xl p-6 text-white">
-              <div class="flex items-center mb-4">
-                  <div class="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center mr-4">
-                      <i class="fas fa-building text-white text-xl"></i>
-                  </div>
-                  <div>
-                      <p class="text-sm opacity-80">Investasi PMDN</p>
-                      <h4 class="text-2xl font-bold">Rp 15,2 T</h4>
-                  </div>
-              </div>
-              <p class="text-sm opacity-90">TW III 2024</p>
-          </div>
-                    
-          <div class="bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-2xl p-6 text-blue-800">
-              <div class="flex items-center mb-4">
-                  <div class="w-12 h-12 bg-blue-800 bg-opacity-20 rounded-full flex items-center justify-center mr-4">
-                      <i class="fas fa-globe text-blue-800 text-xl"></i>
-                  </div>
-                  <div>
-                      <p class="text-sm opacity-80">Investasi PMA</p>
-                      <h4 class="text-2xl font-bold">USD 850 Jt</h4>
-                  </div>
-              </div>
-              <p class="text-sm opacity-90">TW III 2024</p>
-          </div>
-                    
-          <div class="bg-gradient-to-r from-blue-700 to-blue-900 rounded-2xl p-6 text-white">
-              <div class="flex items-center mb-4">
-                  <div class="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center mr-4">
-                      <i class="fas fa-briefcase text-white text-xl"></i>
-                  </div>
-                  <div>
-                      <p class="text-sm opacity-80">Proyek Investasi</p>
-                      <h4 class="text-2xl font-bold">1.850+</h4>
-                  </div>
-              </div>
-              <p class="text-sm opacity-90">TW III 2024</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
+  <section id="Kinerja" class="py-16 bg-white"> <div class="container mx-auto px-4"> <div class="text-center mb-12"> <h2 class="text-3xl font-bold text-blue-800 mb-4">
+Kinerja Investasi
+</h2> <p class="text-gray-600 max-w-2xl mx-auto">
+Pantau perkembangan dan capaian investasi di Kota Surabaya
+</p> </div> <div class="max-w-4xl mx-auto"> <div class="bg-white rounded-2xl shadow-custom p-8 mb-8"> <div class="flex items-center mb-6"> <div class="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center mr-4"> <i class="fas fa-chart-line text-blue-800 text-xl"></i> </div> <h3 class="text-2xl font-bold text-blue-800">
+Laporan Kinerja Investasi
+</h3> </div> <p class="text-gray-700 mb-6">
+Pilih periode Triwulan untuk melihat laporan kinerja investasi di Kota Surabaya.
+</p> <!-- COMBOBOX --> <div class="flex flex-col md:flex-row items-center mb-8"> <label class="text-gray-700 font-medium mb-2 md:mb-0 md:mr-4">
+Pilih Triwulan:
+</label> <div class="relative w-full md:w-64"> <select id="kinerjaSelect" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none text-gray-700"> <option value="">Pilih Periode Triwulan</option> <option value="Kinerja-Investasi-TWI-2023.pdf"> TW I 2023 </option><option value="Kinerja-Investasi-TWII-2023.pdf"> TW II 2023 </option><option value="Kinerja-Investasi-TWIII-2023.pdf"> TW III 2023 </option><option value="Kinerja-Investasi-TW I-IV 2024.pdf"> TW I-IV 2024 </option><option value="Kinerja-Investasi-TWI-2024.pdf"> TW I 2024 </option><option value="Kinerja-Investasi-TWII-2024.pdf"> TW II 2024 </option><option value="Kinerja-Investasi-TWIII-2024.pdf"> TW III 2024 </option> </select> </div> </div> <!-- KETERANGAN --> <div id="keteranganKinerja" class="bg-blue-50 p-4 rounded-lg mb-6"> <p class="text-blue-800 font-medium flex items-center"> <i class="fas fa-info-circle text-blue-600 mr-2"></i> <span>Silakan pilih periode Triwulan.</span> </p> </div> <!-- PDF VIEWER --> <div id="pdfViewerContainer" class="hidden"> <div class="flex justify-between items-center mb-4"> <h4 class="text-lg font-bold text-blue-800">
+Laporan Kinerja Investasi
+</h4> <a id="downloadPdf" href="#" target="_blank" class="inline-flex items-center bg-yellow-400 text-blue-800 font-medium px-4 py-2 rounded-lg hover:bg-yellow-300 transition"> <i class="fas fa-download mr-2"></i>
+Download PDF
+</a> </div> <object id="pdfViewer" type="application/pdf" width="100%" height="780px" class="rounded-lg"></object> </div> </div> <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12"> <div class="bg-gradient-to-r from-blue-600 to-blue-800 rounded-2xl p-6 text-white"> <div class="flex items-center mb-4"> <div class="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center mr-4"> <i class="fas fa-building text-white text-xl"></i> </div> <div> <p class="text-sm opacity-80">Investasi PMDN</p> <h4 class="text-2xl font-bold">Rp 15,2 T</h4> </div> </div> <p class="text-sm opacity-90">TW III 2024</p> </div> <div class="bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-2xl p-6 text-blue-800"> <div class="flex items-center mb-4"> <div class="w-12 h-12 bg-blue-800 bg-opacity-20 rounded-full flex items-center justify-center mr-4"> <i class="fas fa-globe text-blue-800 text-xl"></i> </div> <div> <p class="text-sm opacity-80">Investasi PMA</p> <h4 class="text-2xl font-bold">USD 850 Jt</h4> </div> </div> <p class="text-sm opacity-90">TW III 2024</p> </div> <div class="bg-gradient-to-r from-blue-700 to-blue-900 rounded-2xl p-6 text-white"> <div class="flex items-center mb-4"> <div class="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center mr-4"> <i class="fas fa-briefcase text-white text-xl"></i> </div> <div> <p class="text-sm opacity-80">Proyek Investasi</p> <h4 class="text-2xl font-bold">1.850+</h4> </div> </div> <p class="text-sm opacity-90">TW III 2024</p> </div> </div> </div> </div> </section>
 
     <section id="Panduan" class="py-16 bg-gradient-to-b from-white to-gray-50">
         <div class="container mx-auto px-4">

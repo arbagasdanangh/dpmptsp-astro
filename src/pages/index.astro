@@ -1,75 +1,10 @@
 ---
 import MainLayout from "../layouts/MainLayout.astro";
 import Pdf from "../components/Pdf.astro";
-import { db } from '../lib/db.js';
 import { slugify } from "../utils/slugify";
 import { isRenderTemplateResult } from "astro/runtime/server/render/astro/render-template.js";
 
-let tentang = [];
-let slider = [];
 
-const [t] = await db.execute(
-  "SELECT * FROM beranda_dpmptsp ORDER BY urutan ASC"
-);
-tentang = t;
-
-const [s] = await db.execute(
-  "SELECT * FROM beranda_slider ORDER BY urutan ASC"
-);
-slider = s;
-
-let rows = [];
-try {
-  const [result] = await db.execute('SELECT * FROM posts WHERE kategori = "Berita" ORDER BY tanggal asc limit 3');
-  rows = result;
-} catch (e) {
-  console.error("DB error:", e);
-}
-
-let artikel = [];
-try {
-  const [result] = await db.execute('SELECT * FROM posts WHERE kategori IN ("Perizinan", "Investasi") ORDER BY tanggal asc limit 2');
-  artikel = result;
-} catch (e) {
-  console.error("DB error:", e);
-}
-
-let peta = [];
-try {
-  const [result] = await db.execute('SELECT * FROM peta_investasi limit 1');
-  peta = result;
-} catch (e) {
-  console.error("DB error:", e);
-}
-
-
-let renstra = [];
-try {
-  const [result] = await db.execute('SELECT * FROM renstra_investasi');
-  renstra = result;
-} catch (e) {
-  console.error("DB error:", e);
-}
-
-let unggul = [];
-try {
-  const [result] = await db.execute('SELECT * FROM keunggulan ORDER BY tanggal asc limit 6');
-  unggul = result;
-} catch (e) {
-  console.error("DB error:", e);
-}
-const pdfData = unggul.map(item => ({
-  file: item.link,   // URL PDF
-  title: item.judul  // Judul PDF
-}));
-
-let videos = [];
-try {
-  const [result] = await db.execute('SELECT * FROM videos ORDER BY tanggal DESC');
-  videos = result;
-} catch (e) {
-  console.error("DB error:", e);
-}
 ---
 <style>
 .slider-wrapper {
@@ -253,88 +188,426 @@ try {
 </style>
 
 <MainLayout title="DPMPTSP Kota Surabaya">
-<!-- ================= NAVBAR ================= -->
-<nav class="bg-dpmBlue text-white sticky top-0 z-50 shadow">
-  <div class="max-w-7xl mx-auto px-6">
-    <!-- menu dan mobile menu -->
-    <div id="mobileMenu" class="hidden md:hidden pb-6">
-      <div class="flex flex-col gap-4 font-medium">
-        <a href="#beranda" class="hover:text-dpmYellow">Beranda</a>
-        <a href="/Tentang" class="hover:text-dpmYellow">Profil</a>
-        <a href="#layanan" class="hover:text-dpmYellow">Layanan</a>
-        <a href="#kontak" class="hover:text-dpmYellow">Kontak</a>
-        <a href="#" class="mt-4 bg-dpmYellow text-dpmBlue px-4 py-2 rounded-lg font-semibold text-center">
-          OSS / Perizinan
-        </a>
-      </div>
-    </div>
-  </div>
-</nav>
+  <body class=" bg-gray-50 text-gray-800 antialiased"> 
+       <script> // Update tahun di footer
+        document.getElementById('currentYear').textContent = new Date().getFullYear();
+        
+        // Mobile menu toggle
+        document.getElementById('mobile-menu-button').addEventListener('click', function() {
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenu.classList.toggle('hidden');
+            
+            // Tambahkan animasi slide down/up
+            if (!mobileMenu.classList.contains('hidden')) {
+                mobileMenu.classList.add('animate-slide-up');
+            }
+        });
+        
+        // Tab Navigation Functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const tabButtons = document.querySelectorAll('.tab-btn');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            // Show first tab by default
+            if (tabContents.length > 0) {
+                tabContents.forEach((content, index) => {
+                    if (index === 0) {
+                        content.classList.remove('hidden');
+                        content.classList.add('block');
+                        content.classList.add('animate-blur-in');
+                    } else {
+                        content.classList.add('hidden');
+                        content.classList.remove('block');
+                    }
+                });
+            }
+            
+            // Add click event to tab buttons
+            tabButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const tabId = this.getAttribute('data-tab');
+                    
+                    // Update active button styling
+                    tabButtons.forEach(btn => {
+                        btn.classList.remove('bg-blue-600', 'text-white');
+                        btn.classList.add('bg-gray-100', 'hover:bg-blue-50', 'text-gray-700');
+                    });
+                    
+                    this.classList.remove('bg-gray-100', 'hover:bg-blue-50', 'text-gray-700');
+                    this.classList.add('bg-blue-600', 'text-white');
+                    
+                    // Show selected tab content dengan animasi
+                    tabContents.forEach(content => {
+                        content.classList.add('hidden');
+                        content.classList.remove('block', 'animate-blur-in');
+                    });
+                    
+                    const selectedTab = document.getElementById(tabId);
+                    if (selectedTab) {
+                        selectedTab.classList.remove('hidden');
+                        selectedTab.classList.add('block');
+                        // Delay sedikit untuk trigger animation
+                        setTimeout(() => {
+                            selectedTab.classList.add('animate-blur-in');
+                        }, 10);
+                    } else {
+                        // Jika tab tidak ditemukan, tampilkan default
+                        const defaultTab = document.getElementById('default-tab');
+                        defaultTab.classList.remove('hidden');
+                        defaultTab.classList.add('block');
+                        setTimeout(() => {
+                            defaultTab.classList.add('animate-blur-in');
+                        }, 10);
+                    }
+                });
+            });
+            
+            // FAQ Accordion Functionality
+            const accordionButtons = document.querySelectorAll('.accordion-button');
+            
+            accordionButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const targetId = this.getAttribute('data-target');
+                    const targetContent = document.getElementById(targetId);
+                    const icon = this.querySelector('i.fa-chevron-down');
+                    
+                    // Tutup semua accordion lainnya
+                    accordionButtons.forEach(btn => {
+                        if (btn !== this) {
+                            const otherTargetId = btn.getAttribute('data-target');
+                            const otherContent = document.getElementById(otherTargetId);
+                            const otherIcon = btn.querySelector('i.fa-chevron-down');
+                            
+                            if (otherContent && !otherContent.classList.contains('hidden')) {
+                                otherContent.classList.add('hidden');
+                                otherIcon.style.transform = 'rotate(0deg)';
+                            }
+                        }
+                    });
+                    
+                    // Toggle content visibility dengan animasi
+                    if (targetContent.classList.contains('hidden')) {
+                        targetContent.classList.remove('hidden');
+                        targetContent.classList.add('animate-fold-unfold');
+                        icon.style.transform = 'rotate(180deg)';
+                        
+                        // Hapus class animasi setelah selesai
+                        setTimeout(() => {
+                            targetContent.classList.remove('animate-fold-unfold');
+                        }, 600);
+                    } else {
+                        targetContent.classList.add('hidden');
+                        icon.style.transform = 'rotate(0deg)';
+                    }
+                });
+            });
+            
+            // Scroll animations
+            function animateOnScroll() {
+                const elements = document.querySelectorAll('.animate-fade-up, .animate-scale-in, .animate-slide-in-left, .animate-slide-in-right');
+                
+                elements.forEach(element => {
+                    const elementPosition = element.getBoundingClientRect().top;
+                    const screenPosition = window.innerHeight / 1.2;
+                    
+                    if (elementPosition < screenPosition) {
+                        element.classList.add('animate__animated');
+                        if (element.classList.contains('animate-fade-up')) {
+                            element.style.animationPlayState = 'running';
+                        }
+                    }
+                });
+            }
+            
+            // Run animations on scroll
+            window.addEventListener('scroll', animateOnScroll);
+            window.addEventListener('load', () => {
+                animateOnScroll();
+                // Trigger initial animations
+                setTimeout(() => {
+                    document.querySelectorAll('.stagger-children > *').forEach((child, index) => {
+                        child.style.animationDelay = `${index * 0.1}s`;
+                        child.style.animationPlayState = 'running';
+                    });
+                }, 300);
+            });
+            
+            // Inisialisasi slideshow
+            initSlideshow();
+            
+            // Tambahkan animasi pada load
+            document.body.classList.add('loaded');
+            
+            // Mobile dropdown functionality
+            const mobileDropdownBtns = document.querySelectorAll('.mobile-dropdown-btn');
+            mobileDropdownBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const content = this.nextElementSibling;
+                    const icon = this.querySelector('i');
+                    
+                    if (content.classList.contains('hidden')) {
+                        content.classList.remove('hidden');
+                        icon.style.transform = 'rotate(180deg)';
+                    } else {
+                        content.classList.add('hidden');
+                        icon.style.transform = 'rotate(0deg)';
+                    }
+                });
+            });
+        });
 
-<!-- ================= HERO ================= -->
-<section class="relative overflow-hidden bg-blue-600">
-  <div class="container mx-auto px-4 py-16 md:py-24">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-      <!-- Hero Text -->
-      <div class="text-white animate-fadeInUp animate__animated animate__fadeInUp">
-        <h1 class="text-4xl md:text-5xl font-bold mb-4">
-          Investasi & Perizinan Terpadu
-        </h1>
-        <p class="text-xl mb-8 opacity-90">
-          Dinas Penanaman Modal dan Pelayanan Terpadu Satu Pintu Kota Surabaya
-        </p>
-        <div class="flex flex-wrap gap-4">
-          <a href="#" class="bg-yellow-400 text-blue-800 font-bold px-6 py-3 rounded-lg hover:bg-yellow-300 transition duration-300 transform hover:scale-105">
-            Mulai Berinvestasi <i class="fas fa-arrow-right ml-2"></i>
-          </a>
-          <a href="#" class="bg-white text-blue-600 font-bold px-6 py-3 rounded-lg hover:bg-gray-100 transition duration-300">
-            Lihat Layanan <i class="fas fa-list ml-2"></i>
-          </a>
-        </div>
-      </div>
+        // Fungsi universal untuk zoom gambar
+        function openImageZoom(imageSrc, title = '') {
+            const modal = document.getElementById('universal-image-modal');
+            const zoomedImg = document.getElementById('universal-zoomed-image');
+            const imageTitle = document.getElementById('image-title');
+            
+            // Set gambar dan judul
+            zoomedImg.src = imageSrc;
+            zoomedImg.alt = title + ' - Zoom View';
+            imageTitle.textContent = title;
+            
+            // Tampilkan modal dengan animasi
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.body.style.overflow = 'hidden';
+            
+            // Tambahkan animasi
+            setTimeout(() => {
+                modal.classList.add('animate-blur-in');
+            }, 10);
+        }
 
-      <!-- Carousel -->
-       <div class="relative slide-in">
+        // Fungsi untuk menutup zoom
+        function closeImageZoom() {
+            const modal = document.getElementById('universal-image-modal');
+            modal.classList.remove('animate-blur-in', 'flex');
+            modal.classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
 
-  <div id="hero-carousel" class="relative overflow-hidden rounded-2xl shadow-2xl">
+        // Tutup modal ketika klik di luar gambar
+        document.getElementById('universal-image-modal').addEventListener('click', function(e) {
+            if (e.target.id === 'universal-image-modal') {
+                closeImageZoom();
+            }
+        });
 
-    <div class="carousel-item bg-blue-800 p-8 rounded-2xl text-white">
-      <h3 class="text-2xl font-bold mb-4">Klinik Investasi Surabaya</h3>
-      <p class="mb-6">Konsultasi perizinan usaha di Kota Surabaya dengan tim ahli kami.</p>
-      <a href="#" class="inline-flex items-center text-yellow-400 font-medium">
-        Selengkapnya <i class="fas fa-chevron-right ml-2"></i>
-      </a>
-    </div>
+        // Tutup dengan tombol ESC
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeImageZoom();
+            }
+        });
 
-    <div class="carousel-item bg-blue-800 p-8 rounded-2xl text-white hidden">
-      <h3 class="text-2xl font-bold mb-4">Layanan Cepat & Transparan</h3>
-      <p class="mb-6">Proses perizinan lebih mudah untuk warga Surabaya.</p>
-      <a href="#" class="inline-flex items-center text-yellow-400 font-medium">
-        Selengkapnya <i class="fas fa-chevron-right ml-2"></i>
-      </a>
-    </div>
+        // VARIABEL DAN FUNGSI SLIDESHOW
+        let slideIntervalId;
+        const slideInterval = 7000;
+        let currentSlide = 0;
 
-  </div>
+        // Fungsi untuk menampilkan slide berdasarkan index
+        function showSlideByIndex(index) {
+            const slides = document.querySelectorAll('.main-slide');
+            const dots = document.querySelectorAll('.slide-dot');
+            
+            if (index < 0 || index >= slides.length) return;
+            
+            // Animasi fade out untuk slide saat ini
+            slides.forEach(slide => {
+                slide.style.transition = 'opacity 0.7s cubic-bezier(0.4, 0, 0.2, 1)';
+                slide.style.opacity = '0';
+                slide.style.zIndex = '1';
+            });
+            
+            // Animasi fade in untuk slide baru
+            slides[index].style.transition = 'opacity 0.7s cubic-bezier(0.4, 0, 0.2, 1)';
+            slides[index].style.opacity = '1';
+            slides[index].style.zIndex = '2';
+            
+            // Update dot aktif dengan animasi
+            dots.forEach(dot => {
+                dot.classList.remove('bg-white');
+                dot.classList.add('bg-white/50');
+                dot.classList.remove('scale-125');
+            });
+            if (dots[index]) {
+                dots[index].classList.remove('bg-white/50');
+                dots[index].classList.add('bg-white');
+                dots[index].classList.add('scale-125');
+            }
+            
+            currentSlide = index;
+            
+            // Reset interval
+            clearInterval(slideIntervalId);
+            slideIntervalId = setInterval(nextSlide, slideInterval);
+            
+            // Tambahkan efek visual pada gambar kecil yang diklik
+            const smallImages = document.querySelectorAll('[data-slide-index]');
+            smallImages.forEach(img => {
+                const parentDiv = img.closest('div');
+                const imgIndex = parseInt(img.getAttribute('data-slide-index'));
+                if (!isNaN(imgIndex) && imgIndex === index) {
+                    // Tambahkan efek highlight dengan animasi
+                    parentDiv.classList.add('ring-4', 'ring-yellow-400', 'ring-offset-2', 'scale-110');
+                    parentDiv.classList.add('animate-jelly');
+                    
+                    // Kembalikan ke normal setelah 1 detik
+                    setTimeout(() => {
+                        parentDiv.classList.remove('ring-4', 'ring-yellow-400', 'ring-offset-2', 'scale-110', 'animate-jelly');
+                    }, 1000);
+                } else {
+                    parentDiv.classList.remove('ring-4', 'ring-yellow-400', 'ring-offset-2', 'scale-110', 'animate-jelly');
+                }
+            });
+        }
 
-  <!-- DOTS (WAJIB) -->
-  <div class="flex justify-center mt-6 space-x-2">
-    <button class="hero-dot w-3 h-3 rounded-full bg-white"></button>
-    <button class="hero-dot w-3 h-3 rounded-full bg-white opacity-50"></button>
-  </div>
+        // Fungsi untuk slide berikutnya
+        function nextSlide() {
+            const slides = document.querySelectorAll('.main-slide');
+            let nextIndex = currentSlide + 1;
+            if (nextIndex >= slides.length) {
+                nextIndex = 0;
+            }
+            showSlideByIndex(nextIndex);
+        }
 
-</div>
+        // Fungsi untuk inisialisasi slideshow
+        function initSlideshow() {
+            const slides = document.querySelectorAll('.main-slide');
+            const dots = document.querySelectorAll('.slide-dot');
+            
+            if (slides.length === 0) return;
+            
+            // Tampilkan slide pertama dengan animasi
+            setTimeout(() => {
+                showSlideByIndex(0);
+            }, 500);
+            
+            // Tambahkan event listener untuk dots
+            dots.forEach(dot => {
+                dot.addEventListener('click', function() {
+                    const index = parseInt(this.getAttribute('data-index'));
+                    if (!isNaN(index)) {
+                        showSlideByIndex(index);
+                    }
+                });
+            });
+            
+            // Mulai slideshow otomatis
+            slideIntervalId = setInterval(nextSlide, slideInterval);
+            
+            // Pause slideshow saat hover
+            const slideshowContainer = document.getElementById('main-slideshow');
+            if (slideshowContainer) {
+                slideshowContainer.addEventListener('mouseenter', function() {
+                    clearInterval(slideIntervalId);
+                });
+                
+                slideshowContainer.addEventListener('mouseleave', function() {
+                    slideIntervalId = setInterval(nextSlide, slideInterval);
+                });
+            }
+        }
 
+        // Artikel Nested Dropdown (Desktop)
+        const artikelWrapper = document.querySelector('.artikel-wrapper');
+        const artikelContent = document.querySelector('.artikel-content');
+        const artikelChevron = document.querySelector('.artikel-chevron');
 
+        if (artikelWrapper && artikelContent) {
+            artikelWrapper.addEventListener('mouseenter', () => {
+                artikelContent.style.maxHeight = '200px';
+                artikelContent.style.opacity = '1';
+                if (artikelChevron) {
+                    artikelChevron.style.transform = 'rotate(180deg)';
+                }
+            });
 
-    </div>
-  </div>
+            artikelWrapper.addEventListener('mouseleave', () => {
+                artikelContent.style.maxHeight = '0px';
+                artikelContent.style.opacity = '0';
+                if (artikelChevron) {
+                    artikelChevron.style.transform = 'rotate(0deg)';
+                }
+            });
+        }
 
-  <!-- Decorative Circles -->
-  <div class="absolute top-0 right-0 w-64 h-64 bg-yellow-400 rounded-full opacity-10 -translate-y-32 translate-x-32"></div>
-  <div class="absolute bottom-0 left-0 w-96 h-96 bg-blue-600 rounded-full opacity-10 -translate-x-64 translate-y-64"></div>
-</section>
+        // Smooth scroll untuk anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                const href = this.getAttribute('href');
+                
+                if (href !== '#' && href.startsWith('#')) {
+                    e.preventDefault();
+                    const targetId = href.substring(1);
+                    const targetElement = document.getElementById(targetId);
+                    
+                    if (targetElement) {
+                        window.scrollTo({
+                            top: targetElement.offsetTop - 80,
+                            behavior: 'smooth'
+                        });
+                    }
+                }
+            });
+        });
 
-<script is:inline>
+        // Tambahkan efek ripple pada semua tombol dengan class ripple
+        document.querySelectorAll('.ripple').forEach(button => {
+            button.addEventListener('click', function(e) {
+                const x = e.clientX - e.target.getBoundingClientRect().left;
+                const y = e.clientY - e.target.getBoundingClientRect().top;
+                
+                const ripple = document.createElement('span');
+                ripple.style.left = `${x}px`;
+                ripple.style.top = `${y}px`;
+                ripple.classList.add('ripple-effect');
+                
+                this.appendChild(ripple);
+                
+                setTimeout(() => {
+                    ripple.remove();
+                }, 600);
+            });
+        });
+
+        // Tambahkan style untuk ripple effect
+        const style = document.createElement('style');
+        style.textContent = `
+            .ripple-effect {
+                position: absolute;
+                border-radius: 50%;
+                background: rgba(255, 255, 255, 0.6);
+                transform: scale(0);
+                animation: ripple 0.6s linear;
+                pointer-events: none;
+            }
+            
+            @keyframes ripple {
+                to {
+                    transform: scale(4);
+                    opacity: 0;
+                }
+            }
+            
+            .ripple {
+                position: relative;
+                overflow: hidden;
+            }
+        `;
+        document.head.appendChild(style);
+    </script> <!-- Content --> <main class="min-h-screen"> <nav class="bg-dpmBlue text-white sticky top-0 z-50 shadow" data-astro-cid-j7pv25f6=""><div class="max-w-7xl mx-auto px-6" data-astro-cid-j7pv25f6=""><!-- menu dan mobile menu --><div id="mobileMenu" class="hidden md:hidden pb-6" data-astro-cid-j7pv25f6=""><div class="flex flex-col gap-4 font-medium" data-astro-cid-j7pv25f6=""><a href="#beranda" class="hover:text-dpmYellow" data-astro-cid-j7pv25f6="">Beranda</a><a href="/Tentang" class="hover:text-dpmYellow" data-astro-cid-j7pv25f6="">Profil</a><a href="#layanan" class="hover:text-dpmYellow" data-astro-cid-j7pv25f6="">Layanan</a><a href="#kontak" class="hover:text-dpmYellow" data-astro-cid-j7pv25f6="">Kontak</a><a href="#" class="mt-4 bg-dpmYellow text-dpmBlue px-4 py-2 rounded-lg font-semibold text-center" data-astro-cid-j7pv25f6="">
+OSS / Perizinan
+</a></div></div></div></nav><section class="relative overflow-hidden bg-blue-600" data-astro-cid-j7pv25f6=""><div class="container mx-auto px-4 py-16 md:py-24" data-astro-cid-j7pv25f6=""><div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center" data-astro-cid-j7pv25f6=""><!-- Hero Text --><div class="text-white animate-fadeInUp animate__animated animate__fadeInUp" data-astro-cid-j7pv25f6=""><h1 class="text-4xl md:text-5xl font-bold mb-4" data-astro-cid-j7pv25f6="">
+Investasi &amp; Perizinan Terpadu
+</h1><p class="text-xl mb-8 opacity-90" data-astro-cid-j7pv25f6="">
+Dinas Penanaman Modal dan Pelayanan Terpadu Satu Pintu Kota Surabaya
+</p><div class="flex flex-wrap gap-4" data-astro-cid-j7pv25f6=""><a href="#" class="bg-yellow-400 text-blue-800 font-bold px-6 py-3 rounded-lg hover:bg-yellow-300 transition duration-300 transform hover:scale-105" data-astro-cid-j7pv25f6="">
+Mulai Berinvestasi <i class="fas fa-arrow-right ml-2" data-astro-cid-j7pv25f6=""></i></a><a href="#" class="bg-white text-blue-600 font-bold px-6 py-3 rounded-lg hover:bg-gray-100 transition duration-300" data-astro-cid-j7pv25f6="">
+Lihat Layanan <i class="fas fa-list ml-2" data-astro-cid-j7pv25f6=""></i></a></div></div><!-- Carousel --><div class="relative slide-in" data-astro-cid-j7pv25f6=""><div id="hero-carousel" class="relative overflow-hidden rounded-2xl shadow-2xl" data-astro-cid-j7pv25f6=""><div class="carousel-item bg-blue-800 p-8 rounded-2xl text-white" data-astro-cid-j7pv25f6=""><h3 class="text-2xl font-bold mb-4" data-astro-cid-j7pv25f6="">Klinik Investasi Surabaya</h3><p class="mb-6" data-astro-cid-j7pv25f6="">Konsultasi perizinan usaha di Kota Surabaya dengan tim ahli kami.</p><a href="#" class="inline-flex items-center text-yellow-400 font-medium" data-astro-cid-j7pv25f6="">
+Selengkapnya <i class="fas fa-chevron-right ml-2" data-astro-cid-j7pv25f6=""></i></a></div><div class="carousel-item bg-blue-800 p-8 rounded-2xl text-white hidden" data-astro-cid-j7pv25f6=""><h3 class="text-2xl font-bold mb-4" data-astro-cid-j7pv25f6="">Layanan Cepat &amp; Transparan</h3><p class="mb-6" data-astro-cid-j7pv25f6="">Proses perizinan lebih mudah untuk warga Surabaya.</p><a href="#" class="inline-flex items-center text-yellow-400 font-medium" data-astro-cid-j7pv25f6="">
+Selengkapnya <i class="fas fa-chevron-right ml-2" data-astro-cid-j7pv25f6=""></i></a></div></div><!-- DOTS (WAJIB) --><div class="flex justify-center mt-6 space-x-2" data-astro-cid-j7pv25f6=""><button class="hero-dot w-3 h-3 rounded-full bg-white" data-astro-cid-j7pv25f6=""></button><button class="hero-dot w-3 h-3 rounded-full bg-white opacity-50" data-astro-cid-j7pv25f6=""></button></div></div></div></div><!-- Decorative Circles --><div class="absolute top-0 right-0 w-64 h-64 bg-yellow-400 rounded-full opacity-10 -translate-y-32 translate-x-32" data-astro-cid-j7pv25f6=""></div><div class="absolute bottom-0 left-0 w-96 h-96 bg-blue-600 rounded-full opacity-10 -translate-x-64 translate-y-64" data-astro-cid-j7pv25f6=""></div></section><script>
 const slides = document.querySelectorAll('#hero-carousel .carousel-item');
 const indicators = document.querySelectorAll('#hero-carousel + div button');
 let current = 0;
@@ -350,330 +623,373 @@ function showSlide(index) {
 indicators.forEach((btn,i)=>btn.addEventListener('click',()=>showSlide(i)));
 setInterval(()=>showSlide((current+1)%slides.length),5000);
 showSlide(current);
-</script>
-
-<style>
-.hero-gradient {
-    background: linear-gradient(135deg, #1e40af 0%, #1d4ed8 50%, #fbbf24 100%);
-}
-.rounded-2xl { border-radius: 1rem; }
-</style>
-
-<!-- ================= TENTANG ================= -->
-<section class="py-16 bg-white">
-  <div class="container mx-auto px-4">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-      <!-- Text Content -->
-      <div class="animate__animated animate__fadeInUp">
-        <h2 class="text-3xl font-bold text-blue-800 mb-6">
-          {tentang.find(t => t.tipe === 'judul')?.konten}
-        </h2>
-
-        {tentang
-          .filter(t => t.tipe === 'paragraf')
-          .map(p => (
-            <p class="text-gray-700 text-justify mb-6">
-              {p.konten}
-            </p>
-        ))}
-        <a href={tentang.find(t => t.tipe === 'link')?.konten} class="inline-flex items-center bg-blue-600 text-white font-bold px-6 py-3 rounded-lg hover:bg-[#0900C3] hover:text-[#FFF100] transition duration-300">
-          Baca Selengkapnya <i class="fas fa-arrow-right ml-2"></i>
-        </a>
-
-      </div>
-
-      <!-- Image Content -->
-      <div class="relative animate__animated animate__fadeInRight">
-        <div class="blue-yellow-frame p-1 rounded-2xl shadow-custom">
-          <div class="corner-decoration corner-top-left"></div>
-          <div class="corner-decoration corner-bottom-right"></div>
-          <div class="corner-decoration corner-top-right"></div>
-          <div class="corner-decoration corner-bottom-left"></div>
-
-          <!-- Slider Container -->
-          <div class="slider-container">
-              <div class="slider-track" id="sliderTrack">
-                {slider.map(item => (
-                  <div class="slider-slide">
-                      <img src={item.gambar} alt={item.judul} class="slider-img">
-                      <div class="slider-caption">
-                          <h3 class="font-bold text-lg">{item.judul}</h3>
-                          <p class="text-sm">{item.deskripsi}</p>
-                      </div>
-                  </div>
-                ))}
-              </div>
-
-              <!-- Navigation Buttons -->
-              <div class="slider-nav slider-prev" id="prevBtn">
-                  <i class="fas fa-chevron-left text-blue-800"></i>
-              </div>
-              <div class="slider-nav slider-next" id="nextBtn">
-                  <i class="fas fa-chevron-right text-blue-800"></i>
-              </div>
-          </div>
-          <!-- Dots Indicator -->
-        </div>
-        <div class="slider-dots" id="sliderDots">
-            <!-- Dots will be generated by JavaScript -->
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-
-<section class="py-20 bg-white">
-  <div class="max-w-7xl mx-auto px-4">
-
-    <!-- JUDUL -->
-    <div class="text-center mb-16">
-      <h2 class="text-3xl md:text-4xl font-bold text-blue-800 mb-4">
-        Mengapa Berinvestasi di Surabaya?
-      </h2>
-      <p class="text-gray-600 max-w-2xl mx-auto">
-        Kota Surabaya menawarkan berbagai keunggulan sebagai destinasi investasi
+</script><section class="py-16 bg-white" data-astro-cid-j7pv25f6=""><div class="container mx-auto px-4" data-astro-cid-j7pv25f6=""><div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center" data-astro-cid-j7pv25f6=""><!-- Text Content --><div class="animate__animated animate__fadeInUp" data-astro-cid-j7pv25f6=""><h2 class="text-3xl font-bold text-blue-800 mb-6" data-astro-cid-j7pv25f6="">Selamat Datang di DPMPTSP Kota Surabaya</h2><p class="text-gray-700 text-justify mb-6" data-astro-cid-j7pv25f6="">Dinas Penanaman Modal dan Pelayanan Terpadu Satu Pintu (DPMPTSP) Kota Surabaya merupakan lembaga yang memegang peranan dan fungsi strategis di bidang penyelenggaraan pelayanan perizinan terpadu Kota Surabaya.</p><p class="text-gray-700 text-justify mb-6" data-astro-cid-j7pv25f6="">Kami hadir untuk memudahkan proses perizinan dan investasi di Kota Surabaya dengan pelayanan yang cepat, transparan, dan terintegrasi.</p><a href="/Tentang" class="inline-flex items-center bg-blue-600 text-white font-bold px-6 py-3 rounded-lg hover:bg-[#0900C3] hover:text-[#FFF100] transition duration-300" data-astro-cid-j7pv25f6="">
+Baca Selengkapnya <i class="fas fa-arrow-right ml-2" data-astro-cid-j7pv25f6=""></i></a></div><!-- Image Content --><div class="relative animate__animated animate__fadeInRight" data-astro-cid-j7pv25f6=""><div class="blue-yellow-frame p-1 rounded-2xl shadow-custom" data-astro-cid-j7pv25f6=""><div class="corner-decoration corner-top-left" data-astro-cid-j7pv25f6=""></div><div class="corner-decoration corner-bottom-right" data-astro-cid-j7pv25f6=""></div><div class="corner-decoration corner-top-right" data-astro-cid-j7pv25f6=""></div><div class="corner-decoration corner-bottom-left" data-astro-cid-j7pv25f6=""></div><!-- Slider Container --><div class="slider-container" data-astro-cid-j7pv25f6=""><div class="slider-track" id="sliderTrack" data-astro-cid-j7pv25f6="" style="transform: translateX(0%);"><div class="slider-slide" data-astro-cid-j7pv25f6=""><img src="/uploads/dpm3.jpg" alt="Kantor DPMPTSP Surabaya" class="slider-img" data-astro-cid-j7pv25f6=""><div class="slider-caption" data-astro-cid-j7pv25f6=""><h3 class="font-bold text-lg" data-astro-cid-j7pv25f6="">Kantor DPMPTSP Surabaya</h3><p class="text-sm" data-astro-cid-j7pv25f6="">Gedung pelayanan terpadu satu pintu Kota Surabaya</p></div></div><div class="slider-slide" data-astro-cid-j7pv25f6=""><img src="/uploads/SPP-PAKAL.jpeg" alt="Pelayanan Konsultasi" class="slider-img" data-astro-cid-j7pv25f6=""><div class="slider-caption" data-astro-cid-j7pv25f6=""><h3 class="font-bold text-lg" data-astro-cid-j7pv25f6="">Pelayanan Konsultasi</h3><p class="text-sm" data-astro-cid-j7pv25f6="">Konsultasi perizinan dan investasi dengan petugas kami</p></div></div><div class="slider-slide" data-astro-cid-j7pv25f6=""><img src="/uploads/dpm2.jpg" alt="Proses Perizinan" class="slider-img" data-astro-cid-j7pv25f6=""><div class="slider-caption" data-astro-cid-j7pv25f6=""><h3 class="font-bold text-lg" data-astro-cid-j7pv25f6="">Proses Perizinan</h3><p class="text-sm" data-astro-cid-j7pv25f6="">Pelayanan cepat dan transparan untuk proses perizinan</p></div></div><div class="slider-slide" data-astro-cid-j7pv25f6=""><img src="/uploads/dpm4.jpg" alt="Pelayanan Digital" class="slider-img" data-astro-cid-j7pv25f6=""><div class="slider-caption" data-astro-cid-j7pv25f6=""><h3 class="font-bold text-lg" data-astro-cid-j7pv25f6="">Pelayanan Digital</h3><p class="text-sm" data-astro-cid-j7pv25f6="">Sistem terintegrasi untuk kemudahan pelayanan online</p></div></div></div><!-- Navigation Buttons --><div class="slider-nav slider-prev" id="prevBtn" data-astro-cid-j7pv25f6=""><i class="fas fa-chevron-left text-blue-800" data-astro-cid-j7pv25f6=""></i></div><div class="slider-nav slider-next" id="nextBtn" data-astro-cid-j7pv25f6=""><i class="fas fa-chevron-right text-blue-800" data-astro-cid-j7pv25f6=""></i></div></div><!-- Dots Indicator --></div><div class="slider-dots" id="sliderDots" data-astro-cid-j7pv25f6=""><!-- Dots will be generated by JavaScript --><div class="slider-dot active"></div><div class="slider-dot"></div><div class="slider-dot"></div><div class="slider-dot"></div></div></div></div></div></section><section class="py-20 bg-white" data-astro-cid-j7pv25f6=""><div class="max-w-7xl mx-auto px-4" data-astro-cid-j7pv25f6=""><!-- JUDUL --><div class="text-center mb-16" data-astro-cid-j7pv25f6=""><h2 class="text-3xl md:text-4xl font-bold text-blue-800 mb-4" data-astro-cid-j7pv25f6="">
+Mengapa Berinvestasi di Surabaya?
+</h2><p class="text-gray-600 max-w-2xl mx-auto" data-astro-cid-j7pv25f6="">
+Kota Surabaya menawarkan berbagai keunggulan sebagai destinasi investasi
         terbaik di Indonesia.
-      </p>
-    </div>
+</p></div><!-- GRID CARD --><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" data-astro-cid-j7pv25f6=""><div class="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300" data-astro-cid-j7pv25f6=""><!-- ICON --><div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-6" data-astro-cid-j7pv25f6=""><i class="fas fa-chart-line text-blue-600 text-2xl" data-astro-cid-j7pv25f6=""></i></div><!-- CONTENT --><h3 class="text-xl font-bold text-blue-800 mb-3" data-astro-cid-j7pv25f6="">Iklim Investasi</h3><p class="text-gray-600 mb-6 leading-relaxed" data-astro-cid-j7pv25f6="">Pembangunan di Surabaya tumbuh sangat cepat.</p><!-- Button untuk membuka PDF --><button class="text-blue-600 font-semibold inline-flex items-center hover:text-blue-800 transition-colors" onclick="openPDF('https://dpm-ptsp.surabaya.go.id/images/IKLIM_INVESTASI.pdf', 'Iklim Investasi')" data-astro-cid-j7pv25f6="">
+Pelajari Lebih Lanjut <i class="fas fa-arrow-right ml-2" data-astro-cid-j7pv25f6=""></i></button></div><div class="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300" data-astro-cid-j7pv25f6=""><!-- ICON --><div class="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mb-6" data-astro-cid-j7pv25f6=""><i class="fas fa-city text-yellow-500 text-2xl" data-astro-cid-j7pv25f6=""></i></div><!-- CONTENT --><h3 class="text-xl font-bold text-blue-800 mb-3" data-astro-cid-j7pv25f6="">Kota Terbesar</h3><p class="text-gray-600 mb-6 leading-relaxed" data-astro-cid-j7pv25f6="">Kota metropolitan terbesar kedua di Indonesia.</p><!-- Button untuk membuka PDF --><button class="text-blue-600 font-semibold inline-flex items-center hover:text-blue-800 transition-colors" onclick="openPDF('dokumen/KOTA_TERBESAR.pdf', 'Kota Terbesar')" data-astro-cid-j7pv25f6="">
+Pelajari Lebih Lanjut <i class="fas fa-arrow-right ml-2" data-astro-cid-j7pv25f6=""></i></button></div><div class="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300" data-astro-cid-j7pv25f6=""><!-- ICON --><div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-6" data-astro-cid-j7pv25f6=""><i class="fas fa-ship text-blue-600 text-2xl" data-astro-cid-j7pv25f6=""></i></div><!-- CONTENT --><h3 class="text-xl font-bold text-blue-800 mb-3" data-astro-cid-j7pv25f6="">Bandara Pelabuhan</h3><p class="text-gray-600 mb-6 leading-relaxed" data-astro-cid-j7pv25f6="">Berstandar dan bertaraf internasional.</p><!-- Button untuk membuka PDF --><button class="text-blue-600 font-semibold inline-flex items-center hover:text-blue-800 transition-colors" onclick="openPDF('#', 'Bandara Pelabuhan')" data-astro-cid-j7pv25f6="">
+Pelajari Lebih Lanjut <i class="fas fa-arrow-right ml-2" data-astro-cid-j7pv25f6=""></i></button></div><div class="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300" data-astro-cid-j7pv25f6=""><!-- ICON --><div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-6" data-astro-cid-j7pv25f6=""><i class="fas fa-hospital text-red-500 text-2xl" data-astro-cid-j7pv25f6=""></i></div><!-- CONTENT --><h3 class="text-xl font-bold text-blue-800 mb-3" data-astro-cid-j7pv25f6="">Fasilitas Kesehatan</h3><p class="text-gray-600 mb-6 leading-relaxed" data-astro-cid-j7pv25f6="">Standar pelayanan kesehatan bertaraf internasional.</p><!-- Button untuk membuka PDF --><button class="text-blue-600 font-semibold inline-flex items-center hover:text-blue-800 transition-colors" onclick="openPDF('#', 'Fasilitas Kesehatan')" data-astro-cid-j7pv25f6="">
+Pelajari Lebih Lanjut <i class="fas fa-arrow-right ml-2" data-astro-cid-j7pv25f6=""></i></button></div><div class="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300" data-astro-cid-j7pv25f6=""><!-- ICON --><div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-6" data-astro-cid-j7pv25f6=""><i class="fas fa-map-marked-alt text-blue-600 text-2xl" data-astro-cid-j7pv25f6=""></i></div><!-- CONTENT --><h3 class="text-xl font-bold text-blue-800 mb-3" data-astro-cid-j7pv25f6="">Fasilitas Umum</h3><p class="text-gray-600 mb-6 leading-relaxed" data-astro-cid-j7pv25f6="">Terjaga sangat baik dan terkenal sebagai kota 1000 taman.</p><!-- Button untuk membuka PDF --><button class="text-blue-600 font-semibold inline-flex items-center hover:text-blue-800 transition-colors" onclick="openPDF('#', 'Fasilitas Umum')" data-astro-cid-j7pv25f6="">
+Pelajari Lebih Lanjut <i class="fas fa-arrow-right ml-2" data-astro-cid-j7pv25f6=""></i></button></div><div class="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300" data-astro-cid-j7pv25f6=""><!-- ICON --><div class="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mb-6" data-astro-cid-j7pv25f6=""><i class="fas fa-school text-yellow-500 text-2xl" data-astro-cid-j7pv25f6=""></i></div><!-- CONTENT --><h3 class="text-xl font-bold text-blue-800 mb-3" data-astro-cid-j7pv25f6="">Fasilitas Pendidikan</h3><p class="text-gray-600 mb-6 leading-relaxed" data-astro-cid-j7pv25f6="">Universitas negeri dan swasta bertaraf internasional.</p><!-- Button untuk membuka PDF --><button class="text-blue-600 font-semibold inline-flex items-center hover:text-blue-800 transition-colors" onclick="openPDF('#', 'Fasilitas Pendidikan')" data-astro-cid-j7pv25f6="">
+Pelajari Lebih Lanjut <i class="fas fa-arrow-right ml-2" data-astro-cid-j7pv25f6=""></i></button></div></div><!-- Komponen PDF untuk setiap item -->
+        <!-- Modal PDF Viewer --><div id="pdfViewerContainer" class="hidden mt-12" data-astro-cid-urizildg=""> <div class="bg-white rounded-2xl shadow-custom p-6" data-astro-cid-urizildg=""> <div class="flex justify-between items-center mb-4" data-astro-cid-urizildg=""> <h4 id="pdfTitle" class="text-lg font-bold text-blue-800" data-astro-cid-urizildg=""> Iklim Investasi </h4> <div class="flex gap-2" data-astro-cid-urizildg=""> <a id="downloadPdf" href="https://dpm-ptsp.surabaya.go.id/images/IKLIM_INVESTASI.pdf" target="_blank" download="" class="inline-flex items-center bg-yellow-400 text-blue-800 font-medium px-4 py-2 rounded-lg hover:bg-yellow-300 transition" data-astro-cid-urizildg=""> <i class="fas fa-download mr-2" data-astro-cid-urizildg=""></i> Download
+</a> <button id="closePdf" class="w-10 h-10 flex items-center justify-center rounded-full bg-red-100 text-red-600 hover:bg-red-200 transition" data-astro-cid-urizildg=""> <i class="fas fa-times" data-astro-cid-urizildg=""></i> </button> </div> </div> <div class="pdf-container" data-astro-cid-urizildg=""> <object id="pdfViewer" type="application/pdf" width="100%" height="780px" class="rounded-lg" data-astro-cid-urizildg=""> <p class="text-center p-8 text-gray-600" data-astro-cid-urizildg="">
+Browser tidak mendukung PDF preview.
+</p> </object> </div> </div> </div> <script>
+    function openPDF(file, title) {
+        const container = document.getElementById('pdfViewerContainer');
+        const viewer = document.getElementById('pdfViewer');
+        const download = document.getElementById('downloadPdf');
+        const pdfTitle = document.getElementById('pdfTitle');
 
-    <!-- GRID CARD -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-      {unggul.map(item => (
-        <div class="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300">
-        
-          <!-- ICON -->
-          <div class={`w-16 h-16 bg-${item.warna_bg} rounded-full flex items-center justify-center mb-6`}>
-            <i class={`${item.icon} text-${item.warna_icon} text-2xl`}></i>
-          </div>
-        
-          <!-- CONTENT -->
-          <h3 class="text-xl font-bold text-blue-800 mb-3">
-            {item.judul}
-          </h3>
-        
-          <p class="text-gray-600 mb-6 leading-relaxed">
-            {item.deskripsi}
-          </p>
-        
-          <!-- Button untuk membuka PDF -->
-          <button class="text-blue-600 font-semibold inline-flex items-center hover:text-blue-800 transition-colors" onClick={`openPDF('${item.link}', '${item.judul}')`}>
-            Pelajari Lebih Lanjut <i class="fas fa-arrow-right ml-2"></i>
-          </button>
-        
-        
-        </div>
-      ))}
-    </div>
-      {unggul.map(item => (
-        <!-- Komponen PDF untuk setiap item -->
-        <Pdf file={item.link} title={item.judul} />
-      ))}
-  </div>
-</section>
+        viewer.setAttribute('data', file);
+        download.href = file;
+        pdfTitle.innerText = title || 'Dokumen Investasi';
 
+        container.classList.remove('hidden');
+        container.scrollIntoView({ behavior: 'smooth' });
+    }
 
+    document.getElementById('closePdf').addEventListener('click', function () {
+        const container = document.getElementById('pdfViewerContainer');
+        const viewer = document.getElementById('pdfViewer');
 
-<section class="py-16">
-  <div class="container mx-auto px-4">
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        viewer.setAttribute('data', '');
+        container.classList.add('hidden');
+    });
+</script><!-- Komponen PDF untuk setiap item -->
+        <!-- Modal PDF Viewer --><div id="pdfViewerContainer" class="hidden mt-12" data-astro-cid-urizildg=""> <div class="bg-white rounded-2xl shadow-custom p-6" data-astro-cid-urizildg=""> <div class="flex justify-between items-center mb-4" data-astro-cid-urizildg=""> <h4 id="pdfTitle" class="text-lg font-bold text-blue-800" data-astro-cid-urizildg=""> Kota Terbesar </h4> <div class="flex gap-2" data-astro-cid-urizildg=""> <a id="downloadPdf" href="dokumen/KOTA_TERBESAR.pdf" target="_blank" download="" class="inline-flex items-center bg-yellow-400 text-blue-800 font-medium px-4 py-2 rounded-lg hover:bg-yellow-300 transition" data-astro-cid-urizildg=""> <i class="fas fa-download mr-2" data-astro-cid-urizildg=""></i> Download
+</a> <button id="closePdf" class="w-10 h-10 flex items-center justify-center rounded-full bg-red-100 text-red-600 hover:bg-red-200 transition" data-astro-cid-urizildg=""> <i class="fas fa-times" data-astro-cid-urizildg=""></i> </button> </div> </div> <div class="pdf-container" data-astro-cid-urizildg=""> <object id="pdfViewer" type="application/pdf" width="100%" height="780px" class="rounded-lg" data-astro-cid-urizildg=""> <p class="text-center p-8 text-gray-600" data-astro-cid-urizildg="">
+Browser tidak mendukung PDF preview.
+</p> </object> </div> </div> </div> <script>
+    function openPDF(file, title) {
+        const container = document.getElementById('pdfViewerContainer');
+        const viewer = document.getElementById('pdfViewer');
+        const download = document.getElementById('downloadPdf');
+        const pdfTitle = document.getElementById('pdfTitle');
 
-      <!-- KIRI : PETA -->
-      <div class="order-2 lg:order-1">
-        <div class="relative overflow-hidden h-full">
-          <div class="order-2 lg:order-1">
-            <div class="rounded-2xl overflow-hidden">
-              <img src={peta[0]?.gambar} alt="Peta Potensi Investasi Surabaya" class="w-full h-auto"/>
-            </div>
-          </div>
-        </div>
-      </div>
+        viewer.setAttribute('data', file);
+        download.href = file;
+        pdfTitle.innerText = title || 'Dokumen Investasi';
 
-      <!-- KANAN : RENCANA STRATEGIS -->
-      <div class="order-1 lg:order-2">
-        <h2 class="text-3xl font-bold text-blue-800 mb-6">
-          {renstra.find(r => r.tipe === 'judul')?.konten}
-        </h2>
+        container.classList.remove('hidden');
+        container.scrollIntoView({ behavior: 'smooth' });
+    }
 
-        {renstra
-          .filter(r => r.tipe === 'paragraf')
-          .map(item => (
-            <p class="text-gray-700 text-left mb-6 mr-8">
-              {item.konten}
-            </p>
-        ))}
+    document.getElementById('closePdf').addEventListener('click', function () {
+        const container = document.getElementById('pdfViewerContainer');
+        const viewer = document.getElementById('pdfViewer');
 
-        <div class="mb-8">
-          <h3 class="font-bold text-blue-800 mb-4">Wilayah Unggulan:</h3>
-          <div class="flex flex-wrap gap-2">
-            {renstra
-              .filter(r => r.tipe === 'wilayah')
-              .map(item => (
-                <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
-                  {item.konten}
-                </span>
-            ))}
-          </div>
-        </div>
+        viewer.setAttribute('data', '');
+        container.classList.add('hidden');
+    });
+</script><!-- Komponen PDF untuk setiap item -->
+        <!-- Modal PDF Viewer --><div id="pdfViewerContainer" class="hidden mt-12" data-astro-cid-urizildg=""> <div class="bg-white rounded-2xl shadow-custom p-6" data-astro-cid-urizildg=""> <div class="flex justify-between items-center mb-4" data-astro-cid-urizildg=""> <h4 id="pdfTitle" class="text-lg font-bold text-blue-800" data-astro-cid-urizildg=""> Bandara Pelabuhan </h4> <div class="flex gap-2" data-astro-cid-urizildg=""> <a id="downloadPdf" href="#" target="_blank" download="" class="inline-flex items-center bg-yellow-400 text-blue-800 font-medium px-4 py-2 rounded-lg hover:bg-yellow-300 transition" data-astro-cid-urizildg=""> <i class="fas fa-download mr-2" data-astro-cid-urizildg=""></i> Download
+</a> <button id="closePdf" class="w-10 h-10 flex items-center justify-center rounded-full bg-red-100 text-red-600 hover:bg-red-200 transition" data-astro-cid-urizildg=""> <i class="fas fa-times" data-astro-cid-urizildg=""></i> </button> </div> </div> <div class="pdf-container" data-astro-cid-urizildg=""> <object id="pdfViewer" type="application/pdf" width="100%" height="780px" class="rounded-lg" data-astro-cid-urizildg=""> <p class="text-center p-8 text-gray-600" data-astro-cid-urizildg="">
+Browser tidak mendukung PDF preview.
+</p> </object> </div> </div> </div> <script>
+    function openPDF(file, title) {
+        const container = document.getElementById('pdfViewerContainer');
+        const viewer = document.getElementById('pdfViewer');
+        const download = document.getElementById('downloadPdf');
+        const pdfTitle = document.getElementById('pdfTitle');
 
-        <a
-          href={renstra.find(r => r.tipe === 'link')?.konten}
-          class="inline-flex items-center bg-[#FFD41D] text-[#0014FF] font-bold px-6 py-3 rounded-lg hover:bg-[#FFC400] transition duration-300"
-        >
-          Jelajahi Peta <i class="fas fa-map-marked-alt ml-2"></i>
-        </a>
+        viewer.setAttribute('data', file);
+        download.href = file;
+        pdfTitle.innerText = title || 'Dokumen Investasi';
 
-      </div>
+        container.classList.remove('hidden');
+        container.scrollIntoView({ behavior: 'smooth' });
+    }
 
-    </div>
-  </div>
-</section>
+    document.getElementById('closePdf').addEventListener('click', function () {
+        const container = document.getElementById('pdfViewerContainer');
+        const viewer = document.getElementById('pdfViewer');
 
-<section class="py-16 bg-gradient-to-b from-white to-gray-50">
-  <div class="container mx-auto px-4">
+        viewer.setAttribute('data', '');
+        container.classList.add('hidden');
+    });
+</script><!-- Komponen PDF untuk setiap item -->
+        <!-- Modal PDF Viewer --><div id="pdfViewerContainer" class="hidden mt-12" data-astro-cid-urizildg=""> <div class="bg-white rounded-2xl shadow-custom p-6" data-astro-cid-urizildg=""> <div class="flex justify-between items-center mb-4" data-astro-cid-urizildg=""> <h4 id="pdfTitle" class="text-lg font-bold text-blue-800" data-astro-cid-urizildg=""> Fasilitas Kesehatan </h4> <div class="flex gap-2" data-astro-cid-urizildg=""> <a id="downloadPdf" href="#" target="_blank" download="" class="inline-flex items-center bg-yellow-400 text-blue-800 font-medium px-4 py-2 rounded-lg hover:bg-yellow-300 transition" data-astro-cid-urizildg=""> <i class="fas fa-download mr-2" data-astro-cid-urizildg=""></i> Download
+</a> <button id="closePdf" class="w-10 h-10 flex items-center justify-center rounded-full bg-red-100 text-red-600 hover:bg-red-200 transition" data-astro-cid-urizildg=""> <i class="fas fa-times" data-astro-cid-urizildg=""></i> </button> </div> </div> <div class="pdf-container" data-astro-cid-urizildg=""> <object id="pdfViewer" type="application/pdf" width="100%" height="780px" class="rounded-lg" data-astro-cid-urizildg=""> <p class="text-center p-8 text-gray-600" data-astro-cid-urizildg="">
+Browser tidak mendukung PDF preview.
+</p> </object> </div> </div> </div> <script>
+    function openPDF(file, title) {
+        const container = document.getElementById('pdfViewerContainer');
+        const viewer = document.getElementById('pdfViewer');
+        const download = document.getElementById('downloadPdf');
+        const pdfTitle = document.getElementById('pdfTitle');
 
-    <!-- Heading -->
-    <div class="text-center mb-12">
-      <span class="text-sm font-semibold tracking-wider text-blue-600 uppercase">
-        Media Informasi
-      </span>
-      <h2 class="text-3xl md:text-4xl font-bold text-blue-800 mt-2 mb-4">
-        Video Terupdate
-      </h2>
-      <p class="text-gray-600 max-w-2xl mx-auto">
-        Ikuti perkembangan terbaru seputar investasi dan pelayanan perizinan
+        viewer.setAttribute('data', file);
+        download.href = file;
+        pdfTitle.innerText = title || 'Dokumen Investasi';
+
+        container.classList.remove('hidden');
+        container.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    document.getElementById('closePdf').addEventListener('click', function () {
+        const container = document.getElementById('pdfViewerContainer');
+        const viewer = document.getElementById('pdfViewer');
+
+        viewer.setAttribute('data', '');
+        container.classList.add('hidden');
+    });
+</script><!-- Komponen PDF untuk setiap item -->
+        <!-- Modal PDF Viewer --><div id="pdfViewerContainer" class="hidden mt-12" data-astro-cid-urizildg=""> <div class="bg-white rounded-2xl shadow-custom p-6" data-astro-cid-urizildg=""> <div class="flex justify-between items-center mb-4" data-astro-cid-urizildg=""> <h4 id="pdfTitle" class="text-lg font-bold text-blue-800" data-astro-cid-urizildg=""> Fasilitas Umum </h4> <div class="flex gap-2" data-astro-cid-urizildg=""> <a id="downloadPdf" href="#" target="_blank" download="" class="inline-flex items-center bg-yellow-400 text-blue-800 font-medium px-4 py-2 rounded-lg hover:bg-yellow-300 transition" data-astro-cid-urizildg=""> <i class="fas fa-download mr-2" data-astro-cid-urizildg=""></i> Download
+</a> <button id="closePdf" class="w-10 h-10 flex items-center justify-center rounded-full bg-red-100 text-red-600 hover:bg-red-200 transition" data-astro-cid-urizildg=""> <i class="fas fa-times" data-astro-cid-urizildg=""></i> </button> </div> </div> <div class="pdf-container" data-astro-cid-urizildg=""> <object id="pdfViewer" type="application/pdf" width="100%" height="780px" class="rounded-lg" data-astro-cid-urizildg=""> <p class="text-center p-8 text-gray-600" data-astro-cid-urizildg="">
+Browser tidak mendukung PDF preview.
+</p> </object> </div> </div> </div> <script>
+    function openPDF(file, title) {
+        const container = document.getElementById('pdfViewerContainer');
+        const viewer = document.getElementById('pdfViewer');
+        const download = document.getElementById('downloadPdf');
+        const pdfTitle = document.getElementById('pdfTitle');
+
+        viewer.setAttribute('data', file);
+        download.href = file;
+        pdfTitle.innerText = title || 'Dokumen Investasi';
+
+        container.classList.remove('hidden');
+        container.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    document.getElementById('closePdf').addEventListener('click', function () {
+        const container = document.getElementById('pdfViewerContainer');
+        const viewer = document.getElementById('pdfViewer');
+
+        viewer.setAttribute('data', '');
+        container.classList.add('hidden');
+    });
+</script><!-- Komponen PDF untuk setiap item -->
+        <!-- Modal PDF Viewer --><div id="pdfViewerContainer" class="hidden mt-12" data-astro-cid-urizildg=""> <div class="bg-white rounded-2xl shadow-custom p-6" data-astro-cid-urizildg=""> <div class="flex justify-between items-center mb-4" data-astro-cid-urizildg=""> <h4 id="pdfTitle" class="text-lg font-bold text-blue-800" data-astro-cid-urizildg=""> Fasilitas Pendidikan </h4> <div class="flex gap-2" data-astro-cid-urizildg=""> <a id="downloadPdf" href="#" target="_blank" download="" class="inline-flex items-center bg-yellow-400 text-blue-800 font-medium px-4 py-2 rounded-lg hover:bg-yellow-300 transition" data-astro-cid-urizildg=""> <i class="fas fa-download mr-2" data-astro-cid-urizildg=""></i> Download
+</a> <button id="closePdf" class="w-10 h-10 flex items-center justify-center rounded-full bg-red-100 text-red-600 hover:bg-red-200 transition" data-astro-cid-urizildg=""> <i class="fas fa-times" data-astro-cid-urizildg=""></i> </button> </div> </div> <div class="pdf-container" data-astro-cid-urizildg=""> <object id="pdfViewer" type="application/pdf" width="100%" height="780px" class="rounded-lg" data-astro-cid-urizildg=""> <p class="text-center p-8 text-gray-600" data-astro-cid-urizildg="">
+Browser tidak mendukung PDF preview.
+</p> </object> </div> </div> </div> <script>
+    function openPDF(file, title) {
+        const container = document.getElementById('pdfViewerContainer');
+        const viewer = document.getElementById('pdfViewer');
+        const download = document.getElementById('downloadPdf');
+        const pdfTitle = document.getElementById('pdfTitle');
+
+        viewer.setAttribute('data', file);
+        download.href = file;
+        pdfTitle.innerText = title || 'Dokumen Investasi';
+
+        container.classList.remove('hidden');
+        container.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    document.getElementById('closePdf').addEventListener('click', function () {
+        const container = document.getElementById('pdfViewerContainer');
+        const viewer = document.getElementById('pdfViewer');
+
+        viewer.setAttribute('data', '');
+        container.classList.add('hidden');
+    });
+</script></div></section><section class="py-16" data-astro-cid-j7pv25f6=""><div class="container mx-auto px-4" data-astro-cid-j7pv25f6=""><div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center" data-astro-cid-j7pv25f6=""><!-- KIRI : PETA --><div class="order-2 lg:order-1" data-astro-cid-j7pv25f6=""><div class="relative overflow-hidden h-full" data-astro-cid-j7pv25f6=""><div class="order-2 lg:order-1" data-astro-cid-j7pv25f6=""><div class="rounded-2xl overflow-hidden" data-astro-cid-j7pv25f6=""><img src="https://dpm-ptsp.surabaya.go.id/images/PetaPotensi.png" alt="Peta Potensi Investasi Surabaya" class="w-full h-auto" data-astro-cid-j7pv25f6=""></div></div></div></div><!-- KANAN : RENCANA STRATEGIS --><div class="order-1 lg:order-2" data-astro-cid-j7pv25f6=""><h2 class="text-3xl font-bold text-blue-800 mb-6" data-astro-cid-j7pv25f6="">Peta Potensi Investasi Surabaya</h2><p class="text-gray-700 text-left mb-6 mr-8" data-astro-cid-j7pv25f6="">Temukan sektor unggulan dan peluang investasi di setiap wilayah Kota Surabaya dengan peta interaktif kami.</p><p class="text-gray-700 text-left mb-6 mr-8" data-astro-cid-j7pv25f6="">Analisis komprehensif terhadap potensi investasi di 31 kecamatan Surabaya, membantu investor dalam pengambilan keputusan yang tepat.</p><div class="mb-8" data-astro-cid-j7pv25f6=""><h3 class="font-bold text-blue-800 mb-4" data-astro-cid-j7pv25f6="">Wilayah Unggulan:</h3><div class="flex flex-wrap gap-2" data-astro-cid-j7pv25f6=""><span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm" data-astro-cid-j7pv25f6="">Benowo</span><span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm" data-astro-cid-j7pv25f6="">Pakal</span><span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm" data-astro-cid-j7pv25f6="">Sambikerep</span><span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm" data-astro-cid-j7pv25f6="">Mulyorejo</span><span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm" data-astro-cid-j7pv25f6="">Gubeng</span><span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm" data-astro-cid-j7pv25f6="">Sukolilo</span></div></div><a href="https://dpm-ptsp.surabaya.go.id/petapotensiinvestasi/html/interaktif/kecamatan.php" class="inline-flex items-center bg-[#FFD41D] text-[#0014FF] font-bold px-6 py-3 rounded-lg hover:bg-[#FFC400] transition duration-300" data-astro-cid-j7pv25f6="">
+Jelajahi Peta <i class="fas fa-map-marked-alt ml-2" data-astro-cid-j7pv25f6=""></i></a></div></div></div></section><section class="py-16 bg-gradient-to-b from-white to-gray-50" data-astro-cid-j7pv25f6=""><div class="container mx-auto px-4" data-astro-cid-j7pv25f6=""><!-- Heading --><div class="text-center mb-12" data-astro-cid-j7pv25f6=""><span class="text-sm font-semibold tracking-wider text-blue-600 uppercase" data-astro-cid-j7pv25f6="">
+Media Informasi
+</span><h2 class="text-3xl md:text-4xl font-bold text-blue-800 mt-2 mb-4" data-astro-cid-j7pv25f6="">
+Video Terupdate
+</h2><p class="text-gray-600 max-w-2xl mx-auto" data-astro-cid-j7pv25f6="">
+Ikuti perkembangan terbaru seputar investasi dan pelayanan perizinan
         di Kota Surabaya.
-      </p>
-    </div>
-    <!-- Video Grid -->
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-    {videos.map(video => (
-      <div class="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 card-hover">
-        <div class="relative">
-            <a href={video.url_video} target="_blank" rel="noopener noreferrer" class="block relative h-48 overflow-hidden group cursor-pointer">
-                <img src={video.thumbnail} alt={video.judul} class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
-                <div class="absolute inset-0 group-hover:from-blue-900/60 transition duration-300">
-                </div>
-                <div class="absolute inset-0 flex items-center justify-center">
-                    <div class="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center group-hover:bg-white transition duration-300 transform group-hover:scale-110">
-                        <i class="fas fa-play text-blue-600 text-2xl ml-1 group-hover:text-blue-700"></i>
-                    </div>
-                </div>
-                <div class="hidden absolute bottom-3 right-3 bg-black/70 text-white text-xs px-2 py-1 rounded">
-                    {video.durasi}
-                </div>
-                <div class="absolute top-3 left-3 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-lg flex items-center">
-                    <i class="fab fa-youtube mr-1"></i> {video.status}
-                </div>
-            </a>
-        </div>
-        <div class="p-6">
-            <h3 class="text-[20px] font-bold text-blue-800 mb-3">{video.judul}</h3>
-            <p class="text-gray-600 text-[14px] mb-4 line-clamp-3">{video.deskripsi}</p>
-            <div class="flex items-center justify-between">
-                <a href={video.url_video} target="_blank" rel="noopener noreferrer" class="text-blue-600 font-semibold inline-flex items-center text-[15px] hover:text-blue-800 group"> 
-                  Tonton video
-                    <i class="fas fa-arrow-right ml-2 text-xs group-hover:ml-3 transition-all duration-300"></i>
-                </a>
-            </div>
-        </div>
-      </div>
-    ))}
-  </div>
-</section>
+</p></div><!-- Video Grid --><div class="grid grid-cols-1 md:grid-cols-3 gap-8" data-astro-cid-j7pv25f6=""><div class="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 card-hover" data-astro-cid-j7pv25f6=""><div class="relative" data-astro-cid-j7pv25f6=""><a href="#" target="_blank" rel="noopener noreferrer" class="block relative h-48 overflow-hidden group cursor-pointer" data-astro-cid-j7pv25f6=""><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRGnC6XYj-H76IMM2zB6CHlSLIIV5SVPWbdPw&amp;s" alt="Pesona Buaya September 2024" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-astro-cid-j7pv25f6=""><div class="absolute inset-0 group-hover:from-blue-900/60 transition duration-300" data-astro-cid-j7pv25f6=""></div><div class="absolute inset-0 flex items-center justify-center" data-astro-cid-j7pv25f6=""><div class="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center group-hover:bg-white transition duration-300 transform group-hover:scale-110" data-astro-cid-j7pv25f6=""><i class="fas fa-play text-blue-600 text-2xl ml-1 group-hover:text-blue-700" data-astro-cid-j7pv25f6=""></i></div></div><div class="hidden absolute bottom-3 right-3 bg-black/70 text-white text-xs px-2 py-1 rounded" data-astro-cid-j7pv25f6=""></div><div class="absolute top-3 left-3 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-lg flex items-center" data-astro-cid-j7pv25f6=""><i class="fab fa-youtube mr-1" data-astro-cid-j7pv25f6=""></i>baru</div></a></div><div class="p-6" data-astro-cid-j7pv25f6=""><h3 class="text-[20px] font-bold text-blue-800 mb-3" data-astro-cid-j7pv25f6="">Pesona Buaya September 2024</h3><p class="text-gray-600 text-[14px] mb-4 line-clamp-3" data-astro-cid-j7pv25f6="">Video terbaru perkembangan investasi dan pariwisata Surabaya.</p><div class="flex items-center justify-between" data-astro-cid-j7pv25f6=""><a href="#" target="_blank" rel="noopener noreferrer" class="text-blue-600 font-semibold inline-flex items-center text-[15px] hover:text-blue-800 group" data-astro-cid-j7pv25f6="">
+Tonton video
+<i class="fas fa-arrow-right ml-2 text-xs group-hover:ml-3 transition-all duration-300" data-astro-cid-j7pv25f6=""></i></a></div></div></div><div class="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 card-hover" data-astro-cid-j7pv25f6=""><div class="relative" data-astro-cid-j7pv25f6=""><a href="#" target="_blank" rel="noopener noreferrer" class="block relative h-48 overflow-hidden group cursor-pointer" data-astro-cid-j7pv25f6=""><img src="https://api.minio.jatimprov.go.id/kominfo-jatim/images/IMG_8752.JPG" alt="Surabaya Great Expo 2024" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-astro-cid-j7pv25f6=""><div class="absolute inset-0 group-hover:from-blue-900/60 transition duration-300" data-astro-cid-j7pv25f6=""></div><div class="absolute inset-0 flex items-center justify-center" data-astro-cid-j7pv25f6=""><div class="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center group-hover:bg-white transition duration-300 transform group-hover:scale-110" data-astro-cid-j7pv25f6=""><i class="fas fa-play text-blue-600 text-2xl ml-1 group-hover:text-blue-700" data-astro-cid-j7pv25f6=""></i></div></div><div class="hidden absolute bottom-3 right-3 bg-black/70 text-white text-xs px-2 py-1 rounded" data-astro-cid-j7pv25f6=""></div><div class="absolute top-3 left-3 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-lg flex items-center" data-astro-cid-j7pv25f6=""><i class="fab fa-youtube mr-1" data-astro-cid-j7pv25f6=""></i>baru</div></a></div><div class="p-6" data-astro-cid-j7pv25f6=""><h3 class="text-[20px] font-bold text-blue-800 mb-3" data-astro-cid-j7pv25f6="">Surabaya Great Expo 2024</h3><p class="text-gray-600 text-[14px] mb-4 line-clamp-3" data-astro-cid-j7pv25f6="">Highlight kegiatan eksposisi dan peluang investasi Kota Surabaya.</p><div class="flex items-center justify-between" data-astro-cid-j7pv25f6=""><a href="#" target="_blank" rel="noopener noreferrer" class="text-blue-600 font-semibold inline-flex items-center text-[15px] hover:text-blue-800 group" data-astro-cid-j7pv25f6="">
+Tonton video
+<i class="fas fa-arrow-right ml-2 text-xs group-hover:ml-3 transition-all duration-300" data-astro-cid-j7pv25f6=""></i></a></div></div></div><div class="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 card-hover" data-astro-cid-j7pv25f6=""><div class="relative" data-astro-cid-j7pv25f6=""><a href="#" target="_blank" rel="noopener noreferrer" class="block relative h-48 overflow-hidden group cursor-pointer" data-astro-cid-j7pv25f6=""><img src="https://dpm-ptsp.surabaya.go.id/tentangfile/PESONA%20BUAYA%20-2025-07-15()_0.png" alt="Pesona Buaya Juli 2024" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-astro-cid-j7pv25f6=""><div class="absolute inset-0 group-hover:from-blue-900/60 transition duration-300" data-astro-cid-j7pv25f6=""></div><div class="absolute inset-0 flex items-center justify-center" data-astro-cid-j7pv25f6=""><div class="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center group-hover:bg-white transition duration-300 transform group-hover:scale-110" data-astro-cid-j7pv25f6=""><i class="fas fa-play text-blue-600 text-2xl ml-1 group-hover:text-blue-700" data-astro-cid-j7pv25f6=""></i></div></div><div class="hidden absolute bottom-3 right-3 bg-black/70 text-white text-xs px-2 py-1 rounded" data-astro-cid-j7pv25f6=""></div><div class="absolute top-3 left-3 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-lg flex items-center" data-astro-cid-j7pv25f6=""><i class="fab fa-youtube mr-1" data-astro-cid-j7pv25f6=""></i>lama</div></a></div><div class="p-6" data-astro-cid-j7pv25f6=""><h3 class="text-[20px] font-bold text-blue-800 mb-3" data-astro-cid-j7pv25f6="">Pesona Buaya Juli 2024</h3><p class="text-gray-600 text-[14px] mb-4 line-clamp-3" data-astro-cid-j7pv25f6="">Update pembangunan dan investasi Kota Surabaya.</p><div class="flex items-center justify-between" data-astro-cid-j7pv25f6=""><a href="#" target="_blank" rel="noopener noreferrer" class="text-blue-600 font-semibold inline-flex items-center text-[15px] hover:text-blue-800 group" data-astro-cid-j7pv25f6="">
+Tonton video
+<i class="fas fa-arrow-right ml-2 text-xs group-hover:ml-3 transition-all duration-300" data-astro-cid-j7pv25f6=""></i></a></div></div></div></div></div><!-- ================= BERITA & ARTIKEL ================= --><section class="py-16 bg-gray-50" data-astro-cid-j7pv25f6=""><div class="max-w-7xl mx-auto px-6" data-astro-cid-j7pv25f6=""><!-- HEADING --><div class="text-center mb-12" data-astro-cid-j7pv25f6=""><h2 class="text-3xl font-bold text-dpmBlue mb-4" data-astro-cid-j7pv25f6="">Berita &amp; Artikel Terupdate</h2><p class="text-gray-600 max-w-2xl mx-auto" data-astro-cid-j7pv25f6="">
+Informasi terkini seputar perizinan, investasi, dan perkembangan Kota Surabaya.
+</p></div><!-- ================= FEATURED ARTIKEL ================= --><section class="py-16 bg-gray-50" data-astro-cid-j7pv25f6=""><div class="container mx-auto px-4" data-astro-cid-j7pv25f6=""><!-- FEATURED ARTIKEL GRID --><div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12" data-astro-cid-j7pv25f6=""><!-- FEATURED 1 -->
+        <div class="bg-gradient-to-r from-blue-600 to-blue-800 rounded-2xl shadow-xl" data-astro-cid-j7pv25f6=""><div class="p-8 text-white h-full flex flex-col justify-between" data-astro-cid-j7pv25f6=""><div data-astro-cid-j7pv25f6=""><span class="inline-block bg-dpmYellow text-dpmBlue text-xs font-bold px-3 py-1 rounded-full mb-4" data-astro-cid-j7pv25f6="">
+ARTIKEL Investasi</span><h3 class="text-2xl font-bold mb-4" data-astro-cid-j7pv25f6="">Capaian Realisasi Investasi PMDN Non-UMK Triwulan II 2025</h3><p class="text-blue-100 mb-6" data-astro-cid-j7pv25f6="">Analisis perkembangan investasi Kota Surabaya pada triwulan kedua tahun 2025 dengan tren positif.</p></div><div class="flex items-center justify-between text-sm" data-astro-cid-j7pv25f6=""><span data-astro-cid-j7pv25f6="">📅 28/8/2025</span><a href="#" class="bg-white text-blue-700 font-semibold px-4 py-2 rounded-lg hover:bg-gray-100 transition" data-astro-cid-j7pv25f6="">
+Baca Selengkapnya
+</a></div></div></div><!-- FEATURED 1 -->
+        <div class="bg-gradient-to-r from-blue-600 to-blue-800 rounded-2xl shadow-xl" data-astro-cid-j7pv25f6=""><div class="p-8 text-white h-full flex flex-col justify-between" data-astro-cid-j7pv25f6=""><div data-astro-cid-j7pv25f6=""><span class="inline-block bg-dpmYellow text-dpmBlue text-xs font-bold px-3 py-1 rounded-full mb-4" data-astro-cid-j7pv25f6="">
+ARTIKEL Perizinan</span><h3 class="text-2xl font-bold mb-4" data-astro-cid-j7pv25f6="">Layanan Drive Thru PATAS Meningkat</h3><p class="text-blue-100 mb-6" data-astro-cid-j7pv25f6="">Pelayanan perizinan drive thru semakin diminati pelaku usaha dengan peningkatan signifikan pada bulan terakhir.</p></div><div class="flex items-center justify-between text-sm" data-astro-cid-j7pv25f6=""><span data-astro-cid-j7pv25f6="">📅 24/11/2025</span><a href="#" class="bg-white text-blue-700 font-semibold px-4 py-2 rounded-lg hover:bg-gray-100 transition" data-astro-cid-j7pv25f6="">
+Baca Selengkapnya
+</a></div></div></div></div></div></section><!-- GRID BERITA DYNAMIC --><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" data-astro-cid-j7pv25f6=""><div class="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 card-hover flex flex-col h-full" data-astro-cid-j7pv25f6=""><div class="relative h-80 overflow-hidden" data-astro-cid-j7pv25f6=""><img src="https://dpm-ptsp.surabaya.go.id/fileberita/tpid-2025-2025-12-16(BERITA).jpeg" alt="Pemkot Surabaya Adakan Kegiatan High Level Marketing" class="absolute inset-0 w-full h-96 object-cover hover:scale-105 transition-transform duration-500" style="object-position: center 30%;" data-astro-cid-j7pv25f6=""><!-- Logo/Header Overlay --></div><div class="p-5 flex-grow" data-astro-cid-j7pv25f6=""><h3 class="text-lg font-bold text-blue-800 mb-2 line-clamp-2" data-astro-cid-j7pv25f6="">Pemkot Surabaya Adakan Kegiatan High Level Marketing</h3><p class="text-gray-600 text-sm mb-4" data-astro-cid-j7pv25f6="">Kegiatan untuk memperkuat sinergi kebijakan dan pertumbuhan ekonomi.</p><div class="flex items-center justify-between pt-3 border-t border-gray-100 mt-auto" data-astro-cid-j7pv25f6=""><div class="text-sm text-gray-500" data-astro-cid-j7pv25f6=""><i class="far fa-calendar-alt mr-1" data-astro-cid-j7pv25f6=""></i>16/12/2025</div><a href="/media/pemkot-surabaya-adakan-kegiatan-high-level-marketing" class="text-blue-600 font-semibold text-sm hover:text-blue-800 flex items-center" data-astro-cid-j7pv25f6="">
+Baca Selengkapnya <i class="fas fa-arrow-right ml-1 text-xs" data-astro-cid-j7pv25f6=""></i></a></div></div></div><div class="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 card-hover flex flex-col h-full" data-astro-cid-j7pv25f6=""><div class="relative h-80 overflow-hidden" data-astro-cid-j7pv25f6=""><img src="https://dpm-ptsp.surabaya.go.id/fileberita/Tanggerang-studitour-2025-2025-12-16(BERITA).jpeg" alt="Pemkot Tangerang Studi Tiru ke Kota Surabaya" class="absolute inset-0 w-full h-96 object-cover hover:scale-105 transition-transform duration-500" style="object-position: center 30%;" data-astro-cid-j7pv25f6=""><!-- Logo/Header Overlay --></div><div class="p-5 flex-grow" data-astro-cid-j7pv25f6=""><h3 class="text-lg font-bold text-blue-800 mb-2 line-clamp-2" data-astro-cid-j7pv25f6="">Pemkot Tangerang Studi Tiru ke Kota Surabaya</h3><p class="text-gray-600 text-sm mb-4" data-astro-cid-j7pv25f6="">Kunjungan studi tiru percepatan pelayanan perizinan dan non-perizinan.</p><div class="flex items-center justify-between pt-3 border-t border-gray-100 mt-auto" data-astro-cid-j7pv25f6=""><div class="text-sm text-gray-500" data-astro-cid-j7pv25f6=""><i class="far fa-calendar-alt mr-1" data-astro-cid-j7pv25f6=""></i>16/12/2025</div><a href="/media/pemkot-tangerang-studi-tiru-ke-kota-surabaya" class="text-blue-600 font-semibold text-sm hover:text-blue-800 flex items-center" data-astro-cid-j7pv25f6="">
+Baca Selengkapnya <i class="fas fa-arrow-right ml-1 text-xs" data-astro-cid-j7pv25f6=""></i></a></div></div></div><div class="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 card-hover flex flex-col h-full" data-astro-cid-j7pv25f6=""><div class="relative h-80 overflow-hidden" data-astro-cid-j7pv25f6=""><img src="https://dpm-ptsp.surabaya.go.id/fileberita/umkm-bkpm-2025-2025-12-16(BERITA).jpeg" alt="DPMPTSP Terima Kunjungan Kementerian Investasi" class="absolute inset-0 w-full h-96 object-cover hover:scale-105 transition-transform duration-500" style="object-position: center 30%;" data-astro-cid-j7pv25f6=""><!-- Logo/Header Overlay --></div><div class="p-5 flex-grow" data-astro-cid-j7pv25f6=""><h3 class="text-lg font-bold text-blue-800 mb-2 line-clamp-2" data-astro-cid-j7pv25f6="">DPMPTSP Terima Kunjungan Kementerian Investasi</h3><p class="text-gray-600 text-sm mb-4" data-astro-cid-j7pv25f6="">Fasilitasi UMKM dalam pengembangan usaha dan kemudahan perizinan.</p><div class="flex items-center justify-between pt-3 border-t border-gray-100 mt-auto" data-astro-cid-j7pv25f6=""><div class="text-sm text-gray-500" data-astro-cid-j7pv25f6=""><i class="far fa-calendar-alt mr-1" data-astro-cid-j7pv25f6=""></i>16/12/2025</div><a href="/media/dpmptsp-terima-kunjungan-kementerian-investasi" class="text-blue-600 font-semibold text-sm hover:text-blue-800 flex items-center" data-astro-cid-j7pv25f6="">
+Baca Selengkapnya <i class="fas fa-arrow-right ml-1 text-xs" data-astro-cid-j7pv25f6=""></i></a></div></div></div></div><!-- BUTTON LENGKAP --><div class="text-center mt-12" data-astro-cid-j7pv25f6=""><a href="/beritalist" class="inline-flex items-center bg-dpmYellow text-dpmBlue font-bold px-8 py-3 rounded-lg hover:bg-yellow-300 transition" data-astro-cid-j7pv25f6="">
+Lihat Semua Berita 📰
+</a></div></div></section><script>
+  const track = document.getElementById('sliderTrack');
+  const slides = track.children;
+  let index = 0;
 
+  function slide() {
+    track.style.transform = `translateX(-${index * 100}%)`;
+  }
 
+  document.getElementById('nextBtn').onclick = () => {
+    index = (index + 1) % slides.length;
+    slide();
+  };
 
-<!-- ================= BERITA & ARTIKEL ================= -->
-<section class="py-16 bg-gray-50">
-  <div class="max-w-7xl mx-auto px-6">
+  document.getElementById('prevBtn').onclick = () => {
+    index = (index - 1 + slides.length) % slides.length;
+    slide();
+  };
 
-    <!-- HEADING -->
-    <div class="text-center mb-12">
-      <h2 class="text-3xl font-bold text-dpmBlue mb-4">Berita & Artikel Terupdate</h2>
-      <p class="text-gray-600 max-w-2xl mx-auto">
-        Informasi terkini seputar perizinan, investasi, dan perkembangan Kota Surabaya.
-      </p>
-    </div>
+  setInterval(() => {
+    index = (index + 1) % slides.length;
+    slide();
+  }, 5000);
+</script><script type="module" src="/src/pages/index.astro?astro&amp;type=script&amp;index=0&amp;lang.ts"></script><script client:load="">
+  const track = document.getElementById('sliderTrack');
+  const slides = track.children;
+  let index = 0;
 
-    <!-- ================= FEATURED ARTIKEL ================= -->
-<section class="py-16 bg-gray-50">
-  <div class="container mx-auto px-4">
+  function moveSlide() {
+    track.style.transform = `translateX(-${index * 100}%)`;
+  }
 
-    <!-- FEATURED ARTIKEL GRID -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-      {artikel.map(artikel => (
-        <!-- FEATURED 1 -->
-        <div class="bg-gradient-to-r from-blue-600 to-blue-800 rounded-2xl shadow-xl">
-          <div class="p-8 text-white h-full flex flex-col justify-between">
-            <div>
-              <span class="inline-block bg-dpmYellow text-dpmBlue text-xs font-bold px-3 py-1 rounded-full mb-4">
-                ARTIKEL {artikel.kategori}
-              </span>
+  setInterval(() => {
+    index = (index + 1) % slides.length;
+    moveSlide();
+  }, 4000);
+</script><script>
+document.addEventListener('DOMContentLoaded', () => {
 
-              <h3 class="text-2xl font-bold mb-4">
-                {artikel.judul}
-              </h3>
+  //iki slider
+  const sliderTrack = document.getElementById('sliderTrack');
+  const slides = document.querySelectorAll('.slider-slide');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const sliderDots = document.getElementById('sliderDots');
 
-              <p class="text-blue-100 mb-6">
-                {artikel.konten}
-              </p>
-            </div>
+  let currentSlide = 0;
+  const totalSlides = slides.length;
 
-            <div class="flex items-center justify-between text-sm">
-              <span>📅 {new Date(artikel.tanggal).toLocaleDateString("id-ID")}</span>
-              <a
-                href="#"
-                class="bg-white text-blue-700 font-semibold px-4 py-2 rounded-lg hover:bg-gray-100 transition"
-              >
-                Baca Selengkapnya
-              </a>
-            </div>
-          </div>
-        </div>
-      ))}
+  // Create dots
+  for (let i = 0; i < totalSlides; i++) {
+      const dot = document.createElement('div');
+      dot.classList.add('slider-dot');
+      if (i === 0) dot.classList.add('active');
 
-    </div>
+      dot.addEventListener('click', () => {
+          goToSlide(i);
+      });
 
-  </div>
-</section>
+      sliderDots.appendChild(dot);
+  }
 
+  const dots = document.querySelectorAll('.slider-dot');
 
+  // Function to update slider position
+  function updateSlider() {
+      sliderTrack.style.transform = `translateX(-${currentSlide * 100}%)`;
 
+      // Update active dot
+      dots.forEach((dot, index) => {
+        if (index === currentSlide) {
+          dot.classList.add('active');
+        } else {
+          dot.classList.remove('active');
+        }
+      });
+  }
 
-    <!-- GRID BERITA DYNAMIC -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      {rows.map(post => (
-        <div class="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 card-hover flex flex-col h-full">
-          <div class="relative h-80 overflow-hidden">
-              <img src={post.gambar} alt={post.judul} class="absolute inset-0 w-full h-96 object-cover hover:scale-105 transition-transform duration-500" style="object-position: center 30%;">
-              <!-- Logo/Header Overlay -->
-          </div>
-          <div class="p-5 flex-grow">
-              <h3 class="text-lg font-bold text-blue-800 mb-2 line-clamp-2">{post.judul}</h3>
-              <p class="text-gray-600 text-sm mb-4">{post.konten}</p>
-              <div class="flex items-center justify-between pt-3 border-t border-gray-100 mt-auto">
-                  <div class="text-sm text-gray-500">
-                      <i class="far fa-calendar-alt mr-1"></i> {new Date(post.tanggal).toLocaleDateString("id-ID")}
-                  </div>
-                   <a href={`/media/${slugify(post.judul)}`}
-                      class="text-blue-600 font-semibold text-sm hover:text-blue-800 flex items-center">
-                      Baca Selengkapnya <i class="fas fa-arrow-right ml-1 text-xs"></i>
-                  </a>
-              </div>
-          </div>
-        </div>
-      ))}
-    </div>
+  // Function to go to specific slide
+  function goToSlide(slideIndex) {
+      currentSlide = slideIndex;
+      updateSlider();
+  }
 
-    <!-- BUTTON LENGKAP -->
-    <div class="text-center mt-12">
-      <a href="/beritalist" class="inline-flex items-center bg-dpmYellow text-dpmBlue font-bold px-8 py-3 rounded-lg hover:bg-yellow-300 transition">
-        Lihat Semua Berita 📰
-      </a>
-    </div>
+  // Next slide function
+  function nextSlide() {
+      currentSlide = (currentSlide + 1) % totalSlides;
+      updateSlider();
+  }
 
-  </div>
+  // Previous slide function
+  function prevSlide() {
+      currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
+      updateSlider();
+  }
+
+  // Event listeners for buttons
+  nextBtn.addEventListener('click', nextSlide);
+  prevBtn.addEventListener('click', prevSlide);
+
+  // Auto slide every 5 seconds
+  let slideInterval = setInterval(nextSlide, 3000);
+
+  // Pause auto slide on hover
+  const sliderContainer = document.querySelector('.slider-container');
+  sliderContainer.addEventListener('mouseenter', () => {
+      clearInterval(slideInterval);
+  });
+
+  sliderContainer.addEventListener('mouseleave', () => {
+      slideInterval = setInterval(nextSlide, 5000);
+  });
+
+  // Keyboard navigation
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft') prevSlide();
+    if (e.key === 'ArrowRight') nextSlide();
+  });
+
+  // Initialize slider
+  updateSlider();
+  const heroSlides = document.querySelectorAll('#hero-carousel .carousel-item');
+  const heroDots = document.querySelectorAll('.hero-dot');
+  let heroIndex = 0;
+
+  function showHero(i) {
+    heroSlides.forEach((s, idx) => {
+      s.classList.toggle('hidden', idx !== i);
+      heroDots[idx].classList.toggle('opacity-50', idx !== i);
+    });
+    heroIndex = i;
+  }
+
+  heroDots.forEach((dot, i) =>
+    dot.addEventListener('click', () => showHero(i))
+  );
+
+  setInterval(() => {
+    showHero((heroIndex + 1) % heroSlides.length);
+  }, 5000);
+
+  showHero(0);
+});
+</script></section> </main> 
+<script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                        },
+                        secondary: {
+                            400: '#fbbf24',
+                            500: '#f59e0b',
+                        }
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s infinite',
+                        'bounce-slow': 'bounce 2s infinite',
+                        'spin-slow': 'spin 4s linear infinite',
+                    }
+                }
+            }
+        }
+    </script>  <astro-dev-toolbar></astro-dev-toolbar></body>
 </section>
 <script is:inline>
   const track = document.getElementById('sliderTrack');
