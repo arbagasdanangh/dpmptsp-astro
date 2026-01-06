@@ -1,0 +1,421 @@
+---
+import MainLayout from "../layouts/MainLayout.astro";
+import Pdf from "../components/Pdf.astro";
+import { slugify } from "../utils/slugify";
+import { isRenderTemplateResult } from "astro/runtime/server/render/astro/render-template.js";
+
+
+---
+<style>
+.slider-wrapper {
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0,0,0,.15);
+}
+
+.slider-track {
+  display: flex;
+  transition: transform .6s ease;
+}
+
+.slider-item {
+  min-width: 100%;
+  position: relative;
+}
+.slider-track {
+  will-change: transform;
+}
+
+.slider-item img {
+  width: 100%;
+  height: 380px;
+  object-fit: cover;
+  display: block;
+}
+
+.caption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 20px;
+  background: linear-gradient(transparent, rgba(0,0,0,.7));
+  color: #fff;
+}
+
+.caption h3 {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.caption p {
+  font-size: 14px;
+  opacity: .9;
+}
+
+/* NAV */
+.nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255,255,255,.9);
+  border-radius: 50%;
+  width: 42px;
+  height: 42px;
+  border: none;
+  cursor: pointer;
+  font-size: 20px;
+}
+
+.nav:hover {
+  background: #ffd41d;
+}
+
+.prev { left: 12px; }
+.next { right: 12px; }
+
+
+        .slider-container {
+            position: relative;
+            overflow: hidden;
+            border-radius: 1rem;
+        }
+
+        .slider-track {
+            display: flex;
+            transition: transform 0.5s ease-in-out;
+        }
+
+        .slider-slide {
+            min-width: 100%;
+            position: relative;
+        }
+
+        .slider-img {
+            width: 100%;
+            height: 64vh;
+            max-height: 400px;
+            object-fit: cover;
+            border-radius: 0.5rem;
+        }
+
+        .slider-caption {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
+            color: white;
+            padding: 1.5rem;
+            border-bottom-left-radius: 0.5rem;
+            border-bottom-right-radius: 0.5rem;
+        }
+
+        .slider-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 10;
+            transition: all 0.3s;
+        }
+
+        .slider-nav:hover {
+            background: rgba(255, 255, 255, 1);
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .slider-prev {
+            left: 10px;
+        }
+
+        .slider-next {
+            right: 10px;
+        }
+
+        .slider-dots {
+            display: flex;
+            justify-content: center;
+            margin-top: 1rem;
+            gap: 0.5rem;
+        }
+
+        .slider-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: rgba(59, 130, 246, 0.5);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .slider-dot.active {
+            background-color: rgb(59, 130, 246);
+            transform: scale(1.2);
+        }
+
+        .slider-dot:hover {
+            background-color: rgb(59, 130, 246);
+        }
+
+        /* Bingkai biru dan kuning solid */
+        .blue-yellow-frame {
+            border: 3px solid #1d4ed8;
+            /* Biru tua */
+            border-top-width: 3px;
+            border-left-width: 3px;
+            border-right: 3px solid #fbbf24;
+            /* Kuning */
+            border-bottom: 3px solid #fbbf24;
+            /* Kuning */
+            border-bottom-right-radius: 1.5rem;
+            border-top-left-radius: 1.5rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /*pdf viewer */
+
+        
+</style>
+
+<MainLayout title="DPMPTSP Kota Surabaya">
+      <main>
+        <!-- Hero Banner Section -->
+        <section class="relative overflow-hidden bg-gradient-to-r from-blue-800 to-blue-900">
+            <div class="absolute inset-0 z-0">
+                <div class="absolute top-0 right-0 w-64 h-64 bg-yellow-400 rounded-full opacity-10 -translate-y-32 translate-x-32"></div>
+                <div class="absolute bottom-0 left-0 w-96 h-96 bg-blue-600 rounded-full opacity-10 -translate-x-64 translate-y-64"></div>
+            </div>
+            <div class="container mx-auto px-4 py-12 relative z-10">
+                <div class="text-center text-white">
+                    <h1 class="text-3xl md:text-4xl font-bold mb-4 animate-fadeInUp">Detail Berita</h1>
+                    <p class="text-lg opacity-90 max-w-3xl mx-auto animate-fadeInUp">Informasi lengkap seputar kegiatan dan perkembangan terbaru dari DPMPTSP Surabaya</p>
+                    <div class="mt-8">
+                        <a href="beritalist.html" class="inline-flex items-center bg-yellow-400 text-blue-800 font-bold px-6 py-3 rounded-lg hover:bg-yellow-300 transition duration-300 mr-4">
+                            <i class="fas fa-arrow-left mr-2"></i> Kembali ke Berita
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Content Area -->
+        <div class="container mx-auto px-4 py-8">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Article Content -->
+                <div class="lg:col-span-2">
+                    <div class="bg-white rounded-2xl shadow-custom overflow-hidden card-hover animate-fadeInUp">
+                        <!-- Article Header -->
+                        <div class="p-6 md:p-8 border-b border-gray-100">
+                            <div class="flex items-center justify-between mb-4">
+                                <span class="inline-flex items-center space-x-2 bg-blue-700 text-white px-4 py-2 rounded-full text-sm font-semibold">
+                                    <i class="fas fa-newspaper"></i>
+                                    <span>Berita</span>
+                                </span>
+                                <span class="text-sm text-gray-500">28 Desember 2025</span>
+                            </div>
+                            
+                            <h1 class="text-2xl md:text-3xl font-bold text-gray-900 mb-6 leading-tight">
+                                Pemkot Surabaya Adakan Kegiatan High Level Marketing
+                            </h1>
+                            
+                            <div class="flex flex-wrap items-center gap-4 text-gray-600">
+                                <div class="flex items-center space-x-2">
+                                    <i class="fas fa-user text-blue-700"></i>
+                                    <span>Admin DPMPTSP</span>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <i class="fas fa-eye text-blue-700"></i>
+                                    <span>20 views</span>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <i class="fas fa-clock text-blue-700"></i>
+                                    <span>
+                                        1 min read
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Article Image -->
+                        <div class="overflow-hidden mx-6 mt-6 rounded-xl">
+                            <img src="gambar/beritapemkot.png" alt="Pemkot Surabaya Adakan Kegiatan High Level Marketing"
+                                class="w-full h-64 md:h-96 object-cover transition-transform duration-500 hover:scale-105 rounded-lg">
+                        </div>
+
+                        <!-- Article Body -->
+                        <div class="p-6 md:p-8">
+                            <div class="prose prose-lg max-w-none first-letter text-justify text-gray-700">
+                                <p class="mb-4">DPMPTSP Kota Surabaya - Pemerintah Kota Surabaya menyelenggarakan kegiatan High Level Marketing (HLM) dalam rangka penguatan sinergi kebijakan serta akselerasi implementasi program strategis daerah pada hari Senin tanggal 15 Desember 2025. Kegiatan ini bertujuan untuk menjaga stabilitas sekaligus mendorong peningkatan pertumbuhan ekonomi di Kota Surabaya.</p>
+                                
+                                <p class="mb-4">Kegiatan HLM diselenggarakan di Balai Kota Surabaya dan diinisiasi oleh Tim Pengendalian Inflasi Daerah (TPID), Tim Perluasan dan Percepatan Digitalisasi Daerah (TP2DD), Tim Percepatan Pertumbuhan Ekonomi Daerah (TP2ED), serta Tim Percepatan Akses Keuangan Daerah (TPAKD) Kota Surabaya. Forum ini menjadi wadah strategis bagi seluruh pemangku kepentingan untuk menyelaraskan kebijakan lintas sektor serta memperkuat koordinasi dalam menghadapi dinamika perekonomian daerah.</p>
+                                
+                                <p class="mb-4">Dalam kegiatan tersebut, Pemerintah Kota Surabaya berperan aktif mendukung upaya dalam menciptakan iklim investasi yang kondusif, meningkatkan kemudahan berusaha, serta mendorong percepatan realisasi program-program strategis yang berdampak langsung pada pertumbuhan ekonomi dan kesejahteraan masyarakat.</p>
+                                
+                                <p class="mb-4">Kegiatan ini turut menghadirkan sejumlah narasumber dari berbagai instansi strategis, antara lain Kepala Otoritas Jasa Keuangan (OJK) Jawa Timur, Kepala Perwakilan Bank Indonesia Jawa Timur, Kepala Badan Pusat Statistik (BPS) Kota Surabaya, Kepala Perum Bulog Kantor Cabang Surabaya, serta perwakilan dari Polrestabes Surabaya, Polres Pelabuhan Tanjung Perak, Kejaksaan Negeri Surabaya, dan Kejaksaan Negeri Tanjung Perak.</p>
+                                
+                                <p class="mb-4">Melalui kegiatan ini, diharapkan terbangun komitmen bersama dalam menjaga stabilitas harga, memperluas digitalisasi transaksi keuangan daerah, mempercepat pertumbuhan ekonomi, serta meningkatkan akses keuangan bagi masyarakat dan pelaku usaha. Sinergi yang kuat antarinstansi diharapkan mampu memperkuat ketahanan ekonomi Kota Surabaya sekaligus mendukung terwujudnya pembangunan daerah yang berkelanjutan.</p>
+                            </div>
+                            
+                            <!-- Tags -->
+                            <div class="mt-8 pt-6 border-t border-gray-100">
+                                <div class="flex items-center space-x-2">
+                                    <span class="font-semibold text-gray-700">Tags:</span>
+                                    <div class="flex flex-wrap gap-2">
+                                        <span class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm cursor-pointer transition-colors">
+                                            #dpmptsp
+                                        </span>
+                                        <span class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm cursor-pointer transition-colors">
+                                            #surabaya
+                                        </span>
+                                        <span class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm cursor-pointer transition-colors">
+                                            #investasi
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sidebar -->
+                <div class="space-y-6">
+                    <!-- Related News -->
+                    <div class="bg-white rounded-2xl shadow-custom p-6 card-hover">
+                        <h2 class="text-xl font-bold text-gray-900 mb-6 pb-3 border-b border-gray-100">Berita Terkait</h2>
+                        
+                        <!-- Search Box -->
+                        <div class="mb-6">
+                            <div class="relative">
+                                <input type="text" id="search-input" placeholder="Cari berita atau artikel..." 
+                                       class="w-full px-4 py-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-700 focus:outline-none">
+                                <i class="fas fa-search absolute left-3 top-3.5 text-gray-400"></i>
+                            </div>
+                        </div>
+                        
+                        <!-- Related Item 1 -->
+                        <a href="berita2.html" class="group flex items-start space-x-4 p-3 rounded-xl hover:bg-gray-50 transition-all duration-300 card-hover">
+                            <div class="flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden">
+                                <img src="gambar/bimtek.png" alt="DPMPTSP Kota Surabaya Gelar Bimtek LKPM 2025 untuk Pelaku Usaha Non UMK"
+                                    class="w-[80px] h-[80px] object-cover group-hover:scale-110 transition-transform duration-300">
+                            </div>
+                            <div>
+                                <span class="inline-block bg-blue-50 text-blue-700 text-xs font-semibold px-2 py-1 rounded mb-1">Artikel Penanaman Modal</span>
+                                <h3 class="font-semibold text-gray-900 group-hover:text-blue-700 line-clamp-2 text-sm">DPMPTSP Kota Surabaya Gelar Bimtek LKPM 2025 untuk Pelaku Usaha Non UMK</h3>
+                                <p class="text-xs text-gray-500 mt-1">
+                                    <i class="fas fa-calendar-alt mr-1"></i>21 Desember 2025
+                                </p>
+                            </div>
+                        </a>
+
+                        <a href="berita2.html" class="group flex items-start space-x-4 p-3 rounded-xl hover:bg-gray-50 transition-all duration-300 card-hover">
+                            <div class="flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden">
+                                <img src="gambar/bimtek.png" alt="DPMPTSP Kota Surabaya Gelar Bimtek LKPM 2025 untuk Pelaku Usaha Non UMK"
+                                    class="w-[80px] h-[80px] object-cover group-hover:scale-110 transition-transform duration-300">
+                            </div>
+                            <div>
+                                <span class="inline-block bg-yellow-50 text-yellow-700 text-xs font-semibold px-2 py-1 rounded mb-1">Berita</span>
+                                <h3 class="font-semibold text-gray-900 group-hover:text-blue-700 line-clamp-2 text-sm">Inovasi Pelayanan Publik DPMPTSP Raih Penghargaan Nasional</h3>
+                                <p class="text-xs text-gray-500 mt-1">
+                                    <i class="fas fa-calendar-alt mr-1"></i>18 Desember 2025
+                                </p>
+                            </div>
+                        </a>
+                        
+                        <a href="berita2.html" class="group flex items-start space-x-4 p-3 rounded-xl hover:bg-gray-50 transition-all duration-300 card-hover">
+                            <div class="flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden">
+                                <img src="gambar/bimtek.png" alt="DPMPTSP Kota Surabaya Gelar Bimtek LKPM 2025 untuk Pelaku Usaha Non UMK"
+                                    class="w-[80px] h-[80px] object-cover group-hover:scale-110 transition-transform duration-300">
+                            </div>
+                            <div>
+                                <span class="inline-block bg-yellow-50 text-yellow-700 text-xs font-semibold px-2 py-1 rounded mb-1">Berita</span>
+                                <h3 class="font-semibold text-gray-900 group-hover:text-blue-700 line-clamp-2 text-sm">Pertumbuhan Investasi di Surabaya Meningkat 15% pada Kuartal IV 2025</h3>
+                                <p class="text-xs text-gray-500 mt-1">
+                                    <i class="fas fa-calendar-alt mr-1"></i>15 Desember 2025
+                                </p>
+                            </div>
+                        </a>
+                        
+                        <!-- View All Button -->
+                        <div class="mt-6 pt-4 border-t border-gray-100 text-center">
+                            <a href="beritalist.html" 
+                               class="inline-flex items-center justify-center w-full bg-blue-700 hover:bg-blue-800 text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-300">
+                                <i class="fas fa-list mr-2"></i>
+                                Lihat Semua Berita
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Quick Links -->
+                    <div class="bg-gradient-to-r from-blue-700 to-blue-900 rounded-2xl shadow-custom p-6 text-white card-hover">
+                        <h2 class="text-xl font-bold mb-6">Layanan Cepat</h2>
+                        <div class="space-y-4">
+                            <a href="aplikasi.html#ijinusaha-sec" class="flex items-center justify-between p-3 bg-white/10 rounded-lg hover:bg-white/20 transition-colors">
+                                <span class="font-medium">Perizinan Online</span>
+                                <i class="fas fa-arrow-right text-yellow-300"></i>
+                            </a>
+                            <a href="aplikasi.html#pengaduan-sec" class="flex items-center justify-between p-3 bg-white/10 rounded-lg hover:bg-white/20 transition-colors">
+                                <span class="font-medium">Pengaduan Layanan</span>
+                                <i class="fas fa-arrow-right text-yellow-300"></i>
+                            </a>
+                            <a href="kontak.html" class="flex items-center justify-between p-3 bg-white/10 rounded-lg hover:bg-white/20 transition-colors">
+                                <span class="font-medium">Konsultasi Investasi</span>
+                                <i class="fas fa-arrow-right text-yellow-300"></i>
+                            </a>
+                            <a href="tentangkm.html#kontak-sec" class="flex items-center justify-between p-3 bg-white/10 rounded-lg hover:bg-white/20 transition-colors">
+                                <span class="font-medium">FAQ & Bantuan</span>
+                                <i class="fas fa-arrow-right text-yellow-300"></i>
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Share Section -->
+                    <div class="bg-white rounded-2xl shadow-custom p-6 card-hover">
+                        <h2 class="text-xl font-bold text-gray-900 mb-6 pb-3 border-b border-gray-100">Bagikan Artikel</h2>
+                        <div class="grid grid-cols-2 gap-3">
+                            <a href="#" class="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-lg flex flex-col items-center justify-center transition-all duration-300 card-hover">
+                                <i class="fab fa-facebook-f text-lg mb-2"></i>
+                                <span class="text-xs font-medium">Facebook</span>
+                            </a>
+                            <a href="#" class="bg-blue-400 hover:bg-blue-500 text-white p-3 rounded-lg flex flex-col items-center justify-center transition-all duration-300 card-hover">
+                                <i class="fab fa-twitter text-lg mb-2"></i>
+                                <span class="text-xs font-medium">Twitter</span>
+                            </a>
+                            <a href="#" class="bg-green-500 hover:bg-green-600 text-white p-3 rounded-lg flex flex-col items-center justify-center transition-all duration-300 card-hover">
+                                <i class="fab fa-whatsapp text-lg mb-2"></i>
+                                <span class="text-xs font-medium">WhatsApp</span>
+                            </a>
+                            <a href="#" class="bg-red-500 hover:bg-red-600 text-white p-3 rounded-lg flex flex-col items-center justify-center transition-all duration-300 card-hover">
+                                <i class="fas fa-envelope text-lg mb-2"></i>
+                                <span class="text-xs font-medium">Email</span>
+                            </a>
+                        </div>
+                        
+                        <!-- Copy Link -->
+                        <div class="mt-6 pt-4 border-t border-gray-100">
+                            <div class="flex">
+                                <input type="text" id="article-link" value="https://dpm-ptsp.surabaya.go.id/berita/pemkot-surabaya-high-level-marketing" 
+                                       readonly class="flex-grow px-3 py-2 text-sm border border-gray-300 rounded-l-lg focus:outline-none">
+                                <button id="copy-link" class="bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded-r-lg transition-colors">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                            <p id="copy-message" class="text-xs text-green-600 mt-2 hidden">Link berhasil disalin!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+</body>
+  </MainLayout>
