@@ -12,6 +12,7 @@
     "@astrojs/vercel": "^9.0.2",
     "@tailwindcss/vite": "^4.1.18",
     "astro": "^5.16.6",
+    "autoprefixer": "^10.4.23",
     "mysql2": "^3.16.0",
     "tailwindcss": "^4.1.18"
   },
