@@ -1154,3 +1154,17 @@ document.addEventListener('DOMContentLoaded', () => {
   showHero(0);
 });
 </script>
+<!-- Start of Qontak Webchat Script -->
+<script>
+  const qchatInit = document.createElement('script');
+  qchatInit.src = "https://webchat.qontak.com/qchatInitialize.js";
+  const qchatWidget = document.createElement('script');
+  qchatWidget.src = "https://webchat.qontak.com/js/app.js";
+  document.head.prepend(qchatInit);
+  document.head.prepend(qchatWidget);
+  qchatInit.onload = function() { qchatInitialize({
+    id: "375d205f-d586-424a-9d14-d058756e8545", 
+    code: "o-ddpbmeTRNkrFkEkZUieQ"  
+  })};
+</script>
+<!-- End of Qontak Webchat Script -->
