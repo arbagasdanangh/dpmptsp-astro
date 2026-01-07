@@ -2,6 +2,10 @@
 export const prerender = false;
 
 import MainLayout from "../layouts/MainLayout.astro";
+import { slugify } from "../utils/slugify";
+
+const safeSlug = slugify(item.title);
+
 
 /* =========================
    FETCH DATA DARI API
