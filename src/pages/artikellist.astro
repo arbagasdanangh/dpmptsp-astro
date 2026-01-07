@@ -1,18 +1,106 @@
 ---
-export const prerender = false; // WAJIB UNTUK HTTP API
+/**
+ * ARTIKEL LIST – ASTRO + API DPMPTSP
+ * Aman untuk Vercel (HTTP API)
+ */
+export const prerender = false;
 
 import MainLayout from "../layouts/MainLayout.astro";
 import { slugify } from "../utils/slugify";
 
-const API_URL = "http://parkir.dpmptsp-surabaya.my.id/api/v1/posts?per_page=20&page=2";
+// ======================
+// KONFIGURASI API
+// ======================
+const BASE_URL = "http://parkir.dpmptsp-surabaya.my.id";
+const PER_PAGE = 20;
 
+// ambil page dari query (?page=2)
+const page = Number(Astro.url.searchParams.get("page") ?? 1);
+
+// ======================
+// FETCH DATA
+// ======================
 let articles = [];
+let meta = {};
 
 try {
-  const res = await fetch(API_URL);
+  const res = await fetch(
+    `${BASE_URL}/api/v1/posts?per_page=${PER_PAGE}&page=${page}`
+  );
   const json = await res.json();
-  articles = json.data ?? [];
-} catch (e) {
-  console.error("API ERROR", e);
+
+  articles = (json.data ?? []).map((item) => ({
+    title: item.title,
+    slug: slugify(item.title), // slug AMAN
+    date: item.date,
+    category: item.category ?? "Umum",
+    excerpt: item.content ?? "",
+    content: item.ref ?? "",
+    image: "/img/default-berita.jpg", // fallback WAJIB
+  }));
+
+  meta = json.meta ?? {};
+} catch (err) {
+  console.error("Gagal mengambil data API", err);
 }
 ---
+<MainLayout title="Artikel Penanaman Modal & Perizinan | DPMPTSP Kota Surabaya">
+
+  <!-- HERO -->
+  <section class="bg-gradient-to-r from-blue-800 to-blue-900 py-16 text-center text-white">
+    <h1 class="text-4xl md:text-5xl font-bold mb-4">
+      Artikel Penanaman Modal & Perizinan
+    </h1>
+    <p class="text-lg opacity-90 max-w-3xl mx-auto">
+      Informasi resmi investasi dan perizinan berusaha di Kota Surabaya
+    </p>
+  </section>
+
+  <!-- CONTENT -->
+  <section class="container mx-auto px-4 py-12">
+
+    {articles.length === 0 && (
+      <p class="text-center text-gray-500">
+        Data artikel belum tersedia
+      </p>
+    )}
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      {articles.map((item) => (
+        <article class="bg-white rounded-2xl shadow-lg overflow-hidden hover:-translate-y-1 transition">
+          <a href={`/artikel/${item.slug}`}>
+            <div class="relative h-56 overflow-hidden">
+              <img
+                src={item.image}
+                alt={item.title}
+                class="absolute inset-0 w-full h-full object-cover hover:scale-105 transition duration-500"
+              />
+            </div>
+
+            <div class="p-6">
+              <span
+                class={`inline-block mb-3 px-3 py-1 rounded-full text-xs font-semibold ${
+                  item.category === "Penanaman Modal"
+                    ? "bg-green-100 text-green-700"
+                    : item.category === "Perizinan Berusaha"
+                    ? "bg-yellow-100 text-yellow-700"
+                    : "bg-gray-100 text-gray-700"
+                }`}
+              >
+                {item.category}
+              </span>
+
+              <h3 class="text-lg font-bold text-blue-800 mb-3 line-clamp-2">
+                {item.title}
+              </h3>
+
+              <p class="text-gray-600 text-sm mb-4 line-clamp-3">
+                {item.excerpt}
+              </p>
+
+              <div class="flex items-center justify-between pt-4 border-t">
+                <span class="text-sm text-gray-500">
+                  {item.date}
+                </span>
+
+                <span class="text-blue-600 font-semibold te
