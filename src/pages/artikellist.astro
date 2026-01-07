@@ -1,115 +1,18 @@
 ---
-export const prerender = false;
+export const prerender = false; // WAJIB UNTUK HTTP API
 
 import MainLayout from "../layouts/MainLayout.astro";
 import { slugify } from "../utils/slugify";
 
-const safeSlug = slugify(item.title);
+const API_URL = "http://parkir.dpmptsp-surabaya.my.id/api/v1/posts?per_page=20&page=2";
 
+let articles = [];
 
-/* =========================
-   FETCH DATA DARI API
-   ========================= */
-const res = await fetch("http://parkir.dpmptsp-surabaya.my.id/api/v1/posts?per_page=10");
-const json = await res.json();
-
-/* =========================
-   NORMALISASI DATA API
-   ========================= */
-const articles = json.data.map((item) => ({
-  title: item.title,
-  slug: item.slug,
-  category: item.category ?? "Perizinan Berusaha",
-  date: new Date(item.created_at ?? Date.now()).toLocaleDateString("id-ID", {
-    day: "numeric",
-    month: "long",
-    year: "numeric"
-  }),
-  image:
-    item.thumbnail ??
-    "https://dpm-ptsp.surabaya.go.id/assets/images/default-berita.jpg",
-  excerpt: item.content
-    .replace(/<[^>]*>?/gm, "")
-    .slice(0, 140) + "..."
-}));
+try {
+  const res = await fetch(API_URL);
+  const json = await res.json();
+  articles = json.data ?? [];
+} catch (e) {
+  console.error("API ERROR", e);
+}
 ---
-
-<MainLayout title="Berita & Artikel | DPMPTSP Kota Surabaya">
-
-  <!-- HERO -->
-  <section class="relative overflow-hidden bg-gradient-to-r from-blue-800 to-blue-900 py-16 text-center text-white">
-    <h1 class="text-4xl md:text-5xl font-bold mb-4">
-      Artikel Penanaman Modal & Perizinan
-    </h1>
-    <p class="text-xl opacity-90 max-w-3xl mx-auto">
-      Informasi resmi terkait investasi dan perizinan berusaha di Kota Surabaya
-    </p>
-  </section>
-
-  <!-- FILTER KATEGORI (UI SAJA) -->
-  <section class="container mx-auto px-4 pt-10">
-    <div class="flex flex-wrap gap-3 justify-center">
-      <span class="px-4 py-2 rounded-full bg-blue-600 text-white text-sm font-semibold">
-        Semua Artikel
-      </span>
-      <span class="px-4 py-2 rounded-full bg-green-100 text-green-700 text-sm font-semibold">
-        Penanaman Modal
-      </span>
-      <span class="px-4 py-2 rounded-full bg-yellow-100 text-yellow-700 text-sm font-semibold">
-        Perizinan Berusaha
-      </span>
-    </div>
-  </section>
-
-  <!-- CONTENT -->
-  <section class="container mx-auto px-4 py-12">
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-
-      {articles.map((item) => (
-        <article class="bg-white rounded-2xl shadow-lg overflow-hidden hover:-translate-y-1 transition">
-          <a href={`/artikel/${item.slug}`}>
-            <div class="relative h-56 overflow-hidden">
-              <img
-                src={item.image}
-                alt={item.title}
-                class="absolute inset-0 w-full h-full object-cover hover:scale-105 transition duration-500"
-              />
-            </div>
-
-            <div class="p-6">
-              <span
-                class={`inline-block mb-3 px-3 py-1 rounded-full text-xs font-semibold ${
-                  item.category === "Penanaman Modal"
-                    ? "bg-green-100 text-green-700"
-                    : "bg-yellow-100 text-yellow-700"
-                }`}
-              >
-                {item.category}
-              </span>
-
-              <h3 class="text-lg font-bold text-blue-800 mb-3 line-clamp-2">
-                {item.title}
-              </h3>
-
-              <p class="text-gray-600 text-sm mb-4 line-clamp-3">
-                {item.excerpt}
-              </p>
-
-              <div class="flex items-center justify-between pt-4 border-t">
-                <span class="text-sm text-gray-500">
-                  {item.date}
-                </span>
-
-                <span class="text-blue-600 font-semibold text-sm flex items-center">
-                  Baca Selengkapnya →
-                </span>
-              </div>
-            </div>
-          </a>
-        </article>
-      ))}
-
-    </div>
-  </section>
-
-</MainLayout>
