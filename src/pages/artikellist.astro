@@ -8,25 +8,73 @@ import { slugify } from "../utils/slugify";
 const articles = [
   {
     title: "Pelaporan LKPM TW IV dan Semester II Tahun 2025 Dibuka",
+    category: "Penanaman Modal",
     date: "5 Januari 2026",
     image: "https://dpm-ptsp.surabaya.go.id/fileberita/lkpm-tw4-2025-2026-01-05(BERITA).jpeg",
-    excerpt:
-      "Pelaporan LKPM TW IV dan Semester II Tahun 2025 Dibuka, Pelaku Usaha Wajib Lapor 1–10 Januari 2026"
+    excerpt: "Pelaku usaha wajib menyampaikan LKPM melalui sistem OSS-RBA."
   },
   {
-    title: "DPMPTSP Kota Surabaya Berikan Apresiasi Pegawai Terbaik Tahun 2025",
-    date: "5 Januari 2026",
-    image: "https://dpm-ptsp.surabaya.go.id/fileberita/apresiasi-pegawai-terbaik-2025-2026-01-05(BERITA).jpeg",
-    excerpt:
-      "DPMPTSP Kota Surabaya Berikan Apresiasi Pegawai Terbaik Tahun 2025"
+    title: "Realisasi Investasi Kota Surabaya Tahun 2025 Tunjukkan Tren Positif",
+    category: "Penanaman Modal",
+    date: "3 Januari 2026",
+    image: "https://dpm-ptsp.surabaya.go.id/fileberita/investasi-surabaya-2025.jpeg",
+    excerpt: "Realisasi investasi menunjukkan peningkatan signifikan sepanjang tahun 2025."
   },
   {
-    title:
-      "DPMPTSP Kota Surabaya Terima Kunjungan Kementerian Investasi dan Hilirisasi/BKPM RI",
-    date: "16 Desember 2025",
-    image: "https://dpm-ptsp.surabaya.go.id/fileberita/umkm-bkpm-2025-2025-12-16(BERITA).jpeg",
-    excerpt:
-      "Fasilitasi pelaku UMKM oleh Kementerian Investasi dan Hilirisasi/BKPM RI"
+    title: "Fasilitasi Investasi UMKM Jadi Fokus DPMPTSP Surabaya",
+    category: "Penanaman Modal",
+    date: "28 Desember 2025",
+    image: "https://dpm-ptsp.surabaya.go.id/fileberita/umkm-investasi.jpeg",
+    excerpt: "Pendampingan UMKM untuk mendorong pertumbuhan investasi daerah."
+  },
+  {
+    title: "DPMPTSP Kota Surabaya Terima Kunjungan Investor Nasional",
+    category: "Penanaman Modal",
+    date: "22 Desember 2025",
+    image: "https://dpm-ptsp.surabaya.go.id/fileberita/kunjungan-investor.jpeg",
+    excerpt: "Kunjungan investor sebagai upaya promosi potensi investasi Kota Surabaya."
+  },
+  {
+    title: "Komitmen DPMPTSP Surabaya Wujudkan Iklim Investasi Berkelanjutan",
+    category: "Penanaman Modal",
+    date: "20 Desember 2025",
+    image: "https://dpm-ptsp.surabaya.go.id/fileberita/iklim-investasi.jpeg",
+    excerpt: "Upaya berkelanjutan untuk menciptakan iklim investasi yang kondusif."
+  },
+  {
+    title: "DPMPTSP Kota Surabaya Dorong Kemudahan Perizinan Berusaha",
+    category: "Perizinan Berusaha",
+    date: "6 Januari 2026",
+    image: "https://dpm-ptsp.surabaya.go.id/fileberita/perizinan-oss.jpeg",
+    excerpt: "Penyederhanaan proses perizinan melalui OSS Berbasis Risiko."
+  },
+  {
+    title: "Klinik Investasi Keliling Permudah Konsultasi Perizinan",
+    category: "Perizinan Berusaha",
+    date: "30 Desember 2025",
+    image: "https://dpm-ptsp.surabaya.go.id/fileberita/klinik-investasi.jpeg",
+    excerpt: "Layanan konsultasi perizinan langsung ke masyarakat."
+  },
+  {
+    title: "DPMPTSP Surabaya Sosialisasikan OSS Berbasis Risiko",
+    category: "Perizinan Berusaha",
+    date: "27 Desember 2025",
+    image: "https://dpm-ptsp.surabaya.go.id/fileberita/sosialisasi-oss.jpeg",
+    excerpt: "Pelaku usaha dibekali pemahaman perizinan berbasis tingkat risiko."
+  },
+  {
+    title: "Perizinan Berusaha Terintegrasi Tingkatkan Kepastian Hukum",
+    category: "Perizinan Berusaha",
+    date: "24 Desember 2025",
+    image: "https://dpm-ptsp.surabaya.go.id/fileberita/kepastian-hukum.jpeg",
+    excerpt: "Perizinan terintegrasi memberikan kepastian hukum bagi pelaku usaha."
+  },
+  {
+    title: "Optimalisasi Pelayanan Perizinan Melalui Digitalisasi",
+    category: "Perizinan Berusaha",
+    date: "21 Desember 2025",
+    image: "https://dpm-ptsp.surabaya.go.id/fileberita/digitalisasi-perizinan.jpeg",
+    excerpt: "Transformasi digital untuk meningkatkan kualitas layanan publik."
   }
 ];
 ---
@@ -36,11 +84,26 @@ const articles = [
   <!-- HERO -->
   <section class="relative overflow-hidden bg-gradient-to-r from-blue-800 to-blue-900 py-16 text-center text-white">
     <h1 class="text-4xl md:text-5xl font-bold mb-4">
-      Berita & Artikel
+      Artikel Penanaman Modal & Perizinan
     </h1>
     <p class="text-xl opacity-90 max-w-3xl mx-auto">
-      Informasi terkini seputar kegiatan dan pelayanan DPMPTSP Kota Surabaya
+      Informasi resmi terkait investasi dan perizinan berusaha di Kota Surabaya
     </p>
+  </section>
+
+  <!-- FILTER KATEGORI -->
+  <section class="container mx-auto px-4 pt-10">
+    <div class="flex flex-wrap gap-3 justify-center">
+      <span class="px-4 py-2 rounded-full bg-blue-600 text-white text-sm font-semibold">
+        Semua Artikel
+      </span>
+      <span class="px-4 py-2 rounded-full bg-green-100 text-green-700 text-sm font-semibold">
+        Penanaman Modal
+      </span>
+      <span class="px-4 py-2 rounded-full bg-yellow-100 text-yellow-700 text-sm font-semibold">
+        Perizinan Berusaha
+      </span>
+    </div>
   </section>
 
   <!-- CONTENT -->
@@ -59,6 +122,16 @@ const articles = [
             </div>
 
             <div class="p-6">
+              <span
+                class={`inline-block mb-3 px-3 py-1 rounded-full text-xs font-semibold ${
+                  item.category === "Penanaman Modal"
+                    ? "bg-green-100 text-green-700"
+                    : "bg-yellow-100 text-yellow-700"
+                }`}
+              >
+                {item.category}
+              </span>
+
               <h3 class="text-lg font-bold text-blue-800 mb-3 line-clamp-2">
                 {item.title}
               </h3>
@@ -79,7 +152,7 @@ const articles = [
                 </span>
               </div>
             </div>
-          </a> 
+          </a>
         </article>
       ))}
 
