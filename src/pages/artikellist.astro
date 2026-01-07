@@ -71,10 +71,16 @@ try {
           <a href={`/artikel/${item.slug}`}>
             <div class="relative h-56 overflow-hidden">
               <img
-                src={item.image}
+                src={
+                  item.image
+                    ? `https://dpm-ptsp.surabaya.go.id/fileberita/${item.image}`
+                    : "/img/default-berita.jpg"
+                }
                 alt={item.title}
+                loading="lazy"
                 class="absolute inset-0 w-full h-full object-cover hover:scale-105 transition duration-500"
               />
+
             </div>
 
             <div class="p-6">
