@@ -1,0 +1,59 @@
+---
+// pages/posts/[slug].astro
+import MainLayout from '../../layouts/MainLayout.astro';
+
+const { slug } = Astro.params; 
+const API_URL = `http://parkir.dpmptsp-surabaya.my.id/api/v1/posts/${slug}`;
+const RELATED_URL = `http://parkir.dpmptsp-surabaya.my.id/api/v1/posts?per_page=5`; // ambil berita lain
+
+let post = null;
+let related = [];
+let error = null;
+
+try {
+  const res = await fetch(API_URL);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  post = await res.json();
+
+  const resRelated = await fetch(RELATED_URL);
+  if (!resRelated.ok) throw new Error(`HTTP ${resRelated.status}`);
+  const dataRelated = await resRelated.json();
+  related = dataRelated.filter(r => r.slug !== slug); // jangan tampilkan artikel yang sama
+} catch (e) {
+  error = e.message;
+}
+---
+
+<MainLayout>
+  {error && <p class="text-red-500">Error: {error}</p>}
+
+  {post && (
+    <article class="prose mx-auto my-8">
+      <h1>{post.title}</h1>
+      <p class="text-gray-500">{post.date}</p>
+      {post.image && (
+        <img
+          src={`https://dpm-ptsp.surabaya.go.id/fileberita/${post.image}`}
+          alt={post.title}
+          class="rounded-lg my-4"
+        />
+      )}
+      <div innerHTML={post.content}></div>
+    </article>
+  )}
+
+  {related.length > 0 && (
+    <section class="mx-auto my-8 max-w-3xl">
+      <h2 class="text-xl font-bold mb-4">Berita Terkait</h2>
+      <ul class="space-y-2">
+        {related.map(item => (
+          <li>
+            <a href={`/posts/${item.slug}`} class="text-blue-600 hover:underline">
+              {item.title}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )}
+</MainLayout>
