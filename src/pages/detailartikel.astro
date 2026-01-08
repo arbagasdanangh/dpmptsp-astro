@@ -1,91 +1,37 @@
 ---
-export const prerender = false;
+// pages/posts/[slug].astro
+import MainLayout from '../../layouts/MainLayout.astro';
 
-import MainLayout from "../../layouts/MainLayout.astro";
+const { slug } = Astro.params; // Ambil slug dari URL
+const API_URL = `http://parkir.dpmptsp-surabaya.my.id/api/v1/posts/${slug}`;
 
-// ======================
-// KONFIGURASI API
-// ======================
-const BASE_URL = "http://parkir.dpmptsp-surabaya.my.id";
-
-// ======================
-// AMBIL SLUG DARI URL
-// ======================
-const slug = Astro.params.slug;
-
-// ======================
-// FETCH DETAIL ARTIKEL
-// ======================
 let post = null;
+let error = null;
 
 try {
-  const res = await fetch(`${BASE_URL}/api/v1/posts/${slug}`);
-
-  if (!res.ok) {
-    throw new Error("Artikel tidak ditemukan");
-  }
-
-  const json = await res.json();
-  post = json.data;
-} catch (err) {
-  console.error("Gagal ambil artikel:", err);
+  const res = await fetch(API_URL);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  post = await res.json();
+} catch (e) {
+  error = e.message;
 }
 ---
-<MainLayout title={post ? post.title : "Artikel Penanaman Modal & Perizinan | DPMPTSP Kota Surabaya"}>
 
-  <!-- HERO -->
-  <section class="bg-gradient-to-r from-blue-800 to-blue-900 py-16 text-center text-white">
-    <h1 class="text-4xl md:text-5xl font-bold mb-4">
-      {post ? post.title : "Artikel Penanaman Modal & Perizinan"}
-    </h1>
-    <p class="text-lg opacity-90 max-w-3xl mx-auto">
-      Informasi resmi investasi dan perizinan berusaha di Kota Surabaya
-    </p>
-  </section>
+<MainLayout>
+  {error && <p class="text-red-500">Error: {error}</p>}
 
-  <!-- CONTENT -->
-  <section class="container mx-auto px-4 py-12">
-    {post ? (
-      <article class="bg-white rounded-2xl shadow-lg overflow-hidden">
-        <div class="relative h-96 overflow-hidden mb-6">
-          <img
-            src={
-              post.picture && post.picture.trim() !== ""
-                ? `https://dpm-ptsp.surabaya.go.id/fileberita/${post.picture}`
-                : "/img/default-berita.jpg"
-            }
-            alt={post.title}
-            loading="lazy"
-            class="absolute inset-0 w-full h-full object-cover"
-          />
-        </div>
-
-        <div class="p-6">
-          <span
-            class={`inline-block mb-3 px-3 py-1 rounded-full text-xs font-semibold ${
-              post.category === "Penanaman Modal"
-                ? "bg-green-100 text-green-700"
-                : post.category === "Perizinan Berusaha"
-                ? "bg-yellow-100 text-yellow-700"
-                : "bg-gray-100 text-gray-700"
-            }`}
-          >
-            {post.category}
-          </span>
-
-          <div class="prose max-w-none text-gray-700 mt-4">
-            {@html post.content}
-          </div>
-
-          <div class="mt-6 text-sm text-gray-500">
-            Dipublikasikan: {post.date}
-          </div>
-        </div>
-      </article>
-    ) : (
-      <p class="text-center text-gray-500">
-        Artikel tidak ditemukan atau gagal dimuat.
-      </p>
-    )}
-  </section>
+  {post && (
+    <article class="prose mx-auto my-8">
+      <h1>{post.title}</h1>
+      <p class="text-gray-500">{post.date}</p>
+      {post.image && (
+        <img
+          src={`https://dpm-ptsp.surabaya.go.id/fileberita/${post.image}`}
+          alt={post.title}
+          class="rounded-lg my-4"
+        />
+      )}
+      <div innerHTML={post.content}></div>
+    </article>
+  )}
 </MainLayout>
