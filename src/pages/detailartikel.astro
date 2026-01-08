@@ -2,59 +2,23 @@
 export const prerender = false;
 
 import MainLayout from "../../layouts/MainLayout.astro";
-import { slugify } from "../../utils/slugify";
 
 const BASE_URL = "http://parkir.dpmptsp-surabaya.my.id";
-const slug = Astro.params.slug;
+const { slug } = Astro.params;
 
 let post = null;
 
 try {
-  // Ambil data besar biar slug ketemu
-  const res = await fetch(`${BASE_URL}/api/v1/posts?per_page=100`);
+  const res = await fetch(`${BASE_URL}/api/v1/posts/${slug}`);
+
+  if (!res.ok) {
+    throw new Error("Artikel tidak ditemukan");
+  }
+
   const json = await res.json();
-
-  const rows = json.data ?? [];
-
-  post = rows.find(
-    (item) => slugify(item.title) === slug
-  );
-} catch (e) {
-  console.error("Gagal ambil artikel", e);
-}
-
-if (!post) {
+  post = json.data;
+} catch (err) {
+  console.error("Gagal mengambil artikel:", err);
   throw new Response("Artikel tidak ditemukan", { status: 404 });
 }
 ---
-
-<MainLayout title={post.title}>
-
-<section class="container mx-auto px-4 py-12 max-w-4xl">
-
-  <h1 class="text-3xl md:text-4xl font-bold text-blue-800 mb-4">
-    {post.title}
-  </h1>
-
-  <div class="text-sm text-gray-500 mb-6">
-    {post.date} · {post.category?.title ?? "Umum"}
-  </div>
-
-  <img
-    src={
-      post.picture
-        ? `https://dpm-ptsp.surabaya.go.id/fileberita/${post.picture}`
-        : "/img/default-berita.jpg"
-    }
-    class="w-full rounded-xl mb-8"
-    alt={post.title}
-  />
-
-  <article
-    class="prose prose-lg max-w-none"
-    set:html={post.ref_content}
-  />
-
-</section>
-
-</MainLayout>
