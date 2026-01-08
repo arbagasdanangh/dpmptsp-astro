@@ -1,149 +1,90 @@
 ---
-/**
- * ARTIKEL LIST – ASTRO + API DPMPTSP
- * Aman untuk Vercel (HTTP API)
- */
 export const prerender = false;
 
-import MainLayout from "../layouts/MainLayout.astro";
-import { slugify } from "../utils/slugify";
+import MainLayout from "../../layouts/MainLayout.astro";
 
 // ======================
 // KONFIGURASI API
 // ======================
 const BASE_URL = "http://parkir.dpmptsp-surabaya.my.id";
-const PER_PAGE = 20;
-
-// ambil page dari query (?page=2)
-const page = Number(Astro.url.searchParams.get("page") ?? 1);
 
 // ======================
-// FETCH DATA
+// AMBIL SLUG DARI URL
 // ======================
-let articles = [];
-let meta = {};
+const slug = Astro.params.slug;
+
+// ======================
+// FETCH DETAIL ARTIKEL
+// ======================
+let post = null;
 
 try {
-  const res = await fetch(
-    `${BASE_URL}/api/v1/posts?per_page=${PER_PAGE}&page=${page}`
-  );
+  const res = await fetch(`${BASE_URL}/api/v1/posts/${slug}`);
+
+  if (!res.ok) {
+    throw new Error("Artikel tidak ditemukan");
+  }
+
   const json = await res.json();
-
-  articles = (json.data ?? []).map((item) => ({
-    title: item.title,
-    slug: slugify(item.title), // slug AMAN
-    date: item.date,
-    category: item.category ?? "Umum",
-    excerpt: item.content ?? "",
-    content: item.ref ?? "",
-    image: "/img/default-berita.jpg", // fallback WAJIB
-  }));
-
-  meta = json.meta ?? {};
+  post = json.data;
 } catch (err) {
-  console.error("Gagal mengambil data API", err);
+  console.error("Gagal ambil artikel:", err);
 }
 ---
-<MainLayout title="Artikel Penanaman Modal & Perizinan | DPMPTSP Kota Surabaya">
 
-  <!-- HERO -->
-  <section class="bg-gradient-to-r from-blue-800 to-blue-900 py-16 text-center text-white">
-    <h1 class="text-4xl md:text-5xl font-bold mb-4">
-      Artikel Penanaman Modal & Perizinan
-    </h1>
-    <p class="text-lg opacity-90 max-w-3xl mx-auto">
-      Informasi resmi investasi dan perizinan berusaha di Kota Surabaya
-    </p>
-  </section>
+<MainLayout title={post?.title ?? "Artikel Tidak Ditemukan"}>
 
-  <!-- CONTENT -->
-  <section class="container mx-auto px-4 py-12">
+  {!post && (
+    <section class="container mx-auto px-4 py-20 text-center">
+      <h1 class="text-2xl font-bold text-gray-700">
+        Artikel tidak ditemukan
+      </h1>
+    </section>
+  )}
 
-    {articles.length === 0 && (
-      <p class="text-center text-gray-500">
-        Data artikel belum tersedia
-      </p>
-    )}
+  {post && (
+    <>
+      <!-- HERO -->
+      <section class="bg-gradient-to-r from-blue-800 to-blue-900 py-14 text-white text-center">
+        <h1 class="text-3xl md:text-4xl font-bold max-w-4xl mx-auto">
+          {post.title}
+        </h1>
+        <p class="mt-3 text-sm opacity-90">
+          {post.category?.name} • {post.date}
+        </p>
+      </section>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-      {articles.map((item) => (
-        <article class="bg-white rounded-2xl shadow-lg overflow-hidden hover:-translate-y-1 transition">
-          <a href={`/detailartikel/${item.slug}`}>
-            <div class="relative h-56 overflow-hidden">
-              <img
-  src={
-    item.picture && item.picture.trim() !== ""
-      ? `https://dpm-ptsp.surabaya.go.id/fileberita/${item.picture}`
-      : "/img/default-berita.jpg"
-  }
-  alt={item.title}
-  loading="lazy"
-  class="absolute inset-0 w-full h-full object-cover hover:scale-105 transition duration-500"
-/>
+      <!-- CONTENT -->
+      <section class="container mx-auto px-4 py-12">
+        <article class="max-w-4xl mx-auto bg-white rounded-2xl shadow p-6 md:p-10">
 
+          {post.picture && (
+            <img
+              src={`https://dpm-ptsp.surabaya.go.id/fileberita/${post.picture}`}
+              alt={post.title}
+              class="w-full h-[420px] object-cover rounded-xl mb-8"
+            />
+          )}
 
-            </div>
+          <!-- ISI ARTIKEL -->
+          <div
+            class="prose prose-lg max-w-none text-justify"
+            set:html={post.ref}
+          />
 
-            <div class="p-6">
-              <span
-                class={`inline-block mb-3 px-3 py-1 rounded-full text-xs font-semibold ${
-                  item.category === "Penanaman Modal"
-                    ? "bg-green-100 text-green-700"
-                    : item.category === "Perizinan Berusaha"
-                    ? "bg-yellow-100 text-yellow-700"
-                    : "bg-gray-100 text-gray-700"
-                }`}
-              >
-                {item.category}
-              </span>
+          <!-- TAG -->
+          <div class="mt-10 pt-6 border-t">
+            <span class="text-sm font-semibold text-gray-600">
+              Tag:
+            </span>
+            <span class="ml-2 inline-block bg-gray-100 px-3 py-1 rounded-full text-sm">
+              #{post.category?.slug}
+            </span>
+          </div>
 
-              <h3 class="text-lg font-bold text-blue-800 mb-3 line-clamp-2">
-                {item.title}
-              </h3>
-
-              <p class="text-gray-600 text-sm mb-4 line-clamp-3">
-                {item.excerpt}
-              </p>
-
-              <div class="flex items-center justify-between pt-4 border-t">
-                <span class="text-sm text-gray-500">
-                  {item.date}
-                </span>
-
-                <span class="text-blue-600 font-semibold text-sm flex items-center">
-                  Baca Selengkapnya →
-                </span>
-              </div>
-            </div>
-          </a>
         </article>
-      ))}
-    </div>
+      </section>
+    </>
+  )}
 
-    <!-- PAGINATION -->
-    <div class="flex justify-center gap-3 mt-12">
-      {page > 1 && (
-        <a
-          href={`/artikellist?page=${page - 1}`}
-          class="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200"
-        >
-          ← Sebelumnya
-        </a>
-      )}
-
-      <span class="px-4 py-2 rounded-lg bg-blue-600 text-white">
-        Page {page}
-      </span>
-
-      {articles.length === PER_PAGE && (
-        <a
-          href={`/artikellist?page=${page + 1}`}
-          class="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200"
-        >
-          Selanjutnya →
-        </a>
-      )}
-    </div>
-
-  </section>
 </MainLayout>
