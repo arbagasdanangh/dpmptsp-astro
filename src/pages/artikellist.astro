@@ -71,15 +71,16 @@ try {
           <a href={`/artikel/${item.slug}`}>
             <div class="relative h-56 overflow-hidden">
               <img
-                src={
-                  item.picture
-                    ? `https://dpm-ptsp.surabaya.go.id/fileberita/${item.picture}`
-                    : "/img/default-berita.jpg"
-                }
-                alt={item.title}
-                loading="lazy"
-                class="absolute inset-0 w-full h-full object-cover hover:scale-105 transition duration-500"
-              />
+  src={
+    item.picture && item.picture.trim() !== ""
+      ? `https://dpm-ptsp.surabaya.go.id/fileberita/${item.picture}`
+      : "/img/default-berita.jpg"
+  }
+  alt={item.title}
+  loading="lazy"
+  class="absolute inset-0 w-full h-full object-cover hover:scale-105 transition duration-500"
+/>
+
 
             </div>
 
