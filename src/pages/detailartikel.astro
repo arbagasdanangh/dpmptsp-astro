@@ -1,71 +1,149 @@
 ---
+/**
+ * ARTIKEL LIST – ASTRO + API DPMPTSP
+ * Aman untuk Vercel (HTTP API)
+ */
 export const prerender = false;
 
-import MainLayout from "../../layouts/MainLayout.astro";
+import MainLayout from "../layouts/MainLayout.astro";
+import { slugify } from "../utils/slugify";
 
+// ======================
+// KONFIGURASI API
+// ======================
 const BASE_URL = "http://parkir.dpmptsp-surabaya.my.id";
-const { slug } = Astro.params;
+const PER_PAGE = 20;
 
-let post = null;
+// ambil page dari query (?page=2)
+const page = Number(Astro.url.searchParams.get("page") ?? 1);
+
+// ======================
+// FETCH DATA
+// ======================
+let articles = [];
+let meta = {};
 
 try {
-  const res = await fetch(`${BASE_URL}/api/v1/posts/${slug}`);
-
-  if (!res.ok) {
-    throw new Error("Artikel tidak ditemukan");
-  }
-
+  const res = await fetch(
+    `${BASE_URL}/api/v1/posts?per_page=${PER_PAGE}&page=${page}`
+  );
   const json = await res.json();
-  post = json.data;
+
+  articles = (json.data ?? []).map((item) => ({
+    title: item.title,
+    slug: slugify(item.title), // slug AMAN
+    date: item.date,
+    category: item.category ?? "Umum",
+    excerpt: item.content ?? "",
+    content: item.ref ?? "",
+    image: "/img/default-berita.jpg", // fallback WAJIB
+  }));
+
+  meta = json.meta ?? {};
 } catch (err) {
-  console.error("Gagal mengambil artikel:", err);
-  throw new Response("Artikel tidak ditemukan", { status: 404 });
+  console.error("Gagal mengambil data API", err);
 }
 ---
-<MainLayout title={post.seo_title ?? post.title}>
+<MainLayout title="Artikel Penanaman Modal & Perizinan | DPMPTSP Kota Surabaya">
 
-<section class="container mx-auto px-4 py-12 max-w-4xl">
+  <!-- HERO -->
+  <section class="bg-gradient-to-r from-blue-800 to-blue-900 py-16 text-center text-white">
+    <h1 class="text-4xl md:text-5xl font-bold mb-4">
+      Artikel Penanaman Modal & Perizinan
+    </h1>
+    <p class="text-lg opacity-90 max-w-3xl mx-auto">
+      Informasi resmi investasi dan perizinan berusaha di Kota Surabaya
+    </p>
+  </section>
 
-  <!-- Judul -->
-  <h1 class="text-3xl md:text-4xl font-bold text-blue-800 mb-4">
-    {post.title}
-  </h1>
+  <!-- CONTENT -->
+  <section class="container mx-auto px-4 py-12">
 
-  <!-- Meta -->
-  <div class="flex flex-wrap items-center gap-4 text-sm text-gray-500 mb-6">
-    <span>{post.date}</span>
-    <span>•</span>
-    <span class="capitalize">
-      {post.category?.name ?? "Umum"}
-    </span>
-  </div>
+    {articles.length === 0 && (
+      <p class="text-center text-gray-500">
+        Data artikel belum tersedia
+      </p>
+    )}
 
-  <!-- Gambar -->
-  <img
-    src={
-      post.picture
-        ? `https://dpm-ptsp.surabaya.go.id/fileberita/${post.picture}`
-        : "/img/default-berita.jpg"
-    }
-    alt={post.title}
-    loading="lazy"
-    class="w-full rounded-xl mb-8 shadow"
-  />
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      {articles.map((item) => (
+        <article class="bg-white rounded-2xl shadow-lg overflow-hidden hover:-translate-y-1 transition">
+          <a href={`/detailartikel/${item.slug}`}>
+            <div class="relative h-56 overflow-hidden">
+              <img
+  src={
+    item.picture && item.picture.trim() !== ""
+      ? `https://dpm-ptsp.surabaya.go.id/fileberita/${item.picture}`
+      : "/img/default-berita.jpg"
+  }
+  alt={item.title}
+  loading="lazy"
+  class="absolute inset-0 w-full h-full object-cover hover:scale-105 transition duration-500"
+/>
 
-  <!-- Isi -->
-  <article
-    class="prose prose-lg max-w-none text-justify"
-    set:html={post.ref}
-  />
 
-  <!-- Tags / Kategori -->
-  <div class="mt-10 pt-6 border-t">
-    <span class="font-semibold text-gray-700 mr-2">Kategori:</span>
-    <span class="inline-block bg-gray-100 px-3 py-1 rounded-full text-sm">
-      #{post.category?.slug}
-    </span>
-  </div>
+            </div>
 
-</section>
+            <div class="p-6">
+              <span
+                class={`inline-block mb-3 px-3 py-1 rounded-full text-xs font-semibold ${
+                  item.category === "Penanaman Modal"
+                    ? "bg-green-100 text-green-700"
+                    : item.category === "Perizinan Berusaha"
+                    ? "bg-yellow-100 text-yellow-700"
+                    : "bg-gray-100 text-gray-700"
+                }`}
+              >
+                {item.category}
+              </span>
 
+              <h3 class="text-lg font-bold text-blue-800 mb-3 line-clamp-2">
+                {item.title}
+              </h3>
+
+              <p class="text-gray-600 text-sm mb-4 line-clamp-3">
+                {item.excerpt}
+              </p>
+
+              <div class="flex items-center justify-between pt-4 border-t">
+                <span class="text-sm text-gray-500">
+                  {item.date}
+                </span>
+
+                <span class="text-blue-600 font-semibold text-sm flex items-center">
+                  Baca Selengkapnya →
+                </span>
+              </div>
+            </div>
+          </a>
+        </article>
+      ))}
+    </div>
+
+    <!-- PAGINATION -->
+    <div class="flex justify-center gap-3 mt-12">
+      {page > 1 && (
+        <a
+          href={`/artikellist?page=${page - 1}`}
+          class="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200"
+        >
+          ← Sebelumnya
+        </a>
+      )}
+
+      <span class="px-4 py-2 rounded-lg bg-blue-600 text-white">
+        Page {page}
+      </span>
+
+      {articles.length === PER_PAGE && (
+        <a
+          href={`/artikellist?page=${page + 1}`}
+          class="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200"
+        >
+          Selanjutnya →
+        </a>
+      )}
+    </div>
+
+  </section>
 </MainLayout>
