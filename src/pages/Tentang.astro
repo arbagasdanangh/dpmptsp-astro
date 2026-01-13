@@ -1,135 +1,122 @@
 ---
 import MainLayout from "../layouts/MainLayout.astro";
 
-const API_BASE = import.meta.env.PUBLIC_API_BASE;
-const FILE_BASE = import.meta.env.PUBLIC_FILE_BASE;
+/* ================= SAFE ENV ================= */
+const API_BASE =
+  import.meta.env.PUBLIC_API_BASE ||
+  "https://parkir.dpmptsp-surabaya.my.id";
 
-// query menu
-const active = Astro.url.searchParams.get("menu") || "sambutan";
+const FILE_BASE =
+  import.meta.env.PUBLIC_FILE_BASE ||
+  "https://dpm-ptsp.surabaya.go.id/fileberita";
 
-// fetch menu utama
-const aboutRes = await fetch(`${API_BASE}/api/v1/about-me`);
-const aboutJson = await aboutRes.json();
-const about = aboutJson?.data || {};
+/* ================= FETCH ABOUT ME ================= */
+let about = {};
 
-// fetch detail jika bukan sambutan
-let detailData = [];
-if (active !== "sambutan") {
-  const detailRes = await fetch(
-    `${API_BASE}/api/v1/about-me/detail?category=${active}`
+try {
+  const res = await fetch(`${API_BASE}/api/v1/about-me`);
+  const json = await res.json();
+  about = json?.data || {};
+} catch (e) {
+  console.error("ABOUT ME ERROR", e);
+}
+
+/* ================= FETCH IKM ================= */
+let ikmList = [];
+
+try {
+  const res = await fetch(
+    `${API_BASE}/api/v1/content?category=ikm`
   );
-  const detailJson = await detailRes.json();
-  detailData = detailJson?.data?.data || [];
+  const json = await res.json();
+  ikmList = json?.data?.data || [];
+} catch (e) {
+  console.error("IKM ERROR", e);
 }
 ---
 
-<MainLayout title="Tentang Kami | DPMPTSP Kota Surabaya">
-<section class="bg-gray-50 py-16">
-  <div class="container mx-auto px-4">
+<MainLayout title="Tentang Kami - DPMPTSP Kota Surabaya">
+  <!-- HERO -->
+  <section class="py-16 text-center">
+    <h1 class="text-4xl font-bold text-blue-800 mb-4">
+      Visi Misi Sambutan Tim Organisasi
+    </h1>
+    <p class="text-gray-600 max-w-2xl mx-auto">
+      Informasi lengkap tentang organisasi, visi misi, dan pelayanan
+      DPM-PTSP Kota Surabaya
+    </p>
+  </section>
 
-    <!-- HEADER -->
-    <div class="text-center mb-14">
-      <h1 class="text-4xl font-bold text-blue-700 mb-3">
-        Visi Misi Sambutan Tim Organisasi
-      </h1>
-      <p class="text-gray-600">
-        Informasi lengkap tentang organisasi, visi misi, dan pelayanan DPM-PTSP Kota Surabaya
-      </p>
-    </div>
-
+  <!-- CONTENT -->
+  <section class="container mx-auto px-4 pb-20">
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
 
       <!-- SIDEBAR -->
-      <aside class="bg-white rounded-xl shadow p-5">
-        <h3 class="font-bold text-blue-600 mb-4">Menu Informasi</h3>
+      <aside class="bg-white rounded-xl shadow p-6">
+        <h3 class="font-semibold mb-4 text-blue-700">Menu Informasi</h3>
         <ul class="space-y-2 text-sm">
-
-          {[
-            ["sambutan", "Sambutan"],
-            ["visi-misi", "Visi dan Misi"],
-            ["budaya", "Budaya Pelayanan"],
-            ["motto", "Motto Pelayanan"],
-            ["maklumat", "Maklumat Pelayanan"],
-            ["ikm", "Indeks Kepuasan Masyarakat"],
-            ["zona-integritas", "Zona Integritas"],
-            ["struktur", "Struktur Organisasi"],
-          ].map(([key, label]) => (
-            <li>
-              <a
-                href={`/Tentang?menu=${key}`}
-                class={`block px-4 py-2 rounded-lg ${
-                  active === key
-                    ? "bg-blue-600 text-white"
-                    : "hover:bg-gray-100"
-                }`}
-              >
-                {label}
-              </a>
-            </li>
-          ))}
+          <li class="font-semibold text-blue-600">Sambutan</li>
+          <li>Visi dan Misi</li>
+          <li>Budaya Pelayanan</li>
+          <li>Motto Pelayanan</li>
+          <li>Maklumat Pelayanan</li>
+          <li>Kompensasi Layanan</li>
+          <li>Indeks Kepuasan Masyarakat</li>
+          <li>Zona Integritas</li>
+          <li>Struktur Organisasi</li>
         </ul>
       </aside>
 
-      <!-- CONTENT -->
-      <main class="lg:col-span-3">
+      <!-- MAIN -->
+      <div class="lg:col-span-3 space-y-10">
 
         <!-- SAMBUTAN -->
-        {active === "sambutan" && (
-          <div class="bg-white rounded-xl shadow p-8">
-            <h2 class="text-2xl font-bold text-blue-700 mb-4">
-              Sambutan
-            </h2>
+        <div class="bg-white rounded-xl shadow p-8">
+          <h2 class="text-2xl font-bold text-blue-700 mb-4">
+            Sambutan
+          </h2>
+          <blockquote class="border-l-4 border-blue-500 pl-6 italic text-gray-700 bg-blue-50 p-6 rounded">
+            {about.sambutan || "-"}
+          </blockquote>
+          <p class="text-right mt-4 font-semibold text-blue-700">
+            Kepala Dinas DPM-PTSP<br />
+            <span class="text-sm font-normal">Kota Surabaya</span>
+          </p>
+        </div>
 
-            <blockquote class="bg-yellow-50 border-l-4 border-yellow-400 p-6 italic text-gray-700 leading-relaxed">
-              {about.sambutan}
-            </blockquote>
+        <!-- VISI MISI -->
+        <div class="bg-white rounded-xl shadow p-8">
+          <h2 class="text-2xl font-bold text-blue-700 mb-4">
+            Visi dan Misi
+          </h2>
+          <p class="text-gray-700 whitespace-pre-line">
+            {about["visi-misi"] || "-"}
+          </p>
+        </div>
 
-            <div class="text-right mt-6 font-semibold text-blue-700">
-              Kepala Dinas DPM-PTSP<br />
-              <span class="text-gray-500 text-sm">Kota Surabaya</span>
-            </div>
-          </div>
-        )}
+        <!-- IKM -->
+        <div class="bg-white rounded-xl shadow p-8">
+          <h2 class="text-2xl font-bold text-blue-700 mb-6">
+            Indeks Kepuasan Masyarakat
+          </h2>
 
-        <!-- DETAIL (IKM, dll) -->
-        {active !== "sambutan" && (
-          <div class="bg-white rounded-xl shadow p-8">
-            <h2 class="text-2xl font-bold text-blue-700 mb-6 capitalize">
-              {active.replace("-", " ")}
-            </h2>
-
-            {detailData.length === 0 && (
-              <p class="text-gray-500">Data belum tersedia.</p>
-            )}
-
-            <!-- GRID IMAGE -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-              {detailData.map(item => (
-                <div class="border rounded-lg overflow-hidden hover:shadow-lg transition">
-                  <img
-                    src={`${FILE_BASE}/${item.file}`}
-                    alt={item.title}
-                    class="w-full h-56 object-cover"
-                    loading="lazy"
-                  />
-                  <div class="p-4">
-                    <h3 class="font-semibold text-sm text-gray-800">
-                      {item.title}
-                    </h3>
-                    {item.description && (
-                      <p class="text-xs text-gray-500 mt-1">
-                        {item.description}
-                      </p>
-                    )}
-                  </div>
+          <div class="grid grid-cols-2 md:grid-cols-3 gap-6">
+            {ikmList.map((item) => (
+              <div class="border rounded-lg overflow-hidden hover:shadow-lg transition">
+                <img
+                  src={`${FILE_BASE}/${item.file}`}
+                  alt={item.title}
+                  class="w-full h-48 object-cover"
+                />
+                <div class="p-3 text-sm text-center font-medium">
+                  {item.title}
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
-        )}
+        </div>
 
-      </main>
+      </div>
     </div>
-  </div>
-</section>
+  </section>
 </MainLayout>
