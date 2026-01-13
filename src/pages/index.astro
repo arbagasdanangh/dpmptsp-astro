@@ -3,4 +3,108 @@ import MainLayout from "../layouts/MainLayout.astro";
 import Pdf from "../components/Pdf.astro";
 import { slugify } from "../utils/slugify";
 import { isRenderTemplateResult } from "astro/runtime/server/render/astro/render-template.js";
+---
+
+<MainLayout title="DPMPTSP Kota Surabaya">
+  <!-- Header & Navigation -->
+  <header class="sticky top-0 z-50 bg-[#F7F7F7]">
+    <div class="container mx-auto px-4 sm:px-6">
+      <div class="flex justify-between items-center py-4 relative">
+        <!-- Logo -->
+        <div class="flex items-center z-10 -ml-10">
+          <a href="https://dpm-ptsp.surabaya.go.id/v5/" class="flex items-center space-x-3">
+            <img src="/gambar/logohitam.png" class="h-12" alt="Logo" />
+          </a>
+        </div>
+
+        <!-- Desktop Navigation -->
+        <nav class="hidden xl:block absolute left-1/2 transform -translate-x-1/2">
+          <ul class="flex items-center space-x-8">
+            <li>
+              <a href="/beranda"
+                class="font-semibold text-[#0900C3] hover:text-yellow-400 transition">
+                Beranda
+              </a>
+            </li>
+
+            <!-- Tentang Kami -->
+            <li class="relative group">
+              <a href="/tentangkm"
+                class="text-gray-700 font-semibold hover:text-yellow-400 flex items-center">
+                Tentang Kami <i class="fas fa-chevron-down ml-1 text-xs"></i>
+              </a>
+              <div
+                class="absolute left-0 mt-2 w-64 bg-white rounded-b-lg shadow-lg opacity-0 invisible
+                group-hover:opacity-100 group-hover:visible transition-all z-50">
+                <a href="/tentangkm" class="block px-4 py-3 hover:bg-[#FFD41D]">
+                  Gambaran DPM-PTSP
+                </a>
+                <a href="/tentangkm#stdjenis-sec" class="block px-4 py-3 hover:bg-[#FFD41D]">
+                  Visi dan Misi
+                </a>
+                <a href="/tentangkm#kontak-sec" class="block px-4 py-3 hover:bg-[#FFD41D]">
+                  FAQ
+                </a>
+                <a href="/tentangkm#kontak-sec"
+                  class="block px-4 py-3 hover:bg-[#FFD41D] rounded-b-lg">
+                  Hubungi Kami
+                </a>
+              </div>
+            </li>
+
+            <!-- Tambahkan menu lain: Investasi, Aplikasi, Pelayanan, Informasi -->
+          </ul>
+        </nav>
+
+        <div class="hidden xl:block z-10 -mr-8">
+          <a href="/tentangkm"
+            class="bg-[#FFD41D] text-[#0900C3] font-bold px-4 py-3 rounded-lg hover:bg-[#FFC400]">
+            Kontak & Pengaduan
+          </a>
+        </div>
+
+        <!-- Mobile Button -->
+        <button id="mobile-menu-button" class="xl:hidden text-blue-600">
+          <i class="fas fa-bars text-2xl"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="relative overflow-hidden bg-baru-750">
+    <div class="container mx-auto px-4 py-16 md:py-24 text-center text-white">
+      <h1 class="text-4xl md:text-5xl font-bold mb-4">
+        Investasi & Perizinan Terpadu
+      </h1>
+      <p class="text-xl opacity-90">
+        Dinas Penanaman Modal dan Pelayanan Terpadu Satu Pintu Kota Surabaya
+      </p>
+    </div>
+  </section>
+
+  <!-- Tentang Kami -->
+  <section class="py-[60px] bg-white">
+    <div class="container mx-auto px-4 grid md:grid-cols-2 gap-12 items-center">
+      <div>
+        <h2 class="text-3xl font-bold text-blue-800 mb-6">
+          Selamat Datang di DPMPTSP Kota Surabaya
+        </h2>
+        <p class="text-gray-700 text-justify mb-4">
+          DPMPTSP Kota Surabaya merupakan lembaga strategis
+          dalam pelayanan perizinan terpadu.
+        </p>
+        <a href="/tentangkm"
+          class="inline-flex items-center bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-[#0900C3]">
+          Baca Selengkapnya <i class="fas fa-arrow-right ml-2"></i>
+        </a>
+      </div>
+
+      <img src="/gambar/dpm3.jpg" class="rounded-2xl" alt="DPMPTSP" />
+    </div>
+  </section>
+
+  <!-- Section lain (Mengapa Surabaya, Berita, Video, dll) -->
+  <!-- ISINYA TINGGAL COPY PASTE LANGSUNG DARI HTML KAMU -->
+</MainLayout>
 
