@@ -1,18 +1,20 @@
 ---
 import MainLayout from "../../layouts/MainLayout.astro";
 
-const IMAGE_BASE = "https://dpm-ptsp.surabaya.go.id/fileberita/";
-const API_BASE = "http://parkir.dpmptsp-surabaya.my.id/api/v1/posts";
-
 /* ================= STATIC PATHS ================= */
 export async function getStaticPaths() {
-  const res = await fetch(API_BASE);
+  const res = await fetch(
+    "http://parkir.dpmptsp-surabaya.my.id/api/v1/posts"
+  );
   const json = await res.json();
 
-  return json.data.map((item) => ({
+  return (json.data || []).map((item) => ({
     params: { slug: item.slug }
   }));
 }
+
+/* ================= CONFIG ================= */
+const IMAGE_BASE = "https://dpm-ptsp.surabaya.go.id/fileberita/";
 
 /* ================= PARAM ================= */
 const { slug } = Astro.params;
@@ -22,7 +24,9 @@ let post = null;
 let error = false;
 
 try {
-  const res = await fetch(`${API_BASE}/${slug}`);
+  const res = await fetch(
+    `http://parkir.dpmptsp-surabaya.my.id/api/v1/posts/${slug}`
+  );
   const json = await res.json();
   post = json.data ?? null;
 } catch (e) {
@@ -63,6 +67,7 @@ try {
 
       <!-- CONTENT -->
       <div class="container mx-auto px-6 max-w-4xl py-16">
+
         <h1 class="text-3xl md:text-4xl font-bold text-blue-800 mb-6">
           {post.title}
         </h1>
@@ -73,13 +78,11 @@ try {
         />
 
         <div class="mt-12">
-          <a
-            href="/berita"
-            class="text-blue-700 font-semibold hover:underline"
-          >
+          <a href="/berita" class="text-blue-700 font-semibold hover:underline">
             ← Kembali ke Berita
           </a>
         </div>
+
       </div>
     </>
   )}
