@@ -146,6 +146,13 @@ try {
       <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
         {berita.map((item) => (
           <article class="bg-blue-700 text-white rounded-xl p-6 shadow">
+            <img
+              src={`${IMAGE_BASE}${item.picture}`}
+              alt={item.title}
+              class="absolute inset-0 w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+              style="object-position: center 30%;"
+              loading="lazy"
+            />
             <h3 class="font-bold text-lg mb-3 line-clamp-2">
               {item.title}
             </h3>
