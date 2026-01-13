@@ -1,73 +1,148 @@
 ---
 import MainLayout from "../layouts/MainLayout.astro";
 
-/* ================= BASE URL ================= */
 const BASE_URL = "https://parkir.dpmptsp-surabaya.my.id";
 
-/* ================= FETCH API ================= */
-const res = await fetch(`${BASE_URL}/api/v1/about-me`);
+/* ================= FETCH MENU ================= */
+const resMenu = await fetch(`${BASE_URL}/api/v1/about-me`);
+const menuJson = await resMenu.json();
+const menus = menuJson?.data || {};
 
-if (!res.ok) {
-  throw new Error("Gagal mengambil data Tentang");
-}
+/* ================= FETCH IKM ================= */
+const resIkm = await fetch(`${BASE_URL}/api/v1/about-me/ikm`);
+const ikmJson = await resIkm.json();
+const ikm = Array.isArray(ikmJson) ? ikmJson[0] : ikmJson;
 
-const result = await res.json();
-
-/*
-  Response:
-  {
-    status: "success",
-    data: {
-      budaya: "...",
-      ikm: "...",
-      visi-misi: "...",
-      ...
-    }
-  }
-*/
-const aboutData = result?.data || {};
+/* mapping icon */
+const iconMap = {
+  sambutan: "fa-microphone-alt",
+  "visi-misi": "fa-bullseye",
+  budaya: "fa-hands-helping",
+  "motto-layanan": "fa-quote-right",
+  maklumat: "fa-scroll",
+  kompensasi: "fa-hand-holding-usd",
+  ikm: "fa-smile",
+  struktur: "fa-sitemap",
+  "piagam-penghargaan": "fa-award",
+  "zona-integritas": "fa-shield-alt",
+};
 ---
 
-<MainLayout title="Tentang Organisasi">
-  <main class="min-h-screen bg-gray-50">
+<MainLayout title="Informasi Organisasi">
+<section id="stdjenis-sec" class="py-20 bg-gradient-to-b from-gray-50 to-white">
+  <div class="container mx-auto px-4">
 
-    <!-- HERO -->
-    <section class="bg-blue-800 text-white py-16">
-      <div class="container mx-auto px-4 text-center">
-        <h1 class="text-4xl font-bold mb-4">
-          Tentang Organisasi
-        </h1>
-        <p class="text-blue-100 max-w-2xl mx-auto">
-          Informasi resmi terkait profil dan layanan DPMPTSP Kota Surabaya
-        </p>
-      </div>
-    </section>
+    <!-- HEADER -->
+    <div class="text-center mb-16">
+      <span class="text-sm font-semibold text-blue-600 bg-blue-50 px-4 py-2 rounded-full">
+        Informasi Organisasi
+      </span>
+      <h2 class="text-4xl font-bold text-blue-800 mt-6 mb-4">
+        {menus["sambutan"] ?? "Informasi Organisasi"}
+      </h2>
+      <p class="text-gray-600 max-w-2xl mx-auto text-lg">
+        Informasi lengkap tentang organisasi dan pelayanan DPMPTSP Surabaya
+      </p>
+    </div>
 
-    <!-- LIST DATA -->
-    <section class="container mx-auto px-4 py-16">
-      <div class="bg-white rounded-2xl shadow p-8 max-w-4xl mx-auto">
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
 
-        <h2 class="text-2xl font-bold text-blue-800 mb-6">
-          Informasi Organisasi
-        </h2>
+      <!-- SIDEBAR -->
+      <aside class="lg:col-span-1">
+        <div class="bg-white rounded-2xl shadow p-6 sticky top-24">
+          <h3 class="text-lg font-bold text-blue-800 mb-4">Menu Informasi</h3>
 
-        <ul class="space-y-4">
-          {Object.entries(aboutData).map(([slug, title]) => (
-            <li class="flex items-center gap-4 border-b pb-3 last:border-none">
-              <span class="w-2 h-2 bg-blue-700 rounded-full"></span>
-
-              <a
-                href={`/about/${slug}`}
-                class="text-gray-800 font-medium hover:text-blue-700 transition"
+          <div class="space-y-2 max-h-[500px] overflow-y-auto">
+            {Object.entries(menus).map(([slug, title], i) => (
+              <button
+                class={`tab-btn w-full text-left px-4 py-3 rounded-lg font-medium transition
+                ${i === 0 ? "bg-blue-600 text-white" : "bg-gray-100 hover:bg-blue-50 text-gray-700"}`}
+                data-tab={slug}
               >
+                <i class={`fas ${iconMap[slug] ?? "fa-info-circle"} mr-3`}></i>
                 {title}
-              </a>
-            </li>
-          ))}
-        </ul>
+              </button>
+            ))}
+          </div>
+        </div>
+      </aside>
+
+      <!-- CONTENT -->
+      <div class="lg:col-span-3 space-y-8">
+
+        <!-- SAMBUTAN -->
+        <div id="sambutan" class="tab-content block">
+          <div class="bg-white rounded-2xl shadow p-8">
+            <h3 class="text-3xl font-bold text-blue-800 mb-4">Sambutan</h3>
+            <p class="text-gray-700 leading-relaxed">
+              Selamat datang di website resmi DPMPTSP Kota Surabaya. Kami berkomitmen
+              memberikan pelayanan terbaik kepada masyarakat dan investor.
+            </p>
+          </div>
+        </div>
+
+        <!-- VISI MISI -->
+        <div id="visi-misi" class="tab-content hidden">
+          <div class="bg-white rounded-2xl shadow p-8">
+            <h3 class="text-3xl font-bold text-blue-800 mb-4">Visi & Misi</h3>
+            <img
+              src="/gambar/visi misi.jpg"
+              class="rounded-xl shadow max-w-md mx-auto"
+              alt="Visi Misi"
+            />
+          </div>
+        </div>
+
+        <!-- IKM -->
+        <div id="ikm" class="tab-content hidden">
+          <div class="bg-white rounded-2xl shadow p-8">
+            <h3 class="text-3xl font-bold text-blue-800 mb-4">
+              {ikm?.title ?? "Indeks Kepuasan Masyarakat"}
+            </h3>
+
+            {ikm?.file && (
+              <img
+                src={`${BASE_URL}/storage/${ikm.file}`}
+                class="rounded-xl shadow max-w-md mx-auto mb-6"
+                alt={ikm.title}
+              />
+            )}
+
+            <p class="text-gray-600 text-sm">
+              Dipublikasikan:
+              {new Date(ikm?.created_at).toLocaleDateString("id-ID")}
+            </p>
+          </div>
+        </div>
+
+        <!-- DEFAULT -->
+        <div id="default-tab" class="tab-content hidden">
+          <div class="bg-white rounded-2xl shadow p-8 text-center">
+            <p class="text-gray-600">
+              Silakan pilih menu informasi di sebelah kiri.
+            </p>
+          </div>
+        </div>
 
       </div>
-    </section>
-
-  </main>
+    </div>
+  </div>
+</section>
 </MainLayout>
+
+<script>
+  const tabs = document.querySelectorAll(".tab-btn");
+  const contents = document.querySelectorAll(".tab-content");
+
+  tabs.forEach(btn => {
+    btn.addEventListener("click", () => {
+      const target = btn.dataset.tab;
+
+      tabs.forEach(b => b.classList.remove("bg-blue-600", "text-white"));
+      btn.classList.add("bg-blue-600", "text-white");
+
+      contents.forEach(c => c.classList.add("hidden"));
+      document.getElementById(target)?.classList.remove("hidden");
+    });
+  });
+</script>
