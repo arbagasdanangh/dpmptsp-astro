@@ -1,73 +1,59 @@
 ---
-import MainLayout from "../../layouts/MainLayout.astro";
+import MainLayout from "../layouts/MainLayout.astro";
 
-/* ================= CONFIG ================= */
-const BASE_URL = import.meta.env.PUBLIC_BASE_URL;
+const API_BASE = "https://parkir.dpmptsp-surabaya.my.id";
+const FILE_BASE = "https://dpm-ptsp.surabaya.go.id/fileberita";
 
-/* ================= FETCH API ================= */
-const [ikmRes, categoryRes] = await Promise.all([
-  fetch(`${BASE_URL}/api/v1/about-me/ikm`),
-  fetch(`${BASE_URL}/api/v1/about-me`)
-]);
+let ikmList = [];
 
-const ikmData = await ikmRes.json();        // API 1
-const categoryData = await categoryRes.json(); // API 2
+try {
+  const res = await fetch(`${API_BASE}/api/v1/about-me/ikm`);
+  const json = await res.json();
 
-// API 1 biasanya array
-const ikm = Array.isArray(ikmData) ? ikmData[0] : ikmData;
-
-// Ambil judul kategori dari API 2
-const categoryTitle =
-  categoryData?.data?.ikm ?? "Indeks Kepuasan Masyarakat";
+  // INI YANG BENAR
+  ikmList = json?.data?.data || [];
+} catch (e) {
+  console.error("IKM ERROR", e);
+}
 ---
 
-<MainLayout title={categoryTitle}>
-  <main class="min-h-screen bg-gray-50">
-    <section class="container mx-auto px-4 py-16">
+<MainLayout title="Tentang Kami">
 
-      <!-- HEADER -->
-      <div class="text-center mb-12">
-        <h1 class="text-4xl font-bold text-blue-800 mb-4">
-          {ikm?.title || categoryTitle}
-        </h1>
-        <p class="text-gray-600 max-w-2xl mx-auto">
-          {ikm?.description || "Informasi Indeks Kepuasan Masyarakat"}
-        </p>
-      </div>
+<section class="py-20 bg-gray-50">
+  <div class="container mx-auto px-4">
 
-      <!-- CONTENT -->
-      <div class="bg-white rounded-2xl shadow p-6 max-w-4xl mx-auto">
+    <h1 class="text-3xl font-bold text-blue-800 mb-10 text-center">
+      Indeks Kepuasan Masyarakat
+    </h1>
 
-        <!-- IMAGE -->
-        {ikm?.file && (
-          <div class="mb-6">
-            <img
-              src={`${BASE_URL}/storage/${ikm.file}`}
-              alt={ikm.title}
-              class="w-full rounded-xl shadow"
-              loading="lazy"
-            />
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      {ikmList.map((item) => (
+        <div class="bg-white rounded-xl shadow overflow-hidden">
+          <img
+            src={`${FILE_BASE}/${item.file}`}
+            alt={item.title}
+            class="w-full h-64 object-cover"
+            loading="lazy"
+          />
+          <div class="p-4 text-center">
+            <h3 class="font-semibold text-gray-700">
+              {item.title}
+            </h3>
+            <p class="text-xs text-gray-500 mt-1">
+              {new Date(item.created_at).toLocaleDateString("id-ID")}
+            </p>
           </div>
-        )}
-
-        <!-- META -->
-        <div class="text-sm text-gray-500 mb-4 flex flex-wrap gap-4">
-          <span>📂 Kategori: {ikm?.category}</span>
-          <span>
-            🗓 Dibuat:
-            {new Date(ikm?.created_at).toLocaleDateString("id-ID")}
-          </span>
         </div>
+      ))}
+    </div>
 
-        <!-- CONTENT TEXT -->
-        <article class="prose max-w-none">
-          {ikm?.content
-            ? <div set:html={ikm.content} />
-            : <p>Dokumen Indeks Kepuasan Masyarakat Organisasi.</p>
-          }
-        </article>
-      </div>
+    {ikmList.length === 0 && (
+      <p class="text-center text-gray-500 mt-10">
+        Data IKM tidak tersedia
+      </p>
+    )}
 
-    </section>
-  </main>
+  </div>
+</section>
+
 </MainLayout>
