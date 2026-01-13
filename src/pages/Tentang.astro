@@ -1,90 +1,73 @@
 ---
-import MainLayout from "../layouts/MainLayout.astro";
+import MainLayout from "../../layouts/MainLayout.astro";
 
 /* ================= CONFIG ================= */
-const BASE_URL = "http://parkir.dpmptsp-surabaya.my.id/";
+const BASE_URL = import.meta.env.PUBLIC_BASE_URL;
 
 /* ================= FETCH API ================= */
-const res = await fetch(`${BASE_URL}/api/v1/about-me`);
-const result = await res.json();
+const [ikmRes, categoryRes] = await Promise.all([
+  fetch(`${BASE_URL}/api/v1/about-me/ikm`),
+  fetch(`${BASE_URL}/api/v1/about-me`)
+]);
 
-const data = result?.data || {};
+const ikmData = await ikmRes.json();        // API 1
+const categoryData = await categoryRes.json(); // API 2
+
+// API 1 biasanya array
+const ikm = Array.isArray(ikmData) ? ikmData[0] : ikmData;
+
+// Ambil judul kategori dari API 2
+const categoryTitle =
+  categoryData?.data?.ikm ?? "Indeks Kepuasan Masyarakat";
 ---
 
-<MainLayout title="Tentang Kami">
+<MainLayout title={categoryTitle}>
   <main class="min-h-screen bg-gray-50">
+    <section class="container mx-auto px-4 py-16">
 
-    <!-- HERO -->
-    <section class="bg-blue-800 text-white py-20">
-      <div class="container mx-auto px-4 text-center">
-        <h1 class="text-4xl md:text-5xl font-bold mb-4">
-          Tentang Organisasi
+      <!-- HEADER -->
+      <div class="text-center mb-12">
+        <h1 class="text-4xl font-bold text-blue-800 mb-4">
+          {ikm?.title || categoryTitle}
         </h1>
-        <p class="max-w-2xl mx-auto text-blue-100">
-          Informasi resmi terkait profil dan layanan organisasi
+        <p class="text-gray-600 max-w-2xl mx-auto">
+          {ikm?.description || "Informasi Indeks Kepuasan Masyarakat"}
         </p>
       </div>
-    </section>
 
-    <!-- CONTENT -->
-    <section class="container mx-auto px-4 py-16 space-y-16">
+      <!-- CONTENT -->
+      <div class="bg-white rounded-2xl shadow p-6 max-w-4xl mx-auto">
 
-      <!-- VISI MISI -->
-      {data["visi-misi"] && (
-        <div class="bg-white rounded-2xl shadow p-8">
-          <h2 class="text-3xl font-bold text-blue-800 mb-4">
-            {data["visi-misi"]}
-          </h2>
-          <p class="text-gray-700 leading-relaxed">
-            Informasi visi dan misi organisasi.
-          </p>
+        <!-- IMAGE -->
+        {ikm?.file && (
+          <div class="mb-6">
+            <img
+              src={`${BASE_URL}/storage/${ikm.file}`}
+              alt={ikm.title}
+              class="w-full rounded-xl shadow"
+              loading="lazy"
+            />
+          </div>
+        )}
+
+        <!-- META -->
+        <div class="text-sm text-gray-500 mb-4 flex flex-wrap gap-4">
+          <span>📂 Kategori: {ikm?.category}</span>
+          <span>
+            🗓 Dibuat:
+            {new Date(ikm?.created_at).toLocaleDateString("id-ID")}
+          </span>
         </div>
-      )}
 
-      <!-- STRUKTUR -->
-      {data["struktur"] && (
-        <div class="bg-white rounded-2xl shadow p-8">
-          <h2 class="text-3xl font-bold text-blue-800 mb-4">
-            {data["struktur"]}
-          </h2>
-          <p class="text-gray-700">
-            Struktur organisasi dan susunan jabatan.
-          </p>
-        </div>
-      )}
-
-      <!-- IKM -->
-      {data["ikm"] && (
-        <div class="bg-white rounded-2xl shadow p-8">
-          <h2 class="text-3xl font-bold text-blue-800 mb-4">
-            {data["ikm"]}
-          </h2>
-          <p class="text-gray-700">
-            Indeks Kepuasan Masyarakat sebagai indikator kualitas pelayanan.
-          </p>
-
-          <a
-            href="/about/ikm"
-            class="inline-block mt-6 px-6 py-3 bg-blue-700 text-white rounded-xl hover:bg-blue-800 transition"
-          >
-            Lihat Detail IKM →
-          </a>
-        </div>
-      )}
-
-      <!-- MAKLUMAT -->
-      {data["maklumat"] && (
-        <div class="bg-white rounded-2xl shadow p-8">
-          <h2 class="text-3xl font-bold text-blue-800 mb-4">
-            {data["maklumat"]}
-          </h2>
-          <p class="text-gray-700">
-            Pernyataan resmi komitmen pelayanan kepada masyarakat.
-          </p>
-        </div>
-      )}
+        <!-- CONTENT TEXT -->
+        <article class="prose max-w-none">
+          {ikm?.content
+            ? <div set:html={ikm.content} />
+            : <p>Dokumen Indeks Kepuasan Masyarakat Organisasi.</p>
+          }
+        </article>
+      </div>
 
     </section>
-
   </main>
 </MainLayout>
