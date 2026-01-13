@@ -1,187 +1,168 @@
 ---
 import MainLayout from "../layouts/MainLayout.astro";
-import "../styles/global.css";
+
+/* ================= API ================= */
+const API_BERITA = "http://parkir.dpmptsp-surabaya.my.id/api/v1/posts";
+
+let berita = [];
+
+try {
+  const res = await fetch(API_BERITA);
+  const json = await res.json();
+  berita = json.data?.slice(0, 6) || [];
+} catch (e) {
+  console.error("Gagal load berita", e);
+}
 ---
 
-<MainLayout title="Dashboard Investasi Surabaya">
+<MainLayout title="DPMPTSP Kota Surabaya">
 
   <!-- ================= HERO ================= -->
-  <section class="py-20 bg-gradient-to-r from-blue-800 to-blue-600 text-white">
+  <section class="py-20 bg-white">
     <div class="container mx-auto px-4 text-center">
-      <h1 class="text-4xl md:text-5xl font-bold mb-6">
-        Dashboard Investasi Kota Surabaya
+      <h1 class="text-4xl md:text-5xl font-bold text-blue-800 mb-4">
+        Mengapa Berinvestasi di Surabaya?
       </h1>
-      <p class="text-lg md:text-xl max-w-3xl mx-auto opacity-90">
-        Informasi kinerja investasi, peta potensi, dan panduan perizinan
-        untuk mendukung kemudahan berusaha di Kota Surabaya.
+      <p class="text-gray-600 max-w-2xl mx-auto">
+        Kota Surabaya menawarkan iklim investasi yang kondusif, infrastruktur lengkap,
+        serta pelayanan perizinan yang cepat dan transparan.
       </p>
     </div>
   </section>
 
-  <!-- ================= APLIKASI ================= -->
-  <section class="py-20 bg-gray-50">
+  <!-- ================= KEUNGGULAN ================= -->
+  <section class="py-16 bg-gray-50">
     <div class="container mx-auto px-4">
-      <div class="text-center mb-16">
-        <h2 class="text-4xl font-bold text-blue-800 mb-4">
-          Aplikasi Investasi
-        </h2>
-        <p class="text-gray-600">
-          Akses aplikasi pendukung investasi secara terintegrasi
-        </p>
-      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div class="bg-white rounded-2xl shadow p-8 text-center hover:shadow-xl transition">
-          <i class="fas fa-chart-line text-4xl text-blue-700 mb-4"></i>
-          <h3 class="text-xl font-semibold mb-2">Realisasi Investasi</h3>
-          <p class="text-gray-600">
-            Data realisasi investasi berdasarkan sektor dan wilayah.
+        <div class="bg-white p-6 rounded-xl shadow">
+          <i class="fas fa-chart-line text-3xl text-blue-600 mb-4"></i>
+          <h3 class="font-bold text-lg mb-2">Iklim Investasi</h3>
+          <p class="text-gray-600 text-sm">
+            Pertumbuhan ekonomi stabil dan berkelanjutan.
           </p>
         </div>
 
-        <div class="bg-white rounded-2xl shadow p-8 text-center hover:shadow-xl transition">
-          <i class="fas fa-map-marked-alt text-4xl text-blue-700 mb-4"></i>
-          <h3 class="text-xl font-semibold mb-2">Peta Potensi</h3>
-          <p class="text-gray-600">
-            Peta potensi unggulan investasi di Kota Surabaya.
+        <div class="bg-white p-6 rounded-xl shadow">
+          <i class="fas fa-city text-3xl text-blue-600 mb-4"></i>
+          <h3 class="font-bold text-lg mb-2">Kota Terbesar</h3>
+          <p class="text-gray-600 text-sm">
+            Pusat perdagangan dan industri di Indonesia Timur.
           </p>
         </div>
 
-        <div class="bg-white rounded-2xl shadow p-8 text-center hover:shadow-xl transition">
-          <i class="fas fa-book-open text-4xl text-blue-700 mb-4"></i>
-          <h3 class="text-xl font-semibold mb-2">Panduan Investasi</h3>
-          <p class="text-gray-600">
-            Panduan dan regulasi perizinan berusaha.
+        <div class="bg-white p-6 rounded-xl shadow">
+          <i class="fas fa-ship text-3xl text-blue-600 mb-4"></i>
+          <h3 class="font-bold text-lg mb-2">Pelabuhan & Bandara</h3>
+          <p class="text-gray-600 text-sm">
+            Akses logistik nasional dan internasional.
           </p>
         </div>
+
       </div>
     </div>
   </section>
 
-  <!-- ================= PETA ================= -->
-  <section id="Peta" class="py-20 bg-white">
-    <div class="container mx-auto px-4">
-      <div class="text-center mb-16">
-        <h2 class="text-4xl font-bold text-blue-800 mb-4">
-          Peta Potensi Investasi
+  <!-- ================= PETA INVESTASI ================= -->
+  <section class="py-20 bg-white">
+    <div class="container mx-auto px-4 grid md:grid-cols-2 gap-12 items-center">
+
+      <img
+        src="/images/peta-surabaya.png"
+        alt="Peta Investasi Surabaya"
+        class="rounded-xl shadow"
+        loading="lazy"
+      />
+
+      <div>
+        <h2 class="text-3xl font-bold text-blue-800 mb-4">
+          Peta Potensi Investasi Surabaya
         </h2>
-        <p class="text-gray-600">
-          Visualisasi wilayah dan sektor unggulan investasi
+        <p class="text-gray-600 mb-6">
+          Informasi wilayah unggulan dan sektor strategis di Kota Surabaya
+          untuk mendukung keputusan investasi Anda.
         </p>
-      </div>
-
-      <div class="rounded-2xl overflow-hidden shadow-lg">
-        <img
-          src="/images/peta-investasi.jpg"
-          alt="Peta Potensi Investasi Surabaya"
-          loading="lazy"
-          class="w-full h-auto"
-        />
-      </div>
-    </div>
-  </section>
-
-  <!-- ================= KINERJA ================= -->
-  <section id="Kinerja" class="py-20 bg-gray-50">
-    <div class="container mx-auto px-4">
-      <div class="text-center mb-16">
-        <h2 class="text-4xl font-bold text-blue-800 mb-4">
-          Kinerja Investasi
-        </h2>
-        <p class="text-gray-600">
-          Laporan kinerja investasi per triwulan
-        </p>
-      </div>
-
-      <div class="max-w-xl mx-auto bg-white rounded-2xl shadow p-8">
-        <label class="block mb-3 font-semibold text-gray-700">
-          Pilih Laporan PDF
-        </label>
-
-        <select
-          id="pdfSelect"
-          class="w-full border rounded-lg p-3 mb-4"
-        >
-          <option value="">-- Pilih Dokumen --</option>
-          <option value="Kinerja-Investasi-TWI-2023.pdf">
-            Kinerja Investasi TW I 2023
-          </option>
-          <option value="Kinerja-Investasi-TWII-2023.pdf">
-            Kinerja Investasi TW II 2023
-          </option>
-        </select>
-
-        <iframe
-          id="pdfViewer"
-          class="w-full h-[500px] border rounded-lg hidden"
-        ></iframe>
 
         <a
-          id="pdfDownload"
-          class="mt-4 inline-block bg-blue-700 text-white px-6 py-3 rounded-lg hidden"
-          download
+          href="/peta-investasi"
+          class="inline-block bg-yellow-400 text-black px-6 py-3 rounded-lg font-semibold hover:bg-yellow-500"
         >
-          Download PDF
+          Jelajahi Peta →
         </a>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ================= VIDEO ================= -->
+  <section class="py-20 bg-gray-50">
+    <div class="container mx-auto px-4 text-center">
+      <h2 class="text-3xl font-bold text-blue-800 mb-10">
+        Video Terupdate
+      </h2>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div class="bg-white rounded-xl shadow overflow-hidden">
+          <iframe class="w-full h-56"
+            src="https://www.youtube.com/embed/VIDEO_ID"
+            allowfullscreen></iframe>
+          <div class="p-4 font-semibold">Pesona Buaya 2024</div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow overflow-hidden">
+          <iframe class="w-full h-56"
+            src="https://www.youtube.com/embed/VIDEO_ID"
+            allowfullscreen></iframe>
+          <div class="p-4 font-semibold">Surabaya Great Expo</div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow overflow-hidden">
+          <iframe class="w-full h-56"
+            src="https://www.youtube.com/embed/VIDEO_ID"
+            allowfullscreen></iframe>
+          <div class="p-4 font-semibold">Ekonomi Kreatif</div>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- ================= PANDUAN ================= -->
-  <section id="Panduan" class="py-20 bg-white">
+  <!-- ================= BERITA API ================= -->
+  <section class="py-20 bg-white">
     <div class="container mx-auto px-4">
-      <div class="text-center mb-16">
-        <h2 class="text-4xl font-bold text-blue-800 mb-4">
-          Panduan Investasi
+
+      <div class="text-center mb-12">
+        <h2 class="text-3xl font-bold text-blue-800">
+          Berita & Artikel Terupdate
         </h2>
         <p class="text-gray-600">
-          Alur dan ketentuan perizinan usaha
+          Informasi resmi DPMPTSP Kota Surabaya
         </p>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div class="bg-gray-50 rounded-2xl p-8 shadow">
-          <i class="fas fa-briefcase text-3xl text-blue-700 mb-4"></i>
-          <h3 class="text-xl font-semibold mb-2">
-            Prosedur Perizinan
-          </h3>
-          <p class="text-gray-600">
-            Informasi OSS, SSW, dan perizinan usaha lainnya.
-          </p>
-        </div>
+      {berita.length === 0 && (
+        <p class="text-center text-gray-500">Berita belum tersedia</p>
+      )}
 
-        <div class="bg-gray-50 rounded-2xl p-8 shadow">
-          <i class="fas fa-phone-alt text-3xl text-blue-700 mb-4"></i>
-          <h3 class="text-xl font-semibold mb-2">
-            Layanan Konsultasi
-          </h3>
-          <p class="text-gray-600">
-            Konsultasi langsung di MPP Siola dan SPP Kota Surabaya.
-          </p>
-        </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {berita.map((item) => (
+          <article class="bg-blue-700 text-white rounded-xl p-6 shadow">
+            <h3 class="font-bold text-lg mb-3 line-clamp-2">
+              {item.title}
+            </h3>
+            <p class="text-sm line-clamp-3 mb-4">
+              {item.content}
+            </p>
+            <a
+              href={`/berita/${item.slug}`}
+              class="inline-block bg-white text-blue-700 px-4 py-2 rounded font-semibold"
+            >
+              Baca Selengkapnya
+            </a>
+          </article>
+        ))}
       </div>
+
     </div>
   </section>
-
-  <!-- ================= SCRIPT ================= -->
-  <script is:inline>
-    const select = document.getElementById("pdfSelect");
-    const viewer = document.getElementById("pdfViewer");
-    const download = document.getElementById("pdfDownload");
-
-    select.addEventListener("change", () => {
-      if (!select.value) {
-        viewer.classList.add("hidden");
-        download.classList.add("hidden");
-        return;
-      }
-
-      viewer.src = "/" + select.value;
-      viewer.classList.remove("hidden");
-
-      download.href = "/" + select.value;
-      download.classList.remove("hidden");
-    });
-  </script>
 
 </MainLayout>
