@@ -1,0 +1,88 @@
+---
+import MainLayout from "../../layouts/MainLayout.astro";
+
+/* ================= CONFIG ================= */
+const IMAGE_BASE = "https://dpm-ptsp.surabaya.go.id/fileberita/";
+
+/* ================= PARAM ================= */
+const { slug } = Astro.params;
+
+/* ================= FETCH ================= */
+let post = null;
+let error = false;
+
+try {
+  const res = await fetch(
+    `http://parkir.dpmptsp-surabaya.my.id/api/v1/posts/${slug}`
+  );
+  const json = await res.json();
+  post = json.data ?? null;
+} catch (e) {
+  console.error(e);
+  error = true;
+}
+---
+
+<MainLayout title={post?.title ?? "Detail Berita"}>
+
+<section class="bg-white">
+
+  {/* ===== ERROR STATE ===== */}
+  {error && (
+    <div class="container mx-auto px-6 py-20 text-center text-red-600">
+      Gagal memuat detail berita.
+    </div>
+  )}
+
+  {/* ===== NOT FOUND ===== */}
+  {!error && !post && (
+    <div class="container mx-auto px-6 py-20 text-center text-gray-500">
+      Berita tidak ditemukan.
+    </div>
+  )}
+
+  {/* ===== CONTENT ===== */}
+  {post && (
+    <>
+      <!-- HERO IMAGE -->
+      <div class="relative w-full h-[420px] overflow-hidden">
+        <img
+          src={post.picture
+            ? `${IMAGE_BASE}${post.picture}`
+            : "/images/placeholder-berita.jpg"}
+          alt={post.title}
+          class="absolute inset-0 w-full h-full object-cover"
+          style="object-position: center 30%;"
+        />
+      </div>
+
+      <!-- CONTENT -->
+      <div class="container mx-auto px-6 max-w-4xl py-16">
+
+        <h1 class="text-3xl md:text-4xl font-bold text-blue-800 mb-6">
+          {post.title}
+        </h1>
+
+        <!-- ISI BERITA DARI API (HTML) -->
+        <article
+          class="prose prose-blue max-w-none text-justify"
+          set:html={post.ref}
+        />
+
+        <!-- BACK -->
+        <div class="mt-12">
+          <a
+            href="/berita"
+            class="inline-flex items-center text-blue-700 font-semibold hover:underline"
+          >
+            ← Kembali ke Berita
+          </a>
+        </div>
+
+      </div>
+    </>
+  )}
+
+</section>
+
+</MainLayout>
