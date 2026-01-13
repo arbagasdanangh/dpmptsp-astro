@@ -1,59 +1,139 @@
 ---
-import MainLayout from "../layouts/MainLayout.astro";
+/* ================= ENV ================= */
+const BASE_URL = import.meta.env.PUBLIC_BASE_URL;
 
-const API_BASE = "https://parkir.dpmptsp-surabaya.my.id";
-const FILE_BASE = "https://dpm-ptsp.surabaya.go.id/fileberita";
+/* ================= FETCH API ================= */
+const [menuRes, ikmRes] = await Promise.all([
+  fetch(`${BASE_URL}/api/v1/about-me`),
+  fetch(`${BASE_URL}/api/v1/about-me/ikm`)
+]);
 
-let ikmList = [];
+const menuJson = await menuRes.json();
+const ikmJson = await ikmRes.json();
 
-try {
-  const res = await fetch(`${API_BASE}/api/v1/about-me/ikm`);
-  const json = await res.json();
+/* ================= DATA ================= */
+const menus = menuJson?.data ?? {};
+const ikm = ikmJson?.data ?? ikmJson;
 
-  // INI YANG BENAR
-  ikmList = json?.data?.data || [];
-} catch (e) {
-  console.error("IKM ERROR", e);
-}
+const ikmImage = ikm?.file
+  ? `${BASE_URL}/storage/${ikm.file}`
+  : null;
 ---
 
-<MainLayout title="Tentang Kami">
-
-<section class="py-20 bg-gray-50">
+<section id="stdjenis-sec" class="py-20 bg-gradient-to-b from-gray-50 to-white">
   <div class="container mx-auto px-4">
 
-    <h1 class="text-3xl font-bold text-blue-800 mb-10 text-center">
-      Indeks Kepuasan Masyarakat
-    </h1>
+    <!-- HEADER -->
+    <div class="text-center mb-16">
+      <h2 class="text-4xl font-bold text-blue-800 mb-4">
+        Informasi Organisasi
+      </h2>
+      <p class="text-gray-600 max-w-2xl mx-auto">
+        Informasi lengkap organisasi DPM-PTSP Kota Surabaya
+      </p>
+    </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      {ikmList.map((item) => (
-        <div class="bg-white rounded-xl shadow overflow-hidden">
-          <img
-            src={`${FILE_BASE}/${item.file}`}
-            alt={item.title}
-            class="w-full h-64 object-cover"
-            loading="lazy"
-          />
-          <div class="p-4 text-center">
-            <h3 class="font-semibold text-gray-700">
-              {item.title}
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+
+      <!-- ================= SIDEBAR ================= -->
+      <aside class="lg:col-span-1">
+        <div class="bg-white rounded-2xl shadow p-6 sticky top-24">
+          <h3 class="font-bold text-blue-800 mb-4">Menu Informasi</h3>
+
+          <div class="space-y-2">
+            {Object.entries(menus).map(([key, label]) => (
+              <button
+                class="tab-btn w-full text-left px-4 py-3 rounded-lg bg-gray-100 hover:bg-blue-50 text-gray-700 font-medium"
+                data-tab={key}
+              >
+                {key === "ikm" && <i class="fas fa-smile mr-2"></i>}
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </aside>
+
+      <!-- ================= CONTENT ================= -->
+      <main class="lg:col-span-3 space-y-6">
+
+        <!-- DEFAULT -->
+        <div id="default-tab" class="tab-content">
+          <div class="bg-white rounded-2xl shadow p-10 text-center">
+            <h3 class="text-2xl font-bold text-blue-800 mb-2">
+              Pilih Menu Informasi
             </h3>
-            <p class="text-xs text-gray-500 mt-1">
-              {new Date(item.created_at).toLocaleDateString("id-ID")}
+            <p class="text-gray-600">
+              Silakan pilih menu di sebelah kiri untuk melihat detail informasi
             </p>
           </div>
         </div>
-      ))}
+
+        <!-- ================= IKM TAB ================= -->
+        <div id="ikm" class="tab-content hidden">
+          <div class="bg-white rounded-2xl shadow p-8">
+
+            <div class="flex items-center mb-6">
+              <div class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mr-4">
+                <i class="fas fa-smile text-white text-xl"></i>
+              </div>
+              <div>
+                <h3 class="text-3xl font-bold text-blue-800">
+                  {ikm?.title ?? "Indeks Kepuasan Masyarakat"}
+                </h3>
+                <p class="text-gray-600">
+                  {ikm?.name}
+                </p>
+              </div>
+            </div>
+
+            {ikmImage && (
+              <div class="flex justify-center mb-6">
+                <img
+                  src={ikmImage}
+                  alt={ikm?.title}
+                  class="max-w-xl rounded-xl shadow border"
+                  loading="lazy"
+                />
+              </div>
+            )}
+
+            {ikm?.description && (
+              <p class="text-gray-700 max-w-2xl mx-auto text-center">
+                {ikm.description}
+              </p>
+            )}
+
+            <p class="text-sm text-gray-500 text-center mt-4">
+              Terakhir diperbarui:
+              {" "}
+              {new Date(ikm.updated_at).toLocaleDateString("id-ID")}
+            </p>
+
+          </div>
+        </div>
+
+      </main>
     </div>
-
-    {ikmList.length === 0 && (
-      <p class="text-center text-gray-500 mt-10">
-        Data IKM tidak tersedia
-      </p>
-    )}
-
   </div>
 </section>
 
-</MainLayout>
+<!-- ================= TAB SCRIPT ================= -->
+<script>
+  const buttons = document.querySelectorAll(".tab-btn");
+  const contents = document.querySelectorAll(".tab-content");
+
+  buttons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      const target = btn.dataset.tab;
+
+      contents.forEach(c => c.classList.add("hidden"));
+      document.getElementById(target)?.classList.remove("hidden");
+
+      buttons.forEach(b =>
+        b.classList.remove("bg-blue-600", "text-white")
+      );
+      btn.classList.add("bg-blue-600", "text-white");
+    });
+  });
+</script>
