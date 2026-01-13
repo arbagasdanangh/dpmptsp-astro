@@ -1,7 +1,6 @@
 ---
 import MainLayout from "../layouts/MainLayout.astro";
 
-/* ================= SAFE ENV ================= */
 const API_BASE =
   import.meta.env.PUBLIC_API_BASE ||
   "https://parkir.dpmptsp-surabaya.my.id";
@@ -10,111 +9,142 @@ const FILE_BASE =
   import.meta.env.PUBLIC_FILE_BASE ||
   "https://dpm-ptsp.surabaya.go.id/fileberita";
 
-/* ================= FETCH ABOUT ME ================= */
 let about = {};
+let ikmList = [];
 
 try {
   const res = await fetch(`${API_BASE}/api/v1/about-me`);
   const json = await res.json();
   about = json?.data || {};
-} catch (e) {
-  console.error("ABOUT ME ERROR", e);
-}
-
-/* ================= FETCH IKM ================= */
-let ikmList = [];
+} catch {}
 
 try {
-  const res = await fetch(
-    `${API_BASE}/api/v1/content?category=ikm`
-  );
+  const res = await fetch(`${API_BASE}/api/v1/content?category=ikm`);
   const json = await res.json();
   ikmList = json?.data?.data || [];
-} catch (e) {
-  console.error("IKM ERROR", e);
-}
+} catch {}
 ---
 
 <MainLayout title="Tentang Kami - DPMPTSP Kota Surabaya">
+
   <!-- HERO -->
-  <section class="py-16 text-center">
-    <h1 class="text-4xl font-bold text-blue-800 mb-4">
-      Visi Misi Sambutan Tim Organisasi
-    </h1>
-    <p class="text-gray-600 max-w-2xl mx-auto">
-      Informasi lengkap tentang organisasi, visi misi, dan pelayanan
-      DPM-PTSP Kota Surabaya
-    </p>
+  <section class="bg-gradient-to-b from-blue-50 to-white py-20">
+    <div class="text-center max-w-3xl mx-auto">
+      <h1 class="text-4xl font-extrabold text-blue-800 mb-4">
+        Visi Misi & Profil Organisasi
+      </h1>
+      <p class="text-gray-600 text-lg">
+        Informasi resmi mengenai visi, misi, dan kualitas pelayanan
+        DPM-PTSP Kota Surabaya
+      </p>
+    </div>
   </section>
 
   <!-- CONTENT -->
-  <section class="container mx-auto px-4 pb-20">
-    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+  <section class="container mx-auto px-4 pb-24">
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-10">
 
       <!-- SIDEBAR -->
-      <aside class="bg-white rounded-xl shadow p-6">
-        <h3 class="font-semibold mb-4 text-blue-700">Menu Informasi</h3>
-        <ul class="space-y-2 text-sm">
-          <li class="font-semibold text-blue-600">Sambutan</li>
-          <li>Visi dan Misi</li>
-          <li>Budaya Pelayanan</li>
-          <li>Motto Pelayanan</li>
-          <li>Maklumat Pelayanan</li>
-          <li>Kompensasi Layanan</li>
-          <li>Indeks Kepuasan Masyarakat</li>
-          <li>Zona Integritas</li>
-          <li>Struktur Organisasi</li>
-        </ul>
+      <aside class="sticky top-24 h-fit">
+        <div class="bg-white rounded-2xl shadow p-6">
+          <h3 class="text-blue-700 font-bold mb-5 text-lg">
+            Menu Informasi
+          </h3>
+          <ul class="space-y-1 text-sm">
+            {[
+              "Sambutan",
+              "Visi dan Misi",
+              "Budaya Pelayanan",
+              "Motto Pelayanan",
+              "Maklumat Pelayanan",
+              "Kompensasi Layanan",
+              "Indeks Kepuasan Masyarakat",
+              "Zona Integritas",
+              "Struktur Organisasi",
+            ].map((item, i) => (
+              <li
+                class={`px-4 py-2 rounded-lg cursor-pointer transition
+                  ${i === 0
+                    ? "bg-blue-600 text-white font-semibold"
+                    : "text-gray-600 hover:bg-blue-50 hover:text-blue-700"}`}
+              >
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
       </aside>
 
       <!-- MAIN -->
-      <div class="lg:col-span-3 space-y-10">
+      <div class="lg:col-span-3 space-y-12">
 
         <!-- SAMBUTAN -->
-        <div class="bg-white rounded-xl shadow p-8">
-          <h2 class="text-2xl font-bold text-blue-700 mb-4">
-            Sambutan
-          </h2>
-          <blockquote class="border-l-4 border-blue-500 pl-6 italic text-gray-700 bg-blue-50 p-6 rounded">
+        <section class="bg-white rounded-2xl shadow p-10">
+          <div class="flex items-center gap-3 mb-6">
+            <div class="w-10 h-10 flex items-center justify-center rounded-full bg-blue-600 text-white">
+              🗣️
+            </div>
+            <h2 class="text-2xl font-bold text-blue-700">
+              Sambutan Kepala Dinas
+            </h2>
+          </div>
+
+          <div class="bg-blue-50 border-l-4 border-blue-600 p-6 rounded-lg italic text-gray-700 leading-relaxed">
             {about.sambutan || "-"}
-          </blockquote>
-          <p class="text-right mt-4 font-semibold text-blue-700">
+          </div>
+
+          <p class="text-right mt-6 font-semibold text-blue-700">
             Kepala Dinas DPM-PTSP<br />
-            <span class="text-sm font-normal">Kota Surabaya</span>
+            <span class="text-sm font-normal text-gray-500">
+              Kota Surabaya
+            </span>
           </p>
-        </div>
+        </section>
 
         <!-- VISI MISI -->
-        <div class="bg-white rounded-xl shadow p-8">
-          <h2 class="text-2xl font-bold text-blue-700 mb-4">
-            Visi dan Misi
-          </h2>
-          <p class="text-gray-700 whitespace-pre-line">
+        <section class="bg-white rounded-2xl shadow p-10">
+          <div class="flex items-center gap-3 mb-6">
+            <div class="w-10 h-10 flex items-center justify-center rounded-full bg-blue-600 text-white">
+              🎯
+            </div>
+            <h2 class="text-2xl font-bold text-blue-700">
+              Visi dan Misi
+            </h2>
+          </div>
+
+          <p class="text-gray-700 whitespace-pre-line leading-relaxed">
             {about["visi-misi"] || "-"}
           </p>
-        </div>
+        </section>
 
         <!-- IKM -->
-        <div class="bg-white rounded-xl shadow p-8">
-          <h2 class="text-2xl font-bold text-blue-700 mb-6">
-            Indeks Kepuasan Masyarakat
-          </h2>
+        <section class="bg-white rounded-2xl shadow p-10">
+          <div class="flex items-center gap-3 mb-8">
+            <div class="w-10 h-10 flex items-center justify-center rounded-full bg-blue-600 text-white">
+              📊
+            </div>
+            <h2 class="text-2xl font-bold text-blue-700">
+              Indeks Kepuasan Masyarakat
+            </h2>
+          </div>
 
-          <div class="grid grid-cols-2 md:grid-cols-3 gap-6">
+          <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
             {ikmList.map((item) => (
-              <div class="border rounded-lg overflow-hidden hover:shadow-lg transition">
-                <img
-                  src={`${FILE_BASE}/${item.file}`}
-                  alt={item.title}
-                  class="w-full h-48 object-cover"
-                />
-                <div class="p-3 text-sm text-center font-medium">
+              <div class="group rounded-xl overflow-hidden border hover:shadow-xl transition">
+                <div class="relative h-48 overflow-hidden">
+                  <img
+                    src={`${FILE_BASE}/${item.file}`}
+                    alt={item.title}
+                    class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                  />
+                </div>
+                <div class="p-4 text-center text-sm font-semibold text-gray-700">
                   {item.title}
                 </div>
               </div>
             ))}
           </div>
-        </div>
+        </section>
 
       </div>
     </div>
