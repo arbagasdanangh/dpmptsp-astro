@@ -1,97 +1,176 @@
 ---
-import MainLayout from "../../layouts/MainLayout.astro";
+import MainLayout from "../layouts/MainLayout.astro";
 
-/* ================= CONFIG ================= */
-const BASE_URL = "http://parkir.dpmptsp-surabaya.my.id";
+/* ================= API ================= */
+const API_BERITA = "http://parkir.dpmptsp-surabaya.my.id/api/v1/posts";
+const IMAGE_BASE = "https://dpm-ptsp.surabaya.go.id/fileberita/";
 
-/* ================= FETCH API ================= */
-const [ikmRes, categoryRes] = await Promise.all([
-  fetch(`${BASE_URL}/api/v1/about-me/ikm`),
-  fetch(`${BASE_URL}/api/v1/about-me`)
-]);
+let berita = [];
 
-if (!ikmRes.ok || !categoryRes.ok) {
-  throw new Error("Gagal mengambil data IKM");
+try {
+  const res = await fetch(API_BERITA);
+  const json = await res.json();
+  berita = json.data?.slice(0, 6) || [];
+} catch (e) {
+  console.error("Gagal load berita", e);
 }
-
-const ikmData = await ikmRes.json();
-const categoryData = await categoryRes.json();
-
-/* ================= DATA ================= */
-// API 1 biasanya array
-const ikm = Array.isArray(ikmData) ? ikmData[0] : ikmData;
-
-// Judul kategori dari API 2
-const categoryTitle =
-  categoryData?.data?.ikm || "Indeks Kepuasan Masyarakat";
 ---
 
-<MainLayout title={categoryTitle}>
-  <!-- GOOGLE FONT (TANPA @import) -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
-    rel="stylesheet"
-  />
+<MainLayout title="DPMPTSP Kota Surabaya">
 
-  <main class="min-h-screen bg-gray-50">
+  <!-- ================= HERO ================= -->
+  <section class="py-20 bg-white">
+    <div class="container mx-auto px-4 text-center">
+      <h1 class="text-4xl md:text-5xl font-bold text-blue-800 mb-4">
+        Mengapa Berinvestasi di Surabaya?
+      </h1>
+      <p class="text-gray-600 max-w-2xl mx-auto">
+        Kota Surabaya menawarkan iklim investasi yang kondusif, infrastruktur lengkap,
+        serta pelayanan perizinan yang cepat dan transparan.
+      </p>
+    </div>
+  </section>
 
-    <!-- HEADER -->
-    <section class="bg-blue-800 text-white py-16">
-      <div class="container mx-auto px-4 text-center">
-        <h1 class="text-4xl md:text-5xl font-bold mb-4">
-          {ikm?.title || categoryTitle}
-        </h1>
-        <p class="max-w-2xl mx-auto text-blue-100">
-          {ikm?.description || "Informasi Indeks Kepuasan Masyarakat Organisasi"}
-        </p>
-      </div>
-    </section>
-AAAABBBBBCCCCCC
-    <!-- CONTENT -->
-    <section class="container mx-auto px-4 py-16">
-      <div class="bg-white rounded-2xl shadow-xl p-6 md:p-10 max-w-5xl mx-auto">
+  <!-- ================= KEUNGGULAN ================= -->
+  <section class="py-16 bg-gray-50">
+    <div class="container mx-auto px-4">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
 
-        <!-- IMAGE -->
-        {ikm?.file && (
-          <div class="mb-8">
-            <img
-              src={`${BASE_URL}/storage/${ikm.file}`}
-              alt={ikm.title}
-              class="w-full rounded-xl shadow-md"
-              loading="lazy"
-            />
-          </div>
-        )}
-
-        <!-- META -->
-        <div class="flex flex-wrap gap-6 text-sm text-gray-500 mb-8">
-          <span class="flex items-center gap-2">
-            📂 <strong>Kategori:</strong> {ikm?.category}
-          </span>
-          <span class="flex items-center gap-2">
-            🗓 <strong>Tanggal:</strong>
-            {ikm?.created_at &&
-              new Date(ikm.created_at).toLocaleDateString("id-ID")}
-          </span>
+        <div class="bg-white p-6 rounded-xl shadow">
+          <i class="fas fa-chart-line text-3xl text-blue-600 mb-4"></i>
+          <h3 class="font-bold text-lg mb-2">Iklim Investasi</h3>
+          <p class="text-gray-600 text-sm">
+            Pertumbuhan ekonomi stabil dan berkelanjutan.
+          </p>
         </div>
 
-        <!-- CONTENT -->
-        <article class="prose max-w-none prose-blue">
-          {ikm?.content ? (
-            <div set:html={ikm.content} />
-          ) : (
-            <p>
-              Dokumen <strong>Indeks Kepuasan Masyarakat (IKM)</strong> ini
-              merupakan indikator resmi untuk mengukur kualitas pelayanan
-              organisasi kepada masyarakat.
-            </p>
-          )}
-        </article>
+        <div class="bg-white p-6 rounded-xl shadow">
+          <i class="fas fa-city text-3xl text-blue-600 mb-4"></i>
+          <h3 class="font-bold text-lg mb-2">Kota Terbesar</h3>
+          <p class="text-gray-600 text-sm">
+            Pusat perdagangan dan industri di Indonesia Timur.
+          </p>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow">
+          <i class="fas fa-ship text-3xl text-blue-600 mb-4"></i>
+          <h3 class="font-bold text-lg mb-2">Pelabuhan & Bandara</h3>
+          <p class="text-gray-600 text-sm">
+            Akses logistik nasional dan internasional.
+          </p>
+        </div>
 
       </div>
-    </section>
+    </div>
+  </section>
 
-  </main>
+  <!-- ================= PETA INVESTASI ================= -->
+  <section class="py-20 bg-white">
+    <div class="container mx-auto px-4 grid md:grid-cols-2 gap-12 items-center">
+
+      <img
+        src="/images/peta-surabaya.png"
+        alt="Peta Investasi Surabaya"
+        class="rounded-xl shadow"
+        loading="lazy"
+      />
+
+      <div>
+        <h2 class="text-3xl font-bold text-blue-800 mb-4">
+          Peta Potensi Investasi Surabaya
+        </h2>
+        <p class="text-gray-600 mb-6">
+          Informasi wilayah unggulan dan sektor strategis di Kota Surabaya
+          untuk mendukung keputusan investasi Anda.
+        </p>
+
+        <a
+          href="/peta-investasi"
+          class="inline-block bg-yellow-400 text-black px-6 py-3 rounded-lg font-semibold hover:bg-yellow-500"
+        >
+          Jelajahi Peta →
+        </a>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ================= VIDEO ================= -->
+  <section class="py-20 bg-gray-50">
+    <div class="container mx-auto px-4 text-center">
+      <h2 class="text-3xl font-bold text-blue-800 mb-10">
+        Video Terupdate
+      </h2>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div class="bg-white rounded-xl shadow overflow-hidden">
+          <iframe class="w-full h-56"
+            src="https://www.youtube.com/embed/VIDEO_ID"
+            allowfullscreen></iframe>
+          <div class="p-4 font-semibold">Pesona Buaya 2024</div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow overflow-hidden">
+          <iframe class="w-full h-56"
+            src="https://www.youtube.com/embed/VIDEO_ID"
+            allowfullscreen></iframe>
+          <div class="p-4 font-semibold">Surabaya Great Expo</div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow overflow-hidden">
+          <iframe class="w-full h-56"
+            src="https://www.youtube.com/embed/VIDEO_ID"
+            allowfullscreen></iframe>
+          <div class="p-4 font-semibold">Ekonomi Kreatif</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= BERITA API ================= -->
+  <section class="py-20 bg-white">
+    <div class="container mx-auto px-4">
+
+      <div class="text-center mb-12">
+        <h2 class="text-3xl font-bold text-blue-800">
+          Berita & Artikel Terupdate
+        </h2>
+        <p class="text-gray-600">
+          Informasi resmi DPMPTSP Kota Surabaya
+        </p>
+      </div>
+
+      {berita.length === 0 && (
+        <p class="text-center text-gray-500">Berita belum tersedia</p>
+      )}
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {berita.map((item) => (
+          <article class="bg-blue-700 text-white rounded-xl p-6 shadow">
+            <img
+              src={`${IMAGE_BASE}${item.picture}`}
+              alt={item.title} 
+              class="absolute inset-0 w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+              style="object-position: center 30%;"
+              loading="lazy"
+            />
+            <h3 class="font-bold text-lg mb-3 line-clamp-2">
+              {item.title}
+            </h3>
+            <p class="text-sm line-clamp-3 mb-4">
+              {item.content}
+            </p>
+            <a
+              href={`/berita/${item.slug}`}
+              class="inline-block bg-white text-blue-700 px-4 py-2 rounded font-semibold"
+            >
+              Baca Selengkapnya
+            </a>
+          </article>
+        ))}
+      </div>
+
+    </div>
+  </section>
+
 </MainLayout>
