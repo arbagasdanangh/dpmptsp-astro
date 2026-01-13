@@ -1,59 +1,89 @@
 ---
-import MainLayout from "../layouts/MainLayout.astro";
+import MainLayout from "../../layouts/MainLayout.astro";
 
-const API_BASE = "https://parkir.dpmptsp-surabaya.my.id";
-const FILE_BASE = "https://dpm-ptsp.surabaya.go.id/fileberita";
+/* ================= CONFIG ================= */
+const BASE_URL = import.meta.env.PUBLIC_BASE_URL;
 
-let ikmList = [];
+/* ================= FETCH API ================= */
+const [ikmRes, categoryRes] = await Promise.all([
+  fetch(`${BASE_URL}/api/v1/about-me/ikm`),
+  fetch(`${BASE_URL}/api/v1/about-me`)
+]);
 
-try {
-  const res = await fetch(`${API_BASE}/api/v1/about-me/ikm`);
-  const json = await res.json();
-
-  // INI YANG BENAR
-  ikmList = json?.data?.data || [];
-} catch (e) {
-  console.error("IKM ERROR", e);
+if (!ikmRes.ok || !categoryRes.ok) {
+  throw new Error("Gagal mengambil data IKM");
 }
+
+const ikmData = await ikmRes.json();
+const categoryData = await categoryRes.json();
+
+/* ================= DATA ================= */
+// API 1 biasanya array
+const ikm = Array.isArray(ikmData) ? ikmData[0] : ikmData;
+
+// Judul kategori dari API 2
+const categoryTitle =
+  categoryData?.data?.ikm || "Indeks Kepuasan Masyarakat";
 ---
 
-<MainLayout title="Tentang Kami">
+<MainLayout title={categoryTitle}>
+  <main class="min-h-screen bg-gray-50">
 
-<section class="py-20 bg-gray-50">
-  <div class="container mx-auto px-4">
+    <!-- HEADER -->
+    <section class="bg-blue-800 text-white py-16">
+      <div class="container mx-auto px-4 text-center">
+        <h1 class="text-4xl md:text-5xl font-bold mb-4">
+          {ikm?.title || categoryTitle}
+        </h1>
+        <p class="max-w-2xl mx-auto text-blue-100">
+          {ikm?.description || "Informasi Indeks Kepuasan Masyarakat Organisasi"}
+        </p>
+      </div>
+    </section>
 
-    <h1 class="text-3xl font-bold text-blue-800 mb-10 text-center">
-      Indeks Kepuasan Masyarakat
-    </h1>
+    <!-- CONTENT -->
+    <section class="container mx-auto px-4 py-16">
+      <div class="bg-white rounded-2xl shadow-xl p-6 md:p-10 max-w-5xl mx-auto">
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      {ikmList.map((item) => (
-        <div class="bg-white rounded-xl shadow overflow-hidden">
-          <img
-            src={`${FILE_BASE}/${item.file}`}
-            alt={item.title}
-            class="w-full h-64 object-cover"
-            loading="lazy"
-          />
-          <div class="p-4 text-center">
-            <h3 class="font-semibold text-gray-700">
-              {item.title}
-            </h3>
-            <p class="text-xs text-gray-500 mt-1">
-              {new Date(item.created_at).toLocaleDateString("id-ID")}
-            </p>
+        <!-- IMAGE -->
+        {ikm?.file && (
+          <div class="mb-8">
+            <img
+              src={`${BASE_URL}/storage/${ikm.file}`}
+              alt={ikm.title}
+              class="w-full rounded-xl shadow-md"
+              loading="lazy"
+            />
           </div>
+        )}
+
+        <!-- META -->
+        <div class="flex flex-wrap gap-6 text-sm text-gray-500 mb-8">
+          <span class="flex items-center gap-2">
+            📂 <strong>Kategori:</strong> {ikm?.category}
+          </span>
+          <span class="flex items-center gap-2">
+            🗓 <strong>Tanggal:</strong>
+            {ikm?.created_at &&
+              new Date(ikm.created_at).toLocaleDateString("id-ID")}
+          </span>
         </div>
-      ))}
-    </div>
 
-    {ikmList.length === 0 && (
-      <p class="text-center text-gray-500 mt-10">
-        Data IKM tidak tersedia
-      </p>
-    )}
+        <!-- CONTENT -->
+        <article class="prose max-w-none prose-blue">
+          {ikm?.content ? (
+            <div set:html={ikm.content} />
+          ) : (
+            <p>
+              Dokumen <strong>Indeks Kepuasan Masyarakat (IKM)</strong> ini
+              merupakan indikator resmi untuk mengukur kualitas pelayanan
+              organisasi kepada masyarakat.
+            </p>
+          )}
+        </article>
 
-  </div>
-</section>
+      </div>
+    </section>
 
+  </main>
 </MainLayout>
