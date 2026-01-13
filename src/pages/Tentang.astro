@@ -1,176 +1,73 @@
 ---
 import MainLayout from "../layouts/MainLayout.astro";
 
-/* ================= API ================= */
-const API_BERITA = "http://parkir.dpmptsp-surabaya.my.id/api/v1/posts";
-const IMAGE_BASE = "https://dpm-ptsp.surabaya.go.id/fileberita/";
+/* ================= BASE URL ================= */
+const BASE_URL = "https://parkir.dpmptsp-surabaya.my.id";
 
-let berita = [];
+/* ================= FETCH API ================= */
+const res = await fetch(`${BASE_URL}/api/v1/about-me`);
 
-try {
-  const res = await fetch(API_BERITA);
-  const json = await res.json();
-  berita = json.data?.slice(0, 6) || [];
-} catch (e) {
-  console.error("Gagal load berita", e);
+if (!res.ok) {
+  throw new Error("Gagal mengambil data Tentang");
 }
+
+const result = await res.json();
+
+/*
+  Response:
+  {
+    status: "success",
+    data: {
+      budaya: "...",
+      ikm: "...",
+      visi-misi: "...",
+      ...
+    }
+  }
+*/
+const aboutData = result?.data || {};
 ---
 
-<MainLayout title="DPMPTSP Kota Surabaya">
+<MainLayout title="Tentang Organisasi">
+  <main class="min-h-screen bg-gray-50">
 
-  <!-- ================= HERO ================= -->
-  <section class="py-20 bg-white">
-    <div class="container mx-auto px-4 text-center">
-      <h1 class="text-4xl md:text-5xl font-bold text-blue-800 mb-4">
-        Mengapa Berinvestasi di Surabaya?
-      </h1>
-      <p class="text-gray-600 max-w-2xl mx-auto">
-        Kota Surabaya menawarkan iklim investasi yang kondusif, infrastruktur lengkap,
-        serta pelayanan perizinan yang cepat dan transparan.
-      </p>
-    </div>
-  </section>
-
-  <!-- ================= KEUNGGULAN ================= -->
-  <section class="py-16 bg-gray-50">
-    <div class="container mx-auto px-4">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-
-        <div class="bg-white p-6 rounded-xl shadow">
-          <i class="fas fa-chart-line text-3xl text-blue-600 mb-4"></i>
-          <h3 class="font-bold text-lg mb-2">Iklim Investasi</h3>
-          <p class="text-gray-600 text-sm">
-            Pertumbuhan ekonomi stabil dan berkelanjutan.
-          </p>
-        </div>
-
-        <div class="bg-white p-6 rounded-xl shadow">
-          <i class="fas fa-city text-3xl text-blue-600 mb-4"></i>
-          <h3 class="font-bold text-lg mb-2">Kota Terbesar</h3>
-          <p class="text-gray-600 text-sm">
-            Pusat perdagangan dan industri di Indonesia Timur.
-          </p>
-        </div>
-
-        <div class="bg-white p-6 rounded-xl shadow">
-          <i class="fas fa-ship text-3xl text-blue-600 mb-4"></i>
-          <h3 class="font-bold text-lg mb-2">Pelabuhan & Bandara</h3>
-          <p class="text-gray-600 text-sm">
-            Akses logistik nasional dan internasional.
-          </p>
-        </div>
-
-      </div>
-    </div>
-  </section>
-
-  <!-- ================= PETA INVESTASI ================= -->
-  <section class="py-20 bg-white">
-    <div class="container mx-auto px-4 grid md:grid-cols-2 gap-12 items-center">
-
-      <img
-        src="/images/peta-surabaya.png"
-        alt="Peta Investasi Surabaya"
-        class="rounded-xl shadow"
-        loading="lazy"
-      />
-
-      <div>
-        <h2 class="text-3xl font-bold text-blue-800 mb-4">
-          Peta Potensi Investasi Surabaya
-        </h2>
-        <p class="text-gray-600 mb-6">
-          Informasi wilayah unggulan dan sektor strategis di Kota Surabaya
-          untuk mendukung keputusan investasi Anda.
-        </p>
-
-        <a
-          href="/peta-investasi"
-          class="inline-block bg-yellow-400 text-black px-6 py-3 rounded-lg font-semibold hover:bg-yellow-500"
-        >
-          Jelajahi Peta →
-        </a>
-      </div>
-
-    </div>
-  </section>
-
-  <!-- ================= VIDEO ================= -->
-  <section class="py-20 bg-gray-50">
-    <div class="container mx-auto px-4 text-center">
-      <h2 class="text-3xl font-bold text-blue-800 mb-10">
-        Video Terupdate
-      </h2>
-
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div class="bg-white rounded-xl shadow overflow-hidden">
-          <iframe class="w-full h-56"
-            src="https://www.youtube.com/embed/VIDEO_ID"
-            allowfullscreen></iframe>
-          <div class="p-4 font-semibold">Pesona Buaya 2024</div>
-        </div>
-
-        <div class="bg-white rounded-xl shadow overflow-hidden">
-          <iframe class="w-full h-56"
-            src="https://www.youtube.com/embed/VIDEO_ID"
-            allowfullscreen></iframe>
-          <div class="p-4 font-semibold">Surabaya Great Expo</div>
-        </div>
-
-        <div class="bg-white rounded-xl shadow overflow-hidden">
-          <iframe class="w-full h-56"
-            src="https://www.youtube.com/embed/VIDEO_ID"
-            allowfullscreen></iframe>
-          <div class="p-4 font-semibold">Ekonomi Kreatif</div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ================= BERITA API ================= -->
-  <section class="py-20 bg-white">
-    <div class="container mx-auto px-4">
-
-      <div class="text-center mb-12">
-        <h2 class="text-3xl font-bold text-blue-800">
-          Berita & Artikel Terupdate
-        </h2>
-        <p class="text-gray-600">
-          Informasi resmi DPMPTSP Kota Surabaya
+    <!-- HERO -->
+    <section class="bg-blue-800 text-white py-16">
+      <div class="container mx-auto px-4 text-center">
+        <h1 class="text-4xl font-bold mb-4">
+          Tentang Organisasi
+        </h1>
+        <p class="text-blue-100 max-w-2xl mx-auto">
+          Informasi resmi terkait profil dan layanan DPMPTSP Kota Surabaya
         </p>
       </div>
+    </section>
 
-      {berita.length === 0 && (
-        <p class="text-center text-gray-500">Berita belum tersedia</p>
-      )}
+    <!-- LIST DATA -->
+    <section class="container mx-auto px-4 py-16">
+      <div class="bg-white rounded-2xl shadow p-8 max-w-4xl mx-auto">
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {berita.map((item) => (
-          <article class="bg-blue-700 text-white rounded-xl p-6 shadow">
-            <img
-              src={`${IMAGE_BASE}${item.picture}`}
-              alt={item.title} 
-              class="absolute inset-0 w-full h-full object-cover hover:scale-105 transition-transform duration-500"
-              style="object-position: center 30%;"
-              loading="lazy"
-            />
-            <h3 class="font-bold text-lg mb-3 line-clamp-2">
-              {item.title}
-            </h3>
-            <p class="text-sm line-clamp-3 mb-4">
-              {item.content}
-            </p>
-            <a
-              href={`/berita/${item.slug}`}
-              class="inline-block bg-white text-blue-700 px-4 py-2 rounded font-semibold"
-            >
-              Baca Selengkapnya
-            </a>
-          </article>
-        ))}
+        <h2 class="text-2xl font-bold text-blue-800 mb-6">
+          Informasi Organisasi
+        </h2>
+
+        <ul class="space-y-4">
+          {Object.entries(aboutData).map(([slug, title]) => (
+            <li class="flex items-center gap-4 border-b pb-3 last:border-none">
+              <span class="w-2 h-2 bg-blue-700 rounded-full"></span>
+
+              <a
+                href={`/about/${slug}`}
+                class="text-gray-800 font-medium hover:text-blue-700 transition"
+              >
+                {title}
+              </a>
+            </li>
+          ))}
+        </ul>
+
       </div>
+    </section>
 
-    </div>
-  </section>
-
+  </main>
 </MainLayout>
