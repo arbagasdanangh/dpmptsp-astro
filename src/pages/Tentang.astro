@@ -10,8 +10,6 @@ let menus = [];
 try {
   const res = await fetch(`${BASE_URL}/api/v1/about-me`);
   const json = await res.json();
-
-  // API: { data: [{ title, category }] }
   menus = Array.isArray(json?.data) ? json.data : [];
 } catch (e) {
   console.error("Gagal load menu:", e);
@@ -49,7 +47,7 @@ try {
       <div class="lg:col-span-3">
         <div
           id="content-area"
-          class="bg-white rounded-2xl shadow p-8 min-h-[400px]"
+          class="bg-white rounded-2xl shadow p-8 min-h-[420px]"
         >
           <p class="text-gray-500 text-center">
             Memuat data...
@@ -76,49 +74,85 @@ async function loadCategory(category) {
     const res = await fetch(`${BASE_URL}/api/v1/about-me/${category}`);
     const json = await res.json();
 
-    // STRUKTUR API:
-    // { data: { category, data: [] } }
+    // API: { data: { category, data: [] } }
     const list = json?.data?.data || [];
 
     if (!Array.isArray(list) || list.length === 0) {
       contentArea.innerHTML = `
-        <p class="text-gray-500 text-center">
-          Data tidak tersedia.
-        </p>
+        <div class="text-center text-gray-500">
+          Informasi belum tersedia.
+        </div>
       `;
       return;
     }
 
     contentArea.innerHTML = list.map(item => `
-      <article class="mb-12 last:mb-0">
+      <article class="mb-14 last:mb-0">
+
         <h2 class="text-3xl font-bold text-blue-800 mb-6">
           ${item.title}
         </h2>
 
         ${
-          item.file
+          /* ❌ SAMBUTAN TIDAK BOLEH ADA GAMBAR */
+          category !== "sambutan" && item.file
             ? `<img
-                src="https://dpm-ptsp.surabaya.go.id/tentangfile/${item.file}"
+                src="${BASE_URL}/storage/${item.file}"
                 alt="${item.title}"
-                class="rounded-xl shadow max-w-md mx-auto mb-6"
+                class="rounded-xl shadow max-w-md mx-auto mb-8"
               />`
             : ""
         }
 
         ${
-          item.content && item.content.trim() !== ""
-            ? `<div class="prose max-w-none text-gray-700">
-                ${item.content}
-              </div>`
-            : `<p class="text-gray-500 italic">
-                Tidak ada deskripsi.
-              </p>`
+          (() => {
+            /* 🟢 SAMBUTAN KOSONG → TEKS RESMI & HALUS */
+            if (category === "sambutan" && (!item.content || item.content.trim() === "")) {
+              return `
+                <div class="bg-blue-50 border border-blue-100 rounded-xl p-6">
+                  <p class="text-gray-700 leading-relaxed">
+                    Selamat datang di website resmi
+                    <strong>Dinas Penanaman Modal dan Pelayanan Terpadu Satu Pintu
+                    Kota Surabaya</strong>.
+                  </p>
+
+                  <p class="text-gray-700 leading-relaxed mt-4">
+                    Kami berkomitmen untuk memberikan pelayanan perizinan dan
+                    nonperizinan yang <strong>mudah, cepat, transparan,
+                    dan profesional</strong> kepada masyarakat dan pelaku usaha.
+                  </p>
+
+                  <p class="text-gray-700 leading-relaxed mt-4">
+                    Website ini merupakan sarana informasi resmi yang memuat
+                    kebijakan, layanan, serta kinerja DPMPTSP Kota Surabaya.
+                  </p>
+                </div>
+              `;
+            }
+
+            /* 🟢 CONTENT NORMAL */
+            if (item.content && item.content.trim() !== "") {
+              return `
+                <div class="prose max-w-none text-gray-700">
+                  ${item.content}
+                </div>
+              `;
+            }
+
+            /* 🟡 DEFAULT HALUS */
+            return `
+              <p class="text-gray-500 italic">
+                Informasi sedang dalam proses pemutakhiran.
+              </p>
+            `;
+          })()
         }
 
-        <p class="text-sm text-gray-400 mt-4">
+        <p class="text-sm text-gray-400 mt-6">
           Dipublikasikan:
           ${new Date(item.created_at).toLocaleDateString("id-ID")}
         </p>
+
       </article>
     `).join("");
 
@@ -132,7 +166,7 @@ async function loadCategory(category) {
   }
 }
 
-// EVENT TAB
+// TAB CLICK
 tabs.forEach((btn, index) => {
   btn.addEventListener("click", () => {
     tabs.forEach(b =>
