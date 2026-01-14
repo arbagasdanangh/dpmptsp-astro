@@ -4,23 +4,21 @@ import { db } from "../../lib/db";
 
 const { slug } = Astro.params;
 
-// ======================
-// NAVBAR (URUTAN FIX)
-// ======================
+// ================= SIDEBAR MENU =================
 const menus = [
   { slug: "sambutan", label: "Sambutan", icon: "🎙️" },
   { slug: "visi-misi", label: "Visi dan Misi", icon: "🎯" },
+  { slug: "struktur-organisasi", label: "Struktur Organisasi", icon: "🏢" },
   { slug: "budaya-pelayanan", label: "Budaya Pelayanan", icon: "🤝" },
   { slug: "motto-pelayanan", label: "Motto Pelayanan", icon: "💬" },
   { slug: "maklumat-pelayanan", label: "Maklumat Pelayanan", icon: "📄" },
   { slug: "kompensasi-layanan", label: "Kompensasi Layanan", icon: "💰" },
+  { slug: "perwali", label: "Perwali", icon: "⚖️" },
   { slug: "ikm", label: "Indeks Kepuasan Masyarakat", icon: "📊" },
   { slug: "zona-integritas", label: "Zona Integritas", icon: "🛡️" },
 ];
 
-// ======================
-// DATA
-// ======================
+// ================= DATA =================
 let data = [];
 try {
   const [rows] = await db.execute(
@@ -40,7 +38,7 @@ const isSambutan = slug === "sambutan";
 <section class="bg-gray-50 py-16">
   <div class="container mx-auto px-6 grid lg:grid-cols-[280px_1fr] gap-10">
 
-    <!-- ================= SIDEBAR ================= -->
+    <!-- SIDEBAR -->
     <aside class="bg-white rounded-2xl shadow p-6">
       <h3 class="text-blue-700 font-bold mb-6 flex items-center gap-2">
         ☰ Menu Informasi
@@ -64,7 +62,7 @@ const isSambutan = slug === "sambutan";
       </ul>
     </aside>
 
-    <!-- ================= CONTENT ================= -->
+    <!-- CONTENT -->
     <main class="bg-white rounded-2xl shadow p-10">
 
       <header class="flex items-center gap-4 mb-8">
@@ -92,16 +90,16 @@ const isSambutan = slug === "sambutan";
       {data.map(item => (
         <article class="mb-14 last:mb-0">
 
-          <!-- ================= GAMBAR ================= -->
+          <!-- GAMBAR (KECUALI SAMBUTAN) -->
           {!isSambutan && item.file && (
             <img
-              src={`https://dpm-ptsp.surabaya.go.id/storage/${item.file}`}
+              src={`https://dpm-ptsp.surabaya.go.id/tentangfile/${item.file}`}
               alt={item.title}
-              class="rounded-2xl shadow max-w-md mx-auto mb-8"
+              class="rounded-2xl shadow max-w-3xl mx-auto mb-8"
             />
           )}
 
-          <!-- ================= KONTEN ================= -->
+          <!-- KONTEN -->
           {isSambutan ? (
             <div class="bg-blue-50 border-l-4 border-blue-500 rounded-xl p-8 italic text-gray-700 leading-relaxed">
               “{item.content}”
