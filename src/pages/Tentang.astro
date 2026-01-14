@@ -33,7 +33,11 @@ try {
 const currentMenu = menus.find(m => m.slug === slug);
 const isSambutan = slug === "sambutan";
 ---
-
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
 <MainLayout title={currentMenu?.label || "Informasi"}>
 <section class="bg-gray-50 py-16">
   <div class="container mx-auto px-6 grid lg:grid-cols-[280px_1fr] gap-10">
