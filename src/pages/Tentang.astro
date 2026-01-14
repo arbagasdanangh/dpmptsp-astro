@@ -1,138 +1,127 @@
 ---
-import MainLayout from "../layouts/MainLayout.astro";
+import MainLayout from "../../layouts/MainLayout.astro";
+import { db } from "../../lib/db";
 
-const BASE_URL = "https://parkir.dpmptsp-surabaya.my.id";
+const { slug } = Astro.params;
 
-/* ===== MENU FIXED ORDER (PERSIS GAMBAR) ===== */
+// ======================
+// NAVBAR (URUTAN FIX)
+// ======================
 const menus = [
-  { title: "Sambutan", category: "sambutan", icon: "🎙️" },
-  { title: "Visi dan Misi", category: "visi-misi", icon: "🎯" },
-  { title: "Budaya Pelayanan", category: "budaya", icon: "🤝" },
-  { title: "Motto Pelayanan", category: "motto-layanan", icon: "💬" },
-  { title: "Maklumat Pelayanan", category: "maklumat", icon: "📜" },
-  { title: "Kompensasi Layanan", category: "kompensasi", icon: "💰" },
-  { title: "Indeks Kepuasan Masyarakat", category: "ikm", icon: "😊" },
-  { title: "Zona Integritas", category: "zona-integritas", icon: "🛡️" },
+  { slug: "sambutan", label: "Sambutan", icon: "🎙️" },
+  { slug: "visi-misi", label: "Visi dan Misi", icon: "🎯" },
+  { slug: "budaya-pelayanan", label: "Budaya Pelayanan", icon: "🤝" },
+  { slug: "motto-pelayanan", label: "Motto Pelayanan", icon: "💬" },
+  { slug: "maklumat-pelayanan", label: "Maklumat Pelayanan", icon: "📄" },
+  { slug: "kompensasi-layanan", label: "Kompensasi Layanan", icon: "💰" },
+  { slug: "ikm", label: "Indeks Kepuasan Masyarakat", icon: "📊" },
+  { slug: "zona-integritas", label: "Zona Integritas", icon: "🛡️" },
 ];
+
+// ======================
+// DATA
+// ======================
+let data = [];
+try {
+  const [rows] = await db.execute(
+    "SELECT title, content, file FROM informasi WHERE slug = ? ORDER BY id DESC",
+    [slug]
+  );
+  data = rows;
+} catch (e) {
+  console.error(e);
+}
+
+const currentMenu = menus.find(m => m.slug === slug);
+const isSambutan = slug === "sambutan";
 ---
 
-<MainLayout title="Tentang DPMPTSP Surabaya">
-<section class="py-16 bg-[#f6f8fc]">
-  <div class="container mx-auto px-6 grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-8">
+<MainLayout title={currentMenu?.label || "Informasi"}>
+<section class="bg-gray-50 py-16">
+  <div class="container mx-auto px-6 grid lg:grid-cols-[280px_1fr] gap-10">
 
-    <!-- SIDEBAR -->
-    <aside class="bg-white rounded-2xl shadow p-5">
-      <div class="flex items-center gap-2 mb-4 text-blue-600 font-semibold">
+    <!-- ================= SIDEBAR ================= -->
+    <aside class="bg-white rounded-2xl shadow p-6">
+      <h3 class="text-blue-700 font-bold mb-6 flex items-center gap-2">
         ☰ Menu Informasi
-      </div>
+      </h3>
 
-      <div class="space-y-2">
-        {menus.map((m, i) => (
-          <button
-            class={`tab-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition
-            ${i === 0
-              ? "bg-blue-600 text-white"
-              : "bg-gray-100 hover:bg-blue-50 text-gray-700"}`}
-            data-category={m.category}
-          >
-            <span>{m.icon}</span>
-            <span>{m.title}</span>
-          </button>
+      <ul class="space-y-2">
+        {menus.map(menu => (
+          <li>
+            <a
+              href={`/informasi/${menu.slug}`}
+              class={`flex items-center gap-3 px-4 py-3 rounded-xl transition
+                ${menu.slug === slug
+                  ? "bg-blue-600 text-white font-semibold"
+                  : "hover:bg-gray-100 text-gray-700"}`}
+            >
+              <span>{menu.icon}</span>
+              {menu.label}
+            </a>
+          </li>
         ))}
-      </div>
+      </ul>
     </aside>
 
-    <!-- CONTENT -->
-    <main class="bg-white rounded-2xl shadow p-10 min-h-[420px]">
-      <div id="content-area"></div>
-    </main>
+    <!-- ================= CONTENT ================= -->
+    <main class="bg-white rounded-2xl shadow p-10">
 
+      <header class="flex items-center gap-4 mb-8">
+        <div class="w-12 h-12 flex items-center justify-center rounded-full bg-blue-600 text-white text-xl">
+          {currentMenu?.icon}
+        </div>
+        <div>
+          <h1 class="text-3xl font-bold text-blue-800">
+            {currentMenu?.label}
+          </h1>
+          {isSambutan && (
+            <p class="text-gray-500 text-sm">
+              Kepala Dinas DPM-PTSP Kota Surabaya
+            </p>
+          )}
+        </div>
+      </header>
+
+      {data.length === 0 && (
+        <div class="text-gray-500 italic">
+          Informasi sedang dipersiapkan.
+        </div>
+      )}
+
+      {data.map(item => (
+        <article class="mb-14 last:mb-0">
+
+          <!-- ================= GAMBAR ================= -->
+          {!isSambutan && item.file && (
+            <img
+              src={`https://dpm-ptsp.surabaya.go.id/storage/${item.file}`}
+              alt={item.title}
+              class="rounded-2xl shadow max-w-md mx-auto mb-8"
+            />
+          )}
+
+          <!-- ================= KONTEN ================= -->
+          {isSambutan ? (
+            <div class="bg-blue-50 border-l-4 border-blue-500 rounded-xl p-8 italic text-gray-700 leading-relaxed">
+              “{item.content}”
+              <div class="mt-6 text-right font-semibold text-blue-700 not-italic">
+                Kepala Dinas DPM-PTSP  
+                <div class="text-sm font-normal text-gray-600">
+                  Kota Surabaya
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div class="prose max-w-none text-gray-700">
+              {item.content}
+            </div>
+          )}
+
+        </article>
+      ))}
+
+    </main>
   </div>
 </section>
 </MainLayout>
-
-<!-- ================= CLIENT SCRIPT ================= -->
-<script>
-const BASE_URL = "https://parkir.dpmptsp-surabaya.my.id";
-const tabs = document.querySelectorAll(".tab-btn");
-const content = document.getElementById("content-area");
-
-async function loadCategory(category) {
-  const res = await fetch(`${BASE_URL}/api/v1/about-me/${category}`);
-  const json = await res.json();
-  const data = json?.data?.data || [];
-
-  if (category === "sambutan") {
-    const item = data[0] || {};
-    content.innerHTML = `
-      <div class="flex items-center gap-3 mb-6">
-        <div class="bg-blue-600 text-white w-10 h-10 rounded-full flex items-center justify-center">
-          🎙️
-        </div>
-        <div>
-          <h2 class="text-2xl font-bold text-blue-700">Sambutan</h2>
-          <p class="text-sm text-gray-500">
-            Kepala Dinas DPM-PTSP Kota Surabaya
-          </p>
-        </div>
-      </div>
-
-      <div class="relative bg-yellow-50 border-l-4 border-blue-600 rounded-xl p-8">
-        <div class="absolute top-4 left-4 text-4xl text-yellow-400">“</div>
-
-        <p class="text-gray-700 leading-relaxed italic">
-          ${
-            item.content && item.content.trim() !== ""
-              ? item.content
-              : "Assalamu’alaikum Warahmatullahi Wabarakatuh. Puji syukur kami panjatkan kehadirat Allah SWT, dengan rahmat-Nya Dinas DPM-PTSP Kota Surabaya terus berupaya meningkatkan kualitas pelayanan investasi dan perizinan kepada masyarakat."
-          }
-        </p>
-      </div>
-
-      <div class="text-right mt-8">
-        <p class="font-semibold text-blue-700">
-          Kepala Dinas DPM-PTSP
-        </p>
-        <p class="text-sm text-gray-500">
-          Kota Surabaya
-        </p>
-      </div>
-    `;
-    return;
-  }
-
-  // ===== KATEGORI LAIN =====
-  if (!data.length) {
-    content.innerHTML = `<p class="text-gray-500">Informasi sedang dipersiapkan.</p>`;
-    return;
-  }
-
-  content.innerHTML = data.map(item => `
-    <h2 class="text-2xl font-bold text-blue-700 mb-6">
-      ${item.title}
-    </h2>
-
-    ${
-      item.file
-        ? `<img src="${BASE_URL}/storage/${item.file}"
-             class="rounded-xl shadow max-w-md mb-6" />`
-        : ""
-    }
-
-    <div class="prose max-w-none text-gray-700">
-      ${item.content || "Informasi sedang dipersiapkan."}
-    </div>
-  `).join("");
-}
-
-// TAB EVENT
-tabs.forEach((btn, i) => {
-  btn.addEventListener("click", () => {
-    tabs.forEach(b => b.classList.remove("bg-blue-600", "text-white"));
-    btn.classList.add("bg-blue-600", "text-white");
-    loadCategory(btn.dataset.category);
-  });
-
-  if (i === 0) loadCategory(btn.dataset.category);
-});
-</script>
