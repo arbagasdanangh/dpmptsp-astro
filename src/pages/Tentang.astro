@@ -6,14 +6,19 @@ const BASE_URL = "https://parkir.dpmptsp-surabaya.my.id";
 /* ================= FETCH MENU ================= */
 const resMenu = await fetch(`${BASE_URL}/api/v1/about-me`);
 const menuJson = await resMenu.json();
-const menus = menuJson?.data || {};
 
-/* ================= FETCH IKM ================= */
-const resIkm = await fetch(`${BASE_URL}/api/v1/about-me/ikm`);
-const ikmJson = await resIkm.json();
-const ikm = Array.isArray(ikmJson) ? ikmJson[0] : ikmJson;
+/*
+API MENU BENTUK:
+{
+  "data": [
+    { "title": "Budaya Pelayanan Organisasi", "category": "budaya" },
+    { "title": "Indeks Kepuasan Masyarakat", "category": "ikm" }
+  ]
+}
+*/
+const menus = Array.isArray(menuJson?.data) ? menuJson.data : [];
 
-/* mapping icon */
+/* ================= ICON MAP ================= */
 const iconMap = {
   sambutan: "fa-microphone-alt",
   "visi-misi": "fa-bullseye",
@@ -29,7 +34,7 @@ const iconMap = {
 ---
 
 <MainLayout title="Informasi Organisasi">
-<section id="stdjenis-sec" class="py-20 bg-gradient-to-b from-gray-50 to-white">
+<section class="py-20 bg-gradient-to-b from-gray-50 to-white">
   <div class="container mx-auto px-4">
 
     <!-- HEADER -->
@@ -38,7 +43,7 @@ const iconMap = {
         Informasi Organisasi
       </span>
       <h2 class="text-4xl font-bold text-blue-800 mt-6 mb-4">
-        {menus["sambutan"] ?? "Informasi Organisasi"}
+        Informasi Organisasi
       </h2>
       <p class="text-gray-600 max-w-2xl mx-auto text-lg">
         Informasi lengkap tentang organisasi dan pelayanan DPMPTSP Surabaya
@@ -50,17 +55,21 @@ const iconMap = {
       <!-- SIDEBAR -->
       <aside class="lg:col-span-1">
         <div class="bg-white rounded-2xl shadow p-6 sticky top-24">
-          <h3 class="text-lg font-bold text-blue-800 mb-4">Menu Informasi</h3>
+          <h3 class="text-lg font-bold text-blue-800 mb-4">
+            Menu Informasi
+          </h3>
 
           <div class="space-y-2 max-h-[500px] overflow-y-auto">
-            {Object.entries(menus).map(([slug, title], i) => (
+            {menus.map((item, i) => (
               <button
                 class={`tab-btn w-full text-left px-4 py-3 rounded-lg font-medium transition
-                ${i === 0 ? "bg-blue-600 text-white" : "bg-gray-100 hover:bg-blue-50 text-gray-700"}`}
-                data-tab={slug}
+                ${i === 0
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-100 hover:bg-blue-50 text-gray-700"}`}
+                data-tab={item.category}
               >
-                <i class={`fas ${iconMap[slug] ?? "fa-info-circle"} mr-3`}></i>
-                {title}
+                <i class={`fas ${iconMap[item.category] ?? "fa-info-circle"} mr-3`}></i>
+                {item.title}
               </button>
             ))}
           </div>
@@ -68,81 +77,114 @@ const iconMap = {
       </aside>
 
       <!-- CONTENT -->
-      <div class="lg:col-span-3 space-y-8">
-
-        <!-- SAMBUTAN -->
-        <div id="sambutan" class="tab-content block">
-          <div class="bg-white rounded-2xl shadow p-8">
-            <h3 class="text-3xl font-bold text-blue-800 mb-4">Sambutan</h3>
-            <p class="text-gray-700 leading-relaxed">
-              Selamat datang di website resmi DPMPTSP Kota Surabaya. Kami berkomitmen
-              memberikan pelayanan terbaik kepada masyarakat dan investor.
-            </p>
-          </div>
+      <div class="lg:col-span-3">
+        <div
+          id="content-area"
+          class="bg-white rounded-2xl shadow p-8 min-h-[300px]"
+        >
+          <p class="text-gray-600 text-center">
+            Memuat data...
+          </p>
         </div>
-
-        <!-- VISI MISI -->
-        <div id="visi-misi" class="tab-content hidden">
-          <div class="bg-white rounded-2xl shadow p-8">
-            <h3 class="text-3xl font-bold text-blue-800 mb-4">Visi & Misi</h3>
-            <img
-              src="/gambar/visi misi.jpg"
-              class="rounded-xl shadow max-w-md mx-auto"
-              alt="Visi Misi"
-            />
-          </div>
-        </div>
-
-        <!-- IKM -->
-        <div id="ikm" class="tab-content hidden">
-          <div class="bg-white rounded-2xl shadow p-8">
-            <h3 class="text-3xl font-bold text-blue-800 mb-4">
-              {ikm?.title ?? "Indeks Kepuasan Masyarakat"}
-            </h3>
-
-            {ikm?.file && (
-              <img
-                src={`${BASE_URL}/storage/${ikm.file}`}
-                class="rounded-xl shadow max-w-md mx-auto mb-6"
-                alt={ikm.title}
-              />
-            )}
-
-            <p class="text-gray-600 text-sm">
-              Dipublikasikan:
-              {new Date(ikm?.created_at).toLocaleDateString("id-ID")}
-            </p>
-          </div>
-        </div>
-
-        <!-- DEFAULT -->
-        <div id="default-tab" class="tab-content hidden">
-          <div class="bg-white rounded-2xl shadow p-8 text-center">
-            <p class="text-gray-600">
-              Silakan pilih menu informasi di sebelah kiri.
-            </p>
-          </div>
-        </div>
-
       </div>
+
     </div>
   </div>
 </section>
 </MainLayout>
 
+<!-- ================= SCRIPT ================= -->
 <script>
-  const tabs = document.querySelectorAll(".tab-btn");
-  const contents = document.querySelectorAll(".tab-content");
+const BASE_URL = "https://parkir.dpmptsp-surabaya.my.id";
 
-  tabs.forEach(btn => {
-    btn.addEventListener("click", () => {
-      const target = btn.dataset.tab;
+const tabs = document.querySelectorAll(".tab-btn");
+const contentArea = document.getElementById("content-area");
 
-      tabs.forEach(b => b.classList.remove("bg-blue-600", "text-white"));
-      btn.classList.add("bg-blue-600", "text-white");
+/* ================= LOAD CONTENT BY CATEGORY ================= */
+async function loadCategory(category) {
+  contentArea.innerHTML = `
+    <p class="text-gray-500 text-center">Memuat data...</p>
+  `;
 
-      contents.forEach(c => c.classList.add("hidden"));
-      document.getElementById(target)?.classList.remove("hidden");
-    });
+  try {
+    const res = await fetch(`${BASE_URL}/api/v1/about-me/${category}`);
+    const json = await res.json();
+    const data = json?.data || [];
+
+    if (!data.length) {
+      contentArea.innerHTML = `
+        <p class="text-gray-500 text-center">
+          Data tidak tersedia.
+        </p>
+      `;
+      return;
+    }
+
+    const item = data[0];
+
+    contentArea.innerHTML = `
+      <h3 class="text-3xl font-bold text-blue-800 mb-6">
+        ${item.title}
+      </h3>
+
+      ${
+        item.file
+          ? `
+        <img
+          src="${BASE_URL}/storage/${item.file}"
+          alt="${item.title}"
+          class="rounded-xl shadow max-w-md mx-auto mb-6"
+        />
+      `
+          : ""
+      }
+
+      ${
+        typeof item.content === "string"
+          ? `
+        <div class="prose max-w-none text-gray-700">
+          ${item.content}
+        </div>
+      `
+          : ""
+      }
+
+      ${
+        item.created_at
+          ? `
+        <p class="text-gray-500 text-sm mt-6">
+          Dipublikasikan:
+          ${new Date(item.created_at).toLocaleDateString("id-ID")}
+        </p>
+      `
+          : ""
+      }
+    `;
+  } catch (err) {
+    contentArea.innerHTML = `
+      <p class="text-red-500 text-center">
+        Gagal memuat data.
+      </p>
+    `;
+  }
+}
+
+/* ================= CLICK + AUTO LOAD ================= */
+tabs.forEach((btn, index) => {
+  btn.addEventListener("click", () => {
+    const category = btn.dataset.tab;
+
+    tabs.forEach(b =>
+      b.classList.remove("bg-blue-600", "text-white")
+    );
+    btn.classList.add("bg-blue-600", "text-white");
+
+    loadCategory(category);
   });
+
+  // auto-load menu pertama
+  if (index === 0) {
+    loadCategory(btn.dataset.tab);
+  }
+});
 </script>
