@@ -1,106 +1,58 @@
 ---
-import MainLayout from "../layouts/MainLayout.astro";
+import MainLayout from "../../layouts/MainLayout.astro";
 
+/* ================= CONFIG ================= */
 const BASE_URL = "https://parkir.dpmptsp-surabaya.my.id";
 
 /* ================= FETCH MENU ================= */
-const resMenu = await fetch(`${BASE_URL}/api/v1/about-me`);
-const menuJson = await resMenu.json();
-
-/*
-API MENU BENTUK:
-{
-  "data": [
-    { "title": "Budaya Pelayanan Organisasi", "category": "budaya" },
-    { "title": "Indeks Kepuasan Masyarakat", "category": "ikm" }
-  ]
+let menus = [];
+try {
+  const res = await fetch(`${BASE_URL}/api/v1/about-me`);
+  const json = await res.json();
+  menus = Array.isArray(json?.data) ? json.data : [];
+} catch (e) {
+  console.error(e);
 }
-*/
-const menus = Array.isArray(menuJson?.data) ? menuJson.data : [];
-
-/* ================= ICON MAP ================= */
-const iconMap = {
-  sambutan: "fa-microphone-alt",
-  "visi-misi": "fa-bullseye",
-  budaya: "fa-hands-helping",
-  "motto-layanan": "fa-quote-right",
-  maklumat: "fa-scroll",
-  kompensasi: "fa-hand-holding-usd",
-  ikm: "fa-smile",
-  struktur: "fa-sitemap",
-  "piagam-penghargaan": "fa-award",
-  "zona-integritas": "fa-shield-alt",
-};
 ---
 
-<MainLayout title="Informasi Organisasi">
-<section class="py-20 bg-gradient-to-b from-gray-50 to-white">
-  <div class="container mx-auto px-4">
-
-    <!-- HEADER -->
-    <div class="text-center mb-16">
-      <span class="text-sm font-semibold text-blue-600 bg-blue-50 px-4 py-2 rounded-full">
-        Informasi Organisasi
-      </span>
-      <h2 class="text-4xl font-bold text-blue-800 mt-6 mb-4">
-        Informasi Organisasi
-      </h2>
-      <p class="text-gray-600 max-w-2xl mx-auto text-lg">
-        Informasi lengkap tentang organisasi dan pelayanan DPMPTSP Surabaya
-      </p>
-    </div>
-
-    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+<MainLayout title="Tentang Kami">
+  <section class="py-20 bg-gradient-to-b from-gray-50 to-white">
+    <div class="container mx-auto px-4 grid grid-cols-1 lg:grid-cols-4 gap-10">
 
       <!-- SIDEBAR -->
-      <aside class="lg:col-span-1">
-        <div class="bg-white rounded-2xl shadow p-6 sticky top-24">
-          <h3 class="text-lg font-bold text-blue-800 mb-4">
-            Menu Informasi
-          </h3>
-
-          <div class="space-y-2 max-h-[500px] overflow-y-auto">
-            {menus.map((item, i) => (
-              <button
-                class={`tab-btn w-full text-left px-4 py-3 rounded-lg font-medium transition
-                ${i === 0
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-100 hover:bg-blue-50 text-gray-700"}`}
-                data-tab={item.category}
-              >
-                <i class={`fas ${iconMap[item.category] ?? "fa-info-circle"} mr-3`}></i>
-                {item.title}
-              </button>
-            ))}
-          </div>
-        </div>
+      <aside class="lg:col-span-1 space-y-3">
+        {menus.map((item, i) => (
+          <button
+            class={`tab-btn w-full text-left px-4 py-3 rounded-lg font-medium transition
+            ${i === 0
+              ? "bg-blue-600 text-white"
+              : "bg-gray-100 hover:bg-blue-50 text-gray-700"}`}
+            data-tab={item.category}
+          >
+            {item.title}
+          </button>
+        ))}
       </aside>
 
       <!-- CONTENT -->
-      <div class="lg:col-span-3">
-        <div
-          id="content-area"
-          class="bg-white rounded-2xl shadow p-8 min-h-[300px]"
-        >
-          <p class="text-gray-600 text-center">
+      <div class="lg:col-span-3 bg-white rounded-2xl shadow-lg p-8 min-h-[400px]">
+        <div id="content-area">
+          <p class="text-gray-500 text-center">
             Memuat data...
           </p>
         </div>
       </div>
 
     </div>
-  </div>
-</section>
+  </section>
 </MainLayout>
 
 <!-- ================= SCRIPT ================= -->
 <script>
 const BASE_URL = "https://parkir.dpmptsp-surabaya.my.id";
-
 const tabs = document.querySelectorAll(".tab-btn");
 const contentArea = document.getElementById("content-area");
 
-/* ================= LOAD CONTENT BY CATEGORY ================= */
 async function loadCategory(category) {
   contentArea.innerHTML = `
     <p class="text-gray-500 text-center">Memuat data...</p>
@@ -109,9 +61,11 @@ async function loadCategory(category) {
   try {
     const res = await fetch(`${BASE_URL}/api/v1/about-me/${category}`);
     const json = await res.json();
-    const data = json?.data || [];
 
-    if (!data.length) {
+    // 🔑 STRUKTUR API: json.data.data[]
+    const list = json?.data?.data || [];
+
+    if (!Array.isArray(list) || list.length === 0) {
       contentArea.innerHTML = `
         <p class="text-gray-500 text-center">
           Data tidak tersedia.
@@ -120,47 +74,37 @@ async function loadCategory(category) {
       return;
     }
 
-    const item = data[0];
+    // 👉 tampilkan SEMUA DATA (bukan cuma index 0)
+    contentArea.innerHTML = list.map(item => `
+      <article class="mb-12 last:mb-0">
+        <h3 class="text-3xl font-bold text-blue-800 mb-6">
+          ${item.title}
+        </h3>
 
-    contentArea.innerHTML = `
-      <h3 class="text-3xl font-bold text-blue-800 mb-6">
-        ${item.title}
-      </h3>
+        ${
+          item.file
+            ? `<img 
+                src="${BASE_URL}/storage/${item.file}"
+                alt="${item.title}"
+                class="rounded-xl shadow max-w-md mx-auto mb-6"
+              />`
+            : ""
+        }
 
-      ${
-        item.file
-          ? `
-        <img
-          src="${BASE_URL}/storage/${item.file}"
-          alt="${item.title}"
-          class="rounded-xl shadow max-w-md mx-auto mb-6"
-        />
-      `
-          : ""
-      }
+        ${
+          item.content
+            ? `<div class="prose max-w-none text-gray-700">
+                ${item.content}
+              </div>`
+            : `<p class="text-gray-500 italic">
+                Tidak ada deskripsi.
+              </p>`
+        }
+      </article>
+    `).join("");
 
-      ${
-        typeof item.content === "string"
-          ? `
-        <div class="prose max-w-none text-gray-700">
-          ${item.content}
-        </div>
-      `
-          : ""
-      }
-
-      ${
-        item.created_at
-          ? `
-        <p class="text-gray-500 text-sm mt-6">
-          Dipublikasikan:
-          ${new Date(item.created_at).toLocaleDateString("id-ID")}
-        </p>
-      `
-          : ""
-      }
-    `;
   } catch (err) {
+    console.error(err);
     contentArea.innerHTML = `
       <p class="text-red-500 text-center">
         Gagal memuat data.
@@ -169,20 +113,18 @@ async function loadCategory(category) {
   }
 }
 
-/* ================= CLICK + AUTO LOAD ================= */
+// TAB CLICK
 tabs.forEach((btn, index) => {
   btn.addEventListener("click", () => {
-    const category = btn.dataset.tab;
-
     tabs.forEach(b =>
       b.classList.remove("bg-blue-600", "text-white")
     );
     btn.classList.add("bg-blue-600", "text-white");
 
-    loadCategory(category);
+    loadCategory(btn.dataset.tab);
   });
 
-  // auto-load menu pertama
+  // load pertama
   if (index === 0) {
     loadCategory(btn.dataset.tab);
   }
