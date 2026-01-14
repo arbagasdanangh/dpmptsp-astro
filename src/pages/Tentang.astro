@@ -3,48 +3,46 @@ import MainLayout from "../layouts/MainLayout.astro";
 
 const BASE_URL = "https://parkir.dpmptsp-surabaya.my.id";
 
-/* ================= FETCH MENU ================= */
-const resMenu = await fetch(`${BASE_URL}/api/v1/about-me`);
-const menuJson = await resMenu.json();
-const menus = menuJson?.data || [];
+/* ===== MENU (URUTAN FIX) ===== */
+const menuOrder = [
+  { key: "sambutan", label: "Sambutan", icon: "fa-microphone" },
+  { key: "visi-misi", label: "Visi dan Misi", icon: "fa-bullseye" },
+  { key: "budaya", label: "Budaya Pelayanan", icon: "fa-hands-helping" },
+  { key: "motto-layanan", label: "Motto Pelayanan", icon: "fa-quote-right" },
+  { key: "maklumat", label: "Maklumat Pelayanan", icon: "fa-scroll" },
+  { key: "kompensasi", label: "Kompensasi Layanan", icon: "fa-hand-holding-usd" },
+  { key: "ikm", label: "Indeks Kepuasan Masyarakat", icon: "fa-smile" },
+  { key: "zona-integritas", label: "Zona Integritas", icon: "fa-shield-alt" },
+];
 
-/* ================= DEFAULT CATEGORY ================= */
-const defaultCategory = menus?.[0]?.category || "sambutan";
-
-/* ================= FETCH CONTENT ================= */
-const resContent = await fetch(`${BASE_URL}/api/v1/about-me/${defaultCategory}`);
-const contentJson = await resContent.json();
-const contents = contentJson?.data?.data || [];
-
-/* ================= ICON MAP ================= */
-const iconMap = {
-  sambutan: "fa-microphone",
-  "visi-misi": "fa-bullseye",
-  budaya: "fa-hands-helping",
-  struktur: "fa-sitemap",
-  perwali: "fa-gavel",
-  ikm: "fa-smile",
-};
+/* ===== LOAD DEFAULT (SAMBUTAN) ===== */
+const res = await fetch(`${BASE_URL}/api/v1/about-me/sambutan`);
+const json = await res.json();
+const contents = json?.data?.data || [];
 ---
 
-<MainLayout title="Tentang DPMPTSP">
+<MainLayout title="Informasi Organisasi">
 <section class="py-20 bg-gray-50">
   <div class="container mx-auto px-4 grid grid-cols-1 lg:grid-cols-4 gap-8">
 
     <!-- SIDEBAR -->
-    <aside class="bg-white rounded-xl shadow p-6">
-      <h3 class="text-lg font-semibold mb-4">Informasi Organisasi</h3>
+    <aside class="bg-white rounded-2xl shadow p-6">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center">
+          <i class="fas fa-bars"></i>
+        </div>
+        <h3 class="font-bold text-blue-700">Menu Informasi</h3>
+      </div>
 
       <div class="space-y-2">
-        {menus.map((item, i) => (
+        {menuOrder.map((m, i) => (
           <button
-            class={`menu-btn w-full text-left px-4 py-3 rounded-lg transition ${
-              i === 0 ? "bg-blue-600 text-white" : "bg-gray-100 hover:bg-blue-50"
-            }`}
-            data-category={item.category}
+            class={`menu-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition
+            ${i === 0 ? "bg-blue-600 text-white" : "bg-gray-100 hover:bg-blue-50 text-gray-700"}`}
+            data-category={m.key}
           >
-            <i class={`fas ${iconMap[item.category] ?? "fa-info-circle"} mr-2`}></i>
-            {item.title}
+            <i class={`fas ${m.icon}`}></i>
+            {m.label}
           </button>
         ))}
       </div>
@@ -52,24 +50,45 @@ const iconMap = {
 
     <!-- CONTENT -->
     <div class="lg:col-span-3">
-      <div id="content-area" class="bg-white rounded-xl shadow p-8 space-y-8">
+      <div id="content-area" class="bg-white rounded-2xl shadow p-10 space-y-8">
 
         {contents.length === 0 && (
-          <p class="text-gray-500 text-center">Data tidak tersedia.</p>
+          <p class="text-center text-gray-500">Data tidak tersedia.</p>
         )}
 
         {contents.map((item) => (
-          <div class="space-y-4">
+          <div>
             {item.category === "sambutan" ? (
+              <!-- SAMBUTAN -->
               <div>
-                <h2 class="text-2xl font-bold">{item.title}</h2>
-                <div class="prose max-w-none">
+                <div class="flex items-center gap-3 mb-2">
+                  <div class="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center">
+                    <i class="fas fa-microphone"></i>
+                  </div>
+                  <h2 class="text-3xl font-bold text-blue-700">Sambutan</h2>
+                </div>
+
+                <p class="text-gray-500 mb-6">
+                  Kepala Dinas DPM-PTSP Kota Surabaya
+                </p>
+
+                <div class="bg-blue-50 border-l-4 border-blue-600 rounded-xl p-6 italic leading-relaxed text-gray-700">
                   {item.content || "Konten sambutan belum tersedia."}
+                </div>
+
+                <div class="text-right mt-6">
+                  <p class="font-semibold text-blue-700">
+                    Kepala Dinas DPM-PTSP
+                  </p>
+                  <p class="text-sm text-gray-500">Kota Surabaya</p>
                 </div>
               </div>
             ) : (
+              <!-- GAMBAR -->
               <div>
-                <h2 class="text-2xl font-bold">{item.title}</h2>
+                <h2 class="text-2xl font-bold text-blue-700 mb-4">
+                  {item.title}
+                </h2>
 
                 {item.file ? (
                   <img
@@ -78,7 +97,7 @@ const iconMap = {
                     class="rounded-xl shadow max-w-full"
                   />
                 ) : (
-                  <p class="text-gray-500">Gambar tidak tersedia.</p>
+                  <p class="text-gray-500">File tidak tersedia.</p>
                 )}
               </div>
             )}
@@ -86,6 +105,7 @@ const iconMap = {
         ))}
       </div>
     </div>
+
   </div>
 </section>
 </MainLayout>
@@ -103,7 +123,6 @@ const iconMap = {
       btn.classList.add("bg-blue-600", "text-white");
 
       const category = btn.dataset.category;
-
       contentArea.innerHTML =
         '<p class="text-center text-gray-500">Memuat data...</p>';
 
@@ -122,28 +141,47 @@ const iconMap = {
           .map((item) => {
             if (item.category === "sambutan") {
               return `
-                <div class="space-y-4">
-                  <h2 class="text-2xl font-bold">${item.title}</h2>
-                  <div class="prose max-w-none">
+                <div>
+                  <div class="flex items-center gap-3 mb-2">
+                    <div class="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center">
+                      <i class="fas fa-microphone"></i>
+                    </div>
+                    <h2 class="text-3xl font-bold text-blue-700">Sambutan</h2>
+                  </div>
+
+                  <p class="text-gray-500 mb-6">
+                    Kepala Dinas DPM-PTSP Kota Surabaya
+                  </p>
+
+                  <div class="bg-blue-50 border-l-4 border-blue-600 rounded-xl p-6 italic leading-relaxed text-gray-700">
                     ${item.content || "Konten sambutan belum tersedia."}
+                  </div>
+
+                  <div class="text-right mt-6">
+                    <p class="font-semibold text-blue-700">
+                      Kepala Dinas DPM-PTSP
+                    </p>
+                    <p class="text-sm text-gray-500">Kota Surabaya</p>
                   </div>
                 </div>
               `;
             }
 
             return `
-              <div class="space-y-4">
-                <h2 class="text-2xl font-bold">${item.title}</h2>
+              <div>
+                <h2 class="text-2xl font-bold text-blue-700 mb-4">
+                  ${item.title}
+                </h2>
                 ${
                   item.file
-                    ? `<img src="https://dpm-ptsp.surabaya.go.id/tentangfile/${item.file}" class="rounded-xl shadow max-w-full" />`
-                    : `<p class="text-gray-500">Gambar tidak tersedia.</p>`
+                    ? `<img src="${BASE_URL}/storage/${item.file}" class="rounded-xl shadow max-w-full" />`
+                    : `<p class="text-gray-500">File tidak tersedia.</p>`
                 }
               </div>
             `;
           })
           .join("");
-      } catch (e) {
+      } catch {
         contentArea.innerHTML =
           '<p class="text-center text-red-500">Gagal memuat data.</p>';
       }
