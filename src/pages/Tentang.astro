@@ -1,3 +1,67 @@
+---
+import MainLayout from "../layouts/MainLayout.astro";
+
+/* ================= CONFIG ================= */
+const BASE_URL = "https://parkir.dpmptsp-surabaya.my.id";
+
+/* ================= FETCH MENU ================= */
+let menus = [];
+
+try {
+  const res = await fetch(`${BASE_URL}/api/v1/about-me`);
+  const json = await res.json();
+
+  // API: { data: [{ title, category }] }
+  menus = Array.isArray(json?.data) ? json.data : [];
+} catch (e) {
+  console.error("Gagal load menu:", e);
+}
+---
+
+<MainLayout title="Tentang DPMPTSP Surabaya">
+  <section class="py-20 bg-gradient-to-b from-gray-50 to-white">
+    <div class="container mx-auto px-4 grid grid-cols-1 lg:grid-cols-4 gap-10">
+
+      <!-- SIDEBAR -->
+      <aside class="lg:col-span-1">
+        <div class="bg-white rounded-2xl shadow p-6 sticky top-24">
+          <h3 class="text-lg font-bold text-blue-800 mb-4">
+            Informasi Organisasi
+          </h3>
+
+          <div class="space-y-2">
+            {menus.map((item, i) => (
+              <button
+                class={`tab-btn w-full text-left px-4 py-3 rounded-lg font-medium transition
+                ${i === 0
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-100 hover:bg-blue-50 text-gray-700"}`}
+                data-category={item.category}
+              >
+                {item.title}
+              </button>
+            ))}
+          </div>
+        </div>
+      </aside>
+
+      <!-- CONTENT -->
+      <div class="lg:col-span-3">
+        <div
+          id="content-area"
+          class="bg-white rounded-2xl shadow p-8 min-h-[400px]"
+        >
+          <p class="text-gray-500 text-center">
+            Memuat data...
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+</MainLayout>
+
+<!-- ================= CLIENT SCRIPT ================= -->
 <script>
 const BASE_URL = "https://parkir.dpmptsp-surabaya.my.id";
 const tabs = document.querySelectorAll(".tab-btn");
@@ -12,7 +76,8 @@ async function loadCategory(category) {
     const res = await fetch(`${BASE_URL}/api/v1/about-me/${category}`);
     const json = await res.json();
 
-    // API: { data: { category, data: [] } }
+    // STRUKTUR API:
+    // { data: { category, data: [] } }
     const list = json?.data?.data || [];
 
     if (!Array.isArray(list) || list.length === 0) {
@@ -31,8 +96,7 @@ async function loadCategory(category) {
         </h2>
 
         ${
-          // 🔥 KHUSUS SAMBUTAN → TANPA GAMBAR
-          category !== "sambutan" && item.file
+          item.file
             ? `<img
                 src="${BASE_URL}/storage/${item.file}"
                 alt="${item.title}"
