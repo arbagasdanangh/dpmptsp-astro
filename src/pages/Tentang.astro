@@ -24,7 +24,7 @@ const iconMap = {
 ---
 
 <MainLayout title="Informasi Organisasi">
-<section class="py-20 bg-gradient-to-b from-gray-50 to-white">
+<section id="stdjenis-sec" class="py-20 bg-gradient-to-b from-gray-50 to-white">
   <div class="container mx-auto px-4">
 
     <!-- HEADER -->
@@ -90,7 +90,7 @@ const BASE_URL = "https://parkir.dpmptsp-surabaya.my.id";
 const tabs = document.querySelectorAll(".tab-btn");
 const contentArea = document.getElementById("content-area");
 
-/* ================= LOAD DATA BY CATEGORY ================= */
+/* ================= LOAD CONTENT BY CATEGORY ================= */
 async function loadCategory(category) {
   contentArea.innerHTML = `
     <p class="text-gray-500 text-center">Memuat data...</p>
@@ -144,7 +144,7 @@ async function loadCategory(category) {
         ${new Date(item.created_at).toLocaleDateString("id-ID")}
       </p>
     `;
-  } catch (error) {
+  } catch (err) {
     contentArea.innerHTML = `
       <p class="text-red-500 text-center">
         Gagal memuat data.
@@ -166,7 +166,7 @@ tabs.forEach((btn, index) => {
     loadCategory(category);
   });
 
-  /* auto load menu pertama */
+  // auto-load menu pertama
   if (index === 0) {
     loadCategory(btn.dataset.tab);
   }
