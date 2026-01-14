@@ -3,10 +3,12 @@ import MainLayout from "../layouts/MainLayout.astro";
 
 const BASE_URL = "https://parkir.dpmptsp-surabaya.my.id";
 
-/* ===== MENU (URUTAN FIX) ===== */
+/* ===== MENU (URUTAN FIX SESUAI GAMBAR) ===== */
 const menuOrder = [
   { key: "sambutan", label: "Sambutan", icon: "fa-microphone" },
   { key: "visi-misi", label: "Visi dan Misi", icon: "fa-bullseye" },
+  { key: "struktur", label: "Struktur Organisasi", icon: "fa-sitemap" },
+  { key: "piagam", label: "Piagam Pelayanan", icon: "fa-certificate" },
   { key: "budaya", label: "Budaya Pelayanan", icon: "fa-hands-helping" },
   { key: "motto-layanan", label: "Motto Pelayanan", icon: "fa-quote-right" },
   { key: "maklumat", label: "Maklumat Pelayanan", icon: "fa-scroll" },
@@ -84,7 +86,7 @@ const contents = json?.data?.data || [];
                 </div>
               </div>
             ) : (
-              <!-- GAMBAR -->
+              <!-- SEMUA SELAIN SAMBUTAN = GAMBAR -->
               <div>
                 <h2 class="text-2xl font-bold text-blue-700 mb-4">
                   {item.title}
@@ -94,7 +96,7 @@ const contents = json?.data?.data || [];
                   <img
                     src={`${BASE_URL}/storage/${item.file}`}
                     alt={item.title}
-                    class="rounded-xl shadow max-w-full"
+                    class="rounded-xl shadow max-w-full mx-auto"
                   />
                 ) : (
                   <p class="text-gray-500">File tidak tersedia.</p>
@@ -174,7 +176,7 @@ const contents = json?.data?.data || [];
                 </h2>
                 ${
                   item.file
-                    ? `<img src="https://dpm-ptsp.surabaya.go.id/tentangfile/${item.file}" class="rounded-xl shadow max-w-full" />`
+                    ? `<img src="${BASE_URL}/storage/${item.file}" class="rounded-xl shadow max-w-full mx-auto" />`
                     : `<p class="text-gray-500">File tidak tersedia.</p>`
                 }
               </div>
