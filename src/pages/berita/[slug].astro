@@ -1,20 +1,7 @@
 ---
-import MainLayout from "../../layouts/MainLayout.astro";---
+import MainLayout from "../../layouts/MainLayout.astro";
+
 export const prerender = false;
----
-
-
-/* ================= STATIC PATHS ================= */
-export async function getStaticPaths() {
-  const res = await fetch(
-    "http://parkir.dpmptsp-surabaya.my.id/api/v1/posts"
-  );
-  const json = await res.json();
-
-  return (json.data || []).map((item) => ({
-    params: { slug: item.slug }
-  }));
-}
 
 /* ================= CONFIG ================= */
 const IMAGE_BASE = "https://dpm-ptsp.surabaya.go.id/fileberita/";
@@ -28,12 +15,17 @@ let error = false;
 
 try {
   const res = await fetch(
-    `http://parkir.dpmptsp-surabaya.my.id/api/v1/posts/${slug}`
+    `https://parkir.dpmptsp-surabaya.my.id/api/v1/posts/${slug}`,
+    { headers: { Accept: "application/json" } }
   );
+
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
   const json = await res.json();
   post = json.data ?? null;
+
 } catch (e) {
-  console.error(e);
+  console.error("DETAIL ERROR:", e);
   error = true;
 }
 ---
@@ -64,13 +56,11 @@ try {
             : "/images/placeholder-berita.jpg"}
           alt={post.title}
           class="absolute inset-0 w-full h-full object-cover"
-          style="object-position: center 30%;"
         />
       </div>
 
       <!-- CONTENT -->
       <div class="container mx-auto px-6 max-w-4xl py-16">
-
         <h1 class="text-3xl md:text-4xl font-bold text-blue-800 mb-6">
           {post.title}
         </h1>
@@ -85,7 +75,6 @@ try {
             ← Kembali ke Berita
           </a>
         </div>
-
       </div>
     </>
   )}
