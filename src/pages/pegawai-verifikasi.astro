@@ -1,0 +1,90 @@
+---
+import MainLayout from "../layouts/MainLayout.astro";
+
+const apiUrl = "https://api.surabaya.go.id/integrasi/api/ssw/det-proses-histori";
+
+const nip = Astro.url.searchParams.get("nip") || "";
+let hasil = [];
+let total = 0;
+
+if (nip) {
+  try {
+    const res = await fetch(apiUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "user": "det_histori",
+        "password": "jk76Rt9"
+      },
+      body: JSON.stringify({ nip })
+    });
+
+    const json = await res.json();
+    hasil = json.data || [];
+    total = hasil.length;
+  } catch (e) {
+    console.error("API Error:", e);
+  }
+}
+---
+
+<MainLayout title="Pegawai Verifikasi">
+  <section class="max-w-7xl mx-auto px-6 py-10">
+    <h1 class="text-2xl font-bold mb-6 text-blue-800">
+      Pencarian Pegawai Verifikasi
+    </h1>
+
+    <!-- FORM SEARCH -->
+    <form method="get" class="flex gap-4 mb-8">
+      <input
+        type="text"
+        name="nip"
+        value={nip}
+        placeholder="Masukkan NIP Pegawai"
+        class="border rounded-lg px-4 py-2 w-72"
+      />
+      <button class="bg-blue-600 text-white px-6 py-2 rounded-lg">
+        Cari
+      </button>
+    </form>
+
+    {nip && (
+      <>
+        <div class="mb-4 text-gray-700">
+          <strong>Total Izin Diverifikasi:</strong> {total}
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full border text-sm">
+            <thead class="bg-gray-100">
+              <tr>
+                <th class="border px-3 py-2">No</th>
+                <th class="border px-3 py-2">Nama Pegawai</th>
+                <th class="border px-3 py-2">OPD</th>
+                <th class="border px-3 py-2">Nama Layanan</th>
+                <th class="border px-3 py-2">Jenis Izin</th>
+                <th class="border px-3 py-2">Status</th>
+                <th class="border px-3 py-2">Tgl Proses</th>
+              </tr>
+            </thead>
+            <tbody>
+              {hasil.map((item, i) => (
+                <tr>
+                  <td class="border px-3 py-2">{i + 1}</td>
+                  <td class="border px-3 py-2">{item.nm_pegawai_bo}</td>
+                  <td class="border px-3 py-2">{item.nm_opd}</td>
+                  <td class="border px-3 py-2">{item.nm_layanan}</td>
+                  <td class="border px-3 py-2">{item.nm_ijin}</td>
+                  <td class="border px-3 py-2">
+                    {item.state_sebelum} → {item.state_sesudah}
+                  </td>
+                  <td class="border px-3 py-2">{item.tgl_proses}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </>
+    )}
+  </section>
+</MainLayout>
