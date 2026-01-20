@@ -323,6 +323,30 @@
             </div>
         </div>
     </header>
+<script is:inline>
+  // Toggle mobile menu
+  const mobileBtn = document.getElementById("mobile-menu-button");
+  const mobileMenu = document.getElementById("mobile-menu");
+
+  if (mobileBtn && mobileMenu) {
+    mobileBtn.addEventListener("click", () => {
+      mobileMenu.classList.toggle("hidden");
+    });
+  }
+
+  // Mobile dropdowns
+  document.querySelectorAll(".mobile-dropdown-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const content = btn.nextElementSibling;
+      const icon = btn.querySelector("i");
+
+      if (content) {
+        content.classList.toggle("hidden");
+        icon?.classList.toggle("rotate-180");
+      }
+    });
+  });
+</script>
 
 
     <!-- JavaScript untuk interaksi -->
