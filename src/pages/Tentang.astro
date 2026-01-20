@@ -24,6 +24,134 @@ const contents = json?.data?.data || [];
 ---
 
 <MainLayout title="Informasi Organisasi">
+
+  <section id="gambar-sec" class="py-20 bg-white relative overflow-hidden">
+        <!-- Background elements dengan animasi baru -->
+        <div class="absolute inset-0 z-0">
+            <div class="absolute top-10 left-10 w-24 h-24 bg-gradient-to-r from-yellow-400 to-yellow-300 rounded-full opacity-20 animate-bounce-soft animate-morph-border"></div>
+            <div class="absolute top-1/3 right-20 w-32 h-32 bg-gradient-to-r from-blue-400 to-blue-300 rounded-full opacity-15 animate-rotate-3d"></div>
+            <div class="absolute bottom-20 left-1/4 w-28 h-28 bg-gradient-to-r from-green-400 to-green-300 rounded-full opacity-20 animate-pulse-soft"></div>
+            <div class="absolute top-1/2 right-1/3 w-20 h-20 bg-gradient-to-r from-red-400 to-red-300 rounded-full opacity-15 animate-wave"></div>
+        </div>
+        
+        <div class="container mx-auto px-4 relative z-10">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+                <div class="animate-slide-in-left animate__animated">
+                    <div class="inline-block mb-6">
+                        <span class="text-sm font-semibold text-blue-600 bg-blue-50 px-4 py-2 rounded-full animate-border-glow">
+                            Tentang Kami
+                        </span>
+                    </div>
+                    <h2 class="text-4xl font-bold text-blue-800 mb-8 gradient-text animate-text-shadow">
+                        Tentang DPMPTSP Kota Surabaya
+                    </h2>
+                    <div class="space-y-6">
+                        <p class="text-gray-700 text-lg leading-relaxed animate-fade-up delay-1 animate__animated" style="animation-play-state: running;">
+                            Berdasarkan visi Dinas Penanaman Modal dan Pelayanan Terpadu Satu Pintu yang telah dirumuskan, terdapat tiga poin pokok yang terkandung di dalam visi tersebut yaitu terkait peningkatan investasi, pelayanan perizinan yang prima dan penggunaan teknologi informasi.
+                        </p>
+                        <p class="text-gray-700 text-lg leading-relaxed animate-fade-up delay-2 animate__animated" style="animation-play-state: running;">
+                            Hal tersebut mengindikasikan bahwa peningkatan investasi sangat didukung dengan pelayanan perizinan prima yang akan diberikan kepada pelaku usaha dalam mengajukan izin investasi di wilayah Kota Surabaya.
+                        </p>
+                        <p class="text-gray-700 text-lg leading-relaxed animate-fade-up delay-3 animate__animated" style="animation-play-state: running;">
+                            Pelayanan perizinan prima tersebut terkait dengan cepatnya proses pelayanan, persyaratan yang mudah dan juga jelasnya prosedur yang diberikan kepada masyarakat.
+                        </p>
+                        <div class="p-6 bg-gradient-to-r from-blue-50 to-yellow-50 rounded-2xl border-l-4 border-blue-600 animate-fade-up delay-4 animate__animated" style="animation-play-state: running;">
+                            <p class="text-gray-700 font-medium">
+                                <i class="fas fa-lightbulb text-yellow-500 mr-3 text-xl animate-pulse-soft"></i>
+                                Untuk memudahkan proses pelayanan juga digunakan teknologi informasi seperti SSW (Surabaya Single Window) dan kedepannya akan digunakan SPIPISE untuk mendukung peningkatan jumlah investasi di Kota Surabaya.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="relative animate-slide-in-right animate__animated">
+                    <!-- Main container dengan efek glass dan border animasi -->
+                    <div class="relative glass-effect p-8 rounded-3xl shadow-2xl gradient-border-animated transform transition-all duration-500 hover-scale-shadow">
+                        <!-- Photo gallery dengan floating effect -->
+                        <div class="relative h-96 flex items-center justify-center">
+                            <!-- Main highlighted photo slideshow (center) -->
+                            <div class="relative z-30 transform transition-all duration-700 hover:scale-110 animate-float-subtle">
+                                <div class="bg-white p-2 rounded-xl shadow-2xl tilt-effect">
+                                    <div id="main-slideshow" class="relative w-72 h-56 overflow-hidden rounded-lg">
+                                        <!-- Slide 1 - Active -->
+                                        <div class="main-slide absolute inset-0 transition-opacity duration-1000 opacity-100" data-index="0" style="transition: opacity 0.7s cubic-bezier(0.4, 0, 0.2, 1); opacity: 0; z-index: 1;">
+                                            <img src="gambar/dpm3.jpg" alt="Kantor Pemerintah Surabaya" class="w-full h-full object-cover">
+                                        </div>
+                                        <!-- Slide 2 -->
+                                        <div class="main-slide absolute inset-0 transition-opacity duration-1000 opacity-0" data-index="1" style="transition: opacity 0.7s cubic-bezier(0.4, 0, 0.2, 1); opacity: 1; z-index: 2;">
+                                            <img src="gambar/SPP-PAKAL.jpeg" alt="Pelayanan Masyarakat" class="w-full h-full object-cover">
+                                        </div>
+                                        <!-- Slide 3 -->
+                                        <div class="main-slide absolute inset-0 transition-opacity duration-1000 opacity-0" data-index="2" style="transition: opacity 0.7s cubic-bezier(0.4, 0, 0.2, 1); opacity: 0; z-index: 1;">
+                                            <img src="gambar/dpm2.jpg" alt="Teknologi Digital" class="w-full h-full object-cover">
+                                        </div>
+                                        <!-- Slide 4 -->
+                                        <div class="main-slide absolute inset-0 transition-opacity duration-1000 opacity-0" data-index="3" style="transition: opacity 0.7s cubic-bezier(0.4, 0, 0.2, 1); opacity: 0; z-index: 1;">
+                                            <img src="gambar/dpm4.jpg" alt="Investasi dan Bisnis" class="w-full h-full object-cover">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Floating fingers (left side) -->
+                            <div class="absolute left-4 top-8 z-20 animate-float-delay-1">
+                                <div class="bg-white p-2 rounded-lg shadow-lg transform -rotate-6 cursor-pointer hover:scale-105 transition-transform duration-300 ripple" onclick="showSlideByIndex(0)">
+                                    <img src="gambar/dpm3.jpg" alt="Pelayanan Publik" class="w-36 h-28 object-cover rounded-md" data-slide-index="0">
+                                </div>
+                            </div>
+
+                            <div class="absolute left-8 bottom-8 z-20 animate-float-delay-2">
+                                <div class="bg-white p-2 rounded-lg shadow-lg transform rotate-3 cursor-pointer hover:scale-105 transition-transform duration-300 ripple" onclick="showSlideByIndex(1)">
+                                    <img src="gambar/SPP-PAKAL.jpeg" alt="Investasi Surabaya" class="w-32 h-24 object-cover rounded-md" data-slide-index="1">
+                                </div>
+                            </div>
+
+                            <!-- Floating fingers (right side) -->
+                            <div class="absolute right-4 top-8 z-20 animate-float-delay-3">
+                                <div class="bg-white p-2 rounded-lg shadow-lg transform rotate-6 cursor-pointer hover:scale-105 transition-transform duration-300 ripple" onclick="showSlideByIndex(2)">
+                                    <img src="gambar/dpm2.jpg" alt="Teknologi Informasi" class="w-36 h-28 object-cover rounded-md" data-slide-index="2">
+                                </div>
+                            </div>
+
+                            <div class="absolute right-8 bottom-8 z-20 animate-float-delay-4">
+                                <div class="bg-white p-2 rounded-lg shadow-lg transform -rotate-3 cursor-pointer hover:scale-105 transition-transform duration-300 ripple" onclick="showSlideByIndex(3)">
+                                    <img src="gambar/dpm4.jpg" alt="Perizinan Digital" class="w-32 h-24 object-cover rounded-md" data-slide-index="3">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Floating icons dengan animasi baru -->
+                        <div class="absolute -top-12 -left-12 w-16 h-16 bg-yellow-400 rounded-full flex items-center justify-center shadow-2xl z-40 animate-jelly">
+                            <i class="fas fa-dollar-sign text-blue-800 text-2xl animate-icon-bounce"></i>
+                        </div>
+                        
+                        <div class="absolute -top-12 -right-12 w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-2xl animate-rotate-3d z-40">
+                            <div class="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center animate-pulse-soft">
+                                <span class="text-white font-bold text-sm">SBY</span>
+                            </div>
+                        </div>
+                        
+                        <div class="absolute -bottom-14 left-1/4 w-14 h-14 bg-yellow-400 rounded-full flex items-center justify-center shadow-2xl z-40 animate-bounce-soft">
+                            <i class="fas fa-building text-blue-700 text-xl"></i>
+                        </div>
+                        
+                        <div class="absolute -bottom-14 right-1/4 w-14 h-14 bg-yellow-400 rounded-full flex items-center justify-center shadow-2xl z-40 animate-bounce-soft">
+                            <i class="fas fa-chart-line text-blue-700 text-lg"></i>
+                        </div>
+                        
+                        <!-- Navigation dots -->
+                        <div class="flex justify-center space-x-2 mt-6">
+                            <div class="slide-dot w-3 h-3 rounded-full cursor-pointer hover:scale-125 transition-transform bg-white/50" data-index="0"></div>
+                            <div class="slide-dot w-3 h-3 rounded-full cursor-pointer hover:scale-125 transition-transform bg-white scale-125" data-index="1"></div>
+                            <div class="slide-dot w-3 h-3 bg-white/50 rounded-full cursor-pointer hover:scale-125 transition-transform" data-index="2"></div>
+                            <div class="slide-dot w-3 h-3 bg-white/50 rounded-full cursor-pointer hover:scale-125 transition-transform" data-index="3"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
 <section class="py-20 bg-gray-50">
   <div class="container mx-auto px-4 grid grid-cols-1 lg:grid-cols-4 gap-8">
 
