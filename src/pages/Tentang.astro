@@ -22,7 +22,7 @@ const res = await fetch(`${BASE_URL}/api/v1/about-me/sambutan`);
 const json = await res.json();
 const contents = json?.data?.data || [];
 ---
-
+ 
 <MainLayout title="Informasi Organisasi">
 
   <section id="gambar-sec" class="py-20 bg-white relative overflow-hidden">
@@ -151,7 +151,7 @@ const contents = json?.data?.data || [];
             </div>
         </div>
     </section>
-    
+
 <section class="py-20 bg-gray-50">
   <div class="container mx-auto px-4 grid grid-cols-1 lg:grid-cols-4 gap-8">
 
