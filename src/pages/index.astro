@@ -19,17 +19,117 @@ try {
 <MainLayout title="DPMPTSP Kota Surabaya">
 
   <!-- ================= HERO ================= -->
-  <section class="py-20 bg-white">
-    <div class="container mx-auto px-4 text-center">
-      <h1 class="text-4xl md:text-5xl font-bold text-blue-800 mb-4">
-        Mengapa Berinvestasi di Surabaya?
-      </h1>
-      <p class="text-gray-600 max-w-2xl mx-auto">
-        Kota Surabaya menawarkan iklim investasi yang kondusif, infrastruktur lengkap,
-        serta pelayanan perizinan yang cepat dan transparan.
-      </p>
-    </div>
-  </section>
+<section class="py-16 bg-gradient-to-b from-gray-50 to-white">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-blue-800 mb-4">Mengapa Berinvestasi di Surabaya?</h2>
+                <p class="text-gray-600 max-w-2xl mx-auto">Kota Surabaya menawarkan berbagai keunggulan sebagai
+                    destinasi investasi terbaik di Indonesia.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Item 1 -->
+                <div class="bg-white rounded-2xl p-6 shadow-custom card-hover">
+                    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-6">
+                        <i class="fas fa-chart-line text-blue-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-blue-800 mb-4">Iklim Investasi yang Kondusif</h3>
+                    <p class="text-gray-700 mb-6">Pembangunan di Surabaya tumbuh sangat cepat dengan dukungan kebijakan yang pro-investasi.</p>
+                    <button onclick="viewPDF('dokumen/IKLIM_INVESTASI.pdf', 'Iklim Investasi yang Kondusif')" class="text-blue-600 font-semibold inline-flex items-center hover:text-blue-800 transition-colors">
+                        Pelajari Lebih Lanjut <i class="fas fa-arrow-right ml-2"></i>
+                    </button>
+                </div>
+
+                <!-- Item 2 -->
+                <div class="bg-white rounded-2xl p-6 shadow-custom card-hover">
+                    <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mb-6">
+                        <i class="fas fa-city text-purple-500 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-blue-800 mb-4">Kota Metropolitan Terbesar Kedua</h3>
+                    <p class="text-gray-700 mb-6">Sebagai kota metropolitan terbesar kedua di Indonesia, Surabaya menjadi pusat ekonomi regional.</p>
+                    <button onclick="viewPDF('dokumen/KOTA_TERBESAR.pdf', 'Kota Metropolitan Terbesar Kedua')" class="text-blue-600 font-semibold inline-flex items-center hover:text-blue-800 transition-colors">
+                        Pelajari Lebih Lanjut <i class="fas fa-arrow-right ml-2"></i>
+                    </button>
+                </div>
+
+                <!-- Item 3 -->
+                <div class="bg-white rounded-2xl p-6 shadow-custom card-hover">
+                    <div class="w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center mb-6">
+                        <i class="fas fa-ship text-teal-500 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-blue-800 mb-4">Bandara &amp; Pelabuhan Internasional</h3>
+                    <p class="text-gray-700 mb-6">Dilengkapi dengan bandara dan pelabuhan berstandar internasional untuk mendukung logistik.</p>
+                   <button onclick="viewPDF('dokumen/BANDARA_PELABUHAN.pdf', 'Bandara &amp; Pelabuhan Internasional')" class="text-blue-600 font-semibold inline-flex items-center hover:text-blue-800 transition-colors">
+                        Pelajari Lebih Lanjut <i class="fas fa-arrow-right ml-2"></i>
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-2xl p-6 shadow-custom card-hover">
+                    <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-6">
+                        <i class="fas fa-hospital text-red-500 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-blue-800 mb-4">Fasilitas Kesehatan</h3>
+                    <p class="text-gray-700 mb-6">Dilengkapi dengan bandara dan pelabuhan berstandar internasional untuk mendukung logistik.</p>
+                   <button onclick="viewPDF('dokumen/FASILITAS_KESEHATAN.pdf', 'Fasilitas Kesehatan')" class="text-blue-600 font-semibold inline-flex items-center hover:text-blue-800 transition-colors">
+                        Pelajari Lebih Lanjut <i class="fas fa-arrow-right ml-2"></i>
+                    </button>
+                </div>
+
+
+                <div class="bg-white rounded-2xl p-6 shadow-custom card-hover">
+                    <div class="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-6">
+                        <i class="fas fa-map-marked-alt text-orange-500 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-blue-800 mb-4">Fasilitas Umum</h3>
+                    <p class="text-gray-700 mb-6">Dilengkapi dengan bandara dan pelabuhan berstandar internasional untuk mendukung logistik.</p>
+                   <button onclick="viewPDF('dokumen/FASILITAS_UMUM.pdf', 'Fasilitas Umum')" class="text-blue-600 font-semibold inline-flex items-center hover:text-blue-800 transition-colors">
+                        Pelajari Lebih Lanjut <i class="fas fa-arrow-right ml-2"></i>
+                    </button>
+                </div>
+
+
+                <div class="bg-white rounded-2xl p-6 shadow-custom card-hover">
+                    <div class="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mb-6">
+                        <i class="fas fa-school text-yellow-500 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-blue-800 mb-4">Fasilitas Pendidikan</h3>
+                    <p class="text-gray-700 mb-6">Dilengkapi dengan bandara dan pelabuhan berstandar internasional untuk mendukung logistik.</p>
+                   <button onclick="viewPDF('dokumen/FASILITAS_PENDIDIKAN.pdf', 'Fasilitas Pendidikan')" class="text-blue-600 font-semibold inline-flex items-center hover:text-blue-800 transition-colors">
+                        Pelajari Lebih Lanjut <i class="fas fa-arrow-right ml-2"></i>
+                    </button>
+                </div>
+            </div>
+            <!-- Modal PDF Viewer -->
+            <div id="pdfViewerContainer" class="hidden mt-12">
+                <div class="bg-white rounded-2xl shadow-custom p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h4 id="pdfTitle" class="text-lg font-bold text-blue-800">
+                            Dokumen
+                        </h4>
+
+                        <div class="flex gap-2">
+                            <a id="downloadPdf" href="#" target="_blank" download="" class="inline-flex items-center bg-yellow-400 text-blue-800 font-medium px-4 py-2 rounded-lg hover:bg-yellow-300 transition">
+                                <i class="fas fa-download mr-2"></i> Download
+                            </a>
+
+                            <button id="closePdf" class="w-10 h-10 flex items-center justify-center rounded-full bg-red-100 text-red-600 hover:bg-red-200 transition">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="pdf-container">
+                        <object id="pdfViewer" type="application/pdf" width="100%" height="780px" class="rounded-lg">
+                            <p class="text-center p-8 text-gray-600">
+                                Browser tidak mendukung PDF preview.
+                            </p>
+                        </object>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </section>
 
   <!-- ================= KEUNGGULAN ================= -->
   <section class="py-16 bg-gray-50">
