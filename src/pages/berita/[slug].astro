@@ -1,9 +1,28 @@
 ---
-import "../../styles/global.css";
+import MainLayout from "../../layouts/MainLayout.astro";---
+export const prerender = false;
+---
 
+
+/* ================= STATIC PATHS ================= */
+export async function getStaticPaths() {
+  const res = await fetch(
+    "http://parkir.dpmptsp-surabaya.my.id/api/v1/posts"
+  );
+  const json = await res.json();
+
+  return (json.data || []).map((item) => ({
+    params: { slug: item.slug }
+  }));
+}
+
+/* ================= CONFIG ================= */
 const IMAGE_BASE = "https://dpm-ptsp.surabaya.go.id/fileberita/";
+
+/* ================= PARAM ================= */
 const { slug } = Astro.params;
 
+/* ================= FETCH DETAIL ================= */
 let post = null;
 let error = false;
 
@@ -19,20 +38,58 @@ try {
 }
 ---
 
-<html lang="id">
-  <head>
-    <title>{post?.title ?? "Detail Berita"}</title>
-  </head>
+<MainLayout title={post?.title ?? "Detail Berita"}>
 
-  <body>
-    {error && <p>Error mengambil data</p>}
+<section class="bg-white">
 
-    {post && (
-      <article>
-        <h1>{post.title}</h1>
-        <img src={`${IMAGE_BASE}${post.image}`} alt={post.title} />
-        <div set:html={post.content}></div>
-      </article>
-    )}
-  </body>
-</html>
+  {error && (
+    <div class="container mx-auto px-6 py-20 text-center text-red-600">
+      Gagal memuat detail berita.
+    </div>
+  )}
+
+  {!error && !post && (
+    <div class="container mx-auto px-6 py-20 text-center text-gray-500">
+      Berita tidak ditemukan.
+    </div>
+  )}
+
+  {post && (
+    <>
+      <!-- HERO IMAGE -->
+      <div class="relative w-full h-[420px] overflow-hidden">
+        <img
+          src={post.picture
+            ? `${IMAGE_BASE}${post.picture}`
+            : "/images/placeholder-berita.jpg"}
+          alt={post.title}
+          class="absolute inset-0 w-full h-full object-cover"
+          style="object-position: center 30%;"
+        />
+      </div>
+
+      <!-- CONTENT -->
+      <div class="container mx-auto px-6 max-w-4xl py-16">
+
+        <h1 class="text-3xl md:text-4xl font-bold text-blue-800 mb-6">
+          {post.title}
+        </h1>
+
+        <article
+          class="prose prose-blue max-w-none text-justify"
+          set:html={post.ref}
+        />
+
+        <div class="mt-12">
+          <a href="/berita" class="text-blue-700 font-semibold hover:underline">
+            ← Kembali ke Berita
+          </a>
+        </div>
+
+      </div>
+    </>
+  )}
+
+</section>
+
+</MainLayout>
