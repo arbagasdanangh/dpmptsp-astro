@@ -174,6 +174,10 @@ const navigationMenus =
 ---
 
 
+<!-- =========================================================
+     HEADER UTAMA
+========================================================== -->
+
 <header
   id="site-header"
   class="site-header"
@@ -181,11 +185,8 @@ const navigationMenus =
 
   <div class="header-container">
 
-    <!-- =====================================================
-         HEADER GRID
-    ====================================================== -->
-
     <div class="header-grid">
+
 
       <!-- ===================================================
            LOGO
@@ -210,7 +211,7 @@ const navigationMenus =
 
 
       <!-- ===================================================
-           DESKTOP / TABLET NAV
+           DESKTOP / TABLET NAVIGATION
       ==================================================== -->
 
       <nav
@@ -229,6 +230,7 @@ const navigationMenus =
                 menu.children.length > 0;
 
               if (hasChildren) {
+
                 return (
                   <li class="desktop-menu-item has-dropdown">
 
@@ -254,8 +256,6 @@ const navigationMenus =
                     </a>
 
 
-                    <!-- DROPDOWN LEVEL 1 -->
-
                     <div class="desktop-dropdown">
 
                       {
@@ -267,6 +267,7 @@ const navigationMenus =
                               child.children.length > 0;
 
                             if (childHasChildren) {
+
                               return (
                                 <div class="dropdown-item nested-parent">
 
@@ -285,14 +286,12 @@ const navigationMenus =
                                     </span>
 
                                     <i
-                                      class="fas fa-chevron-right nested-chevron"
+                                      class="fas fa-chevron-down nested-chevron"
                                       aria-hidden="true"
                                     ></i>
 
                                   </a>
 
-
-                                  <!-- DROPDOWN LEVEL 2 -->
 
                                   <div class="nested-dropdown">
 
@@ -316,6 +315,7 @@ const navigationMenus =
 
                                 </div>
                               );
+
                             }
 
                             return (
@@ -324,18 +324,16 @@ const navigationMenus =
                                   child.url ||
                                   "#"
                                 }
-                                class:list={[
-                                  "dropdown-link",
-                                  {
-                                    "dropdown-last":
-                                      childIndex ===
-                                      menu.children.length - 1
-                                  }
-                                ]}
+                                class="dropdown-link"
                               >
-                                {child.nama}
+
+                                <span>
+                                  {child.nama}
+                                </span>
+
                               </a>
                             );
+
                           }
                         )
                       }
@@ -344,7 +342,9 @@ const navigationMenus =
 
                   </li>
                 );
+
               }
+
 
               return (
                 <li class="desktop-menu-item">
@@ -356,11 +356,14 @@ const navigationMenus =
                     }
                     class="desktop-menu-link"
                   >
+
                     {menu.nama}
+
                   </a>
 
                 </li>
               );
+
             })
           }
 
@@ -370,7 +373,7 @@ const navigationMenus =
 
 
       <!-- ===================================================
-           KONTAK DESKTOP / TABLET
+           KONTAK DESKTOP
       ==================================================== -->
 
       <div class="header-contact">
@@ -395,7 +398,7 @@ const navigationMenus =
 
 
       <!-- ===================================================
-           MOBILE BUTTON
+           MOBILE MENU BUTTON
       ==================================================== -->
 
       <button
@@ -408,6 +411,7 @@ const navigationMenus =
       >
 
         <i
+          id="mobile-menu-icon"
           class="fas fa-bars"
           aria-hidden="true"
         ></i>
@@ -436,6 +440,8 @@ const navigationMenus =
      MOBILE DRAWER
      
      TIDAK ADA LOGO DI SINI
+     
+     Drawer dimulai di bawah header.
 ========================================================== -->
 
 <aside
@@ -443,25 +449,6 @@ const navigationMenus =
   class="mobile-drawer"
   aria-label="Menu mobile"
 >
-
-  <div class="mobile-drawer-header">
-
-    <button
-      id="mobile-close-button"
-      type="button"
-      class="mobile-close-button"
-      aria-label="Tutup menu"
-    >
-
-      <i
-        class="fas fa-xmark"
-        aria-hidden="true"
-      ></i>
-
-    </button>
-
-  </div>
-
 
   <div class="mobile-drawer-content">
 
@@ -476,7 +463,9 @@ const navigationMenus =
               menu.children &&
               menu.children.length > 0;
 
+
             if (hasChildren) {
+
               return (
                 <li class="mobile-menu-item">
 
@@ -507,7 +496,9 @@ const navigationMenus =
                           child.children &&
                           child.children.length > 0;
 
+
                         if (childHasChildren) {
+
                           return (
                             <div class="mobile-nested-item">
 
@@ -551,7 +542,9 @@ const navigationMenus =
 
                             </div>
                           );
+
                         }
+
 
                         return (
                           <a
@@ -561,9 +554,12 @@ const navigationMenus =
                             }
                             class="mobile-child-link"
                           >
+
                             {child.nama}
+
                           </a>
                         );
+
                       })
                     }
 
@@ -571,7 +567,9 @@ const navigationMenus =
 
                 </li>
               );
+
             }
+
 
             return (
               <li class="mobile-menu-item">
@@ -583,11 +581,14 @@ const navigationMenus =
                   }
                   class="mobile-normal-link"
                 >
+
                   {menu.nama}
+
                 </a>
 
               </li>
             );
+
           })
         }
 
@@ -630,7 +631,7 @@ const navigationMenus =
 
 
 <!-- =========================================================
-     SPACER
+     HEADER SPACER
 ========================================================== -->
 
 <div
@@ -641,1488 +642,1898 @@ const navigationMenus =
 
 <style>
 
-  /* ========================================================
-     RESET / BASE
-  ======================================================== */
+/* ============================================================
+   RESET
+============================================================ */
 
-  #site-header,
-  #site-header *,
-  #mobile-drawer,
-  #mobile-drawer * {
-    box-sizing: border-box;
-  }
+#site-header,
+#site-header *,
+#mobile-drawer,
+#mobile-drawer * {
+  box-sizing: border-box;
+}
 
 
-  /* ========================================================
-     HEADER
-  ======================================================== */
+/* ============================================================
+   HEADER
+============================================================ */
 
-  .site-header {
-    position: fixed;
+.site-header {
 
-    top: 0;
-    left: 0;
-    right: 0;
+  position: fixed;
 
-    width: 100%;
+  top: 0;
+  left: 0;
+  right: 0;
 
-    z-index: 9999;
+  width: 100%;
 
-    background: #f7f7f7;
+  z-index: 9999;
 
-    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+  background: #f7f7f7;
 
-    transition:
-      box-shadow 0.25s ease;
-  }
+  border-bottom:
+    1px solid rgba(0, 0, 0, 0.05);
 
+  transition:
+    box-shadow 0.25s ease;
+}
+
+
+.header-container {
+
+  width: 100%;
+
+  max-width: 1600px;
+
+  margin: 0 auto;
+
+  padding:
+    0 24px;
+}
+
+
+/* ============================================================
+   HEADER GRID
+
+   KIRI  = LOGO
+   TENGAH = NAV
+   KANAN = KONTAK
+============================================================ */
+
+.header-grid {
+
+  display: grid;
+
+  grid-template-columns:
+    minmax(0, 1fr)
+    auto
+    minmax(0, 1fr);
+
+  align-items: center;
+
+  min-height: 80px;
+
+  width: 100%;
+}
+
+
+/* ============================================================
+   LOGO
+============================================================ */
+
+.header-logo {
+
+  grid-column: 1;
+
+  justify-self: start;
+
+  display: flex;
+
+  align-items: center;
+
+  min-width: 0;
+
+  position: relative;
+
+  z-index: 2;
+}
+
+
+.header-logo a {
+
+  display: flex;
+
+  align-items: center;
+
+  text-decoration: none;
+}
+
+
+.logo-image {
+
+  display: block;
+
+  width: auto;
+
+  height: 48px;
+
+  max-width: 190px;
+
+  object-fit: contain;
+
+  transition:
+    transform 0.2s ease;
+}
+
+
+.logo-image:hover {
+
+  transform:
+    scale(1.02);
+}
+
+
+/* ============================================================
+   DESKTOP NAV
+============================================================ */
+
+.desktop-navigation {
+
+  grid-column: 2;
+
+  justify-self: center;
+
+  display: block;
+
+  position: relative;
+
+  z-index: 20;
+}
+
+
+.desktop-menu {
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 28px;
+
+  margin: 0;
+
+  padding: 0;
+
+  list-style: none;
+
+  white-space: nowrap;
+}
+
+
+.desktop-menu-item {
+
+  position: relative;
+
+  display: flex;
+
+  align-items: center;
+
+  height: 80px;
+}
+
+
+.desktop-menu-link {
+
+  display: inline-flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 6px;
+
+  height: 100%;
+
+  padding: 0;
+
+  color: #374151;
+
+  font-size: 14px;
+
+  font-weight: 600;
+
+  line-height: 1;
+
+  text-decoration: none;
+
+  white-space: nowrap;
+
+  transition:
+    color 0.2s ease;
+}
+
+
+.desktop-menu-link:hover {
+
+  color: #001bb7;
+}
+
+
+.menu-chevron {
+
+  font-size: 8px;
+
+  transition:
+    transform 0.2s ease;
+}
+
+
+.has-dropdown:hover
+> .desktop-menu-link
+.menu-chevron {
+
+  transform:
+    rotate(180deg);
+}
+
+
+/* ============================================================
+   DESKTOP DROPDOWN LEVEL 1
+
+   LURUS DENGAN MENU INDUK
+============================================================ */
+
+.desktop-dropdown {
+
+  position: absolute;
+
+  top: 100%;
+
+  left: 0;
+
+  width: 245px;
+
+  margin: 0;
+
+  padding: 6px 0;
+
+  background: #ffffff;
+
+  border:
+    1px solid rgba(0, 0, 0, 0.06);
+
+  border-radius:
+    0 0 10px 10px;
+
+  box-shadow:
+    0 12px 30px
+    rgba(0, 0, 0, 0.12);
+
+  opacity: 0;
+
+  visibility: hidden;
+
+  pointer-events: none;
+
+  transform:
+    translateY(6px);
+
+  transform-origin:
+    top left;
+
+  transition:
+    opacity 0.18s ease,
+    visibility 0.18s ease,
+    transform 0.18s ease;
+
+  z-index: 10000;
+}
+
+
+.has-dropdown:hover
+> .desktop-dropdown {
+
+  opacity: 1;
+
+  visibility: visible;
+
+  pointer-events: auto;
+
+  transform:
+    translateY(0);
+}
+
+
+/* ============================================================
+   DROPDOWN ITEM
+============================================================ */
+
+.dropdown-item {
+
+  position: relative;
+
+  width: 100%;
+
+  background: #ffffff;
+}
+
+
+.dropdown-link {
+
+  position: relative;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  width: 100%;
+
+  min-height: 44px;
+
+  padding:
+    10px 16px;
+
+  color: #374151;
+
+  background: #ffffff;
+
+  font-size: 13px;
+
+  font-weight: 500;
+
+  line-height: 1.4;
+
+  text-decoration: none;
+
+  transition:
+    color 0.18s ease,
+    background 0.18s ease;
+}
+
+
+.dropdown-link:hover {
+
+  color: #001bb7;
+
+  background: #ffd41d;
+}
+
+
+/* ============================================================
+   ARTIKEL NESTED
+
+   SUBMENU TURUN KE BAWAH
+============================================================ */
+
+.nested-parent {
+
+  position: relative;
+
+  width: 100%;
+}
+
+
+.nested-trigger {
+
+  padding-right: 16px;
+}
+
+
+.nested-chevron {
+
+  font-size: 8px;
+
+  transition:
+    transform 0.2s ease;
+}
+
+
+/*
+  Submenu Artikel TIDAK absolute.
+  Jadi otomatis turun ke bawah.
+*/
+
+.nested-dropdown {
+
+  position: static;
+
+  width: 100%;
+
+  max-height: 0;
+
+  overflow: hidden;
+
+  padding: 0;
+
+  margin: 0;
+
+  background: #f8fafc;
+
+  opacity: 0;
+
+  visibility: hidden;
+
+  transition:
+    max-height 0.28s ease,
+    opacity 0.2s ease,
+    visibility 0.2s ease;
+}
+
+
+.nested-parent:hover
+> .nested-dropdown {
+
+  max-height: 200px;
+
+  opacity: 1;
+
+  visibility: visible;
+}
+
+
+.nested-parent:hover
+> .nested-trigger
+.nested-chevron {
+
+  transform:
+    rotate(180deg);
+}
+
+
+/* ============================================================
+   PERIZINAN / PENANAMAN MODAL
+============================================================ */
+
+.nested-dropdown-link {
+
+  display: block;
+
+  width: 100%;
+
+  padding:
+    10px 16px 10px 30px;
+
+  color: #001bb7;
+
+  background: #f8fafc;
+
+  font-size: 12px;
+
+  font-weight: 500;
+
+  line-height: 1.4;
+
+  text-decoration: none;
+
+  border-top:
+    1px solid rgba(0, 0, 0, 0.04);
+
+  transition:
+    background 0.18s ease,
+    color 0.18s ease,
+    padding-left 0.18s ease;
+}
+
+
+.nested-dropdown-link:hover {
+
+  color: #001bb7;
+
+  background: #ffd41d;
+
+  padding-left: 34px;
+}
+
+
+/* ============================================================
+   KONTAK DESKTOP
+============================================================ */
+
+.header-contact {
+
+  grid-column: 3;
+
+  justify-self: end;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 8px;
+
+  min-width: 0;
+
+  z-index: 2;
+}
+
+
+.contact-button {
+
+  display: inline-flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  min-height: 42px;
+
+  padding:
+    0 16px;
+
+  color: #0900c3;
+
+  background: #ffd41d;
+
+  border-radius: 9px;
+
+  font-size: 14px;
+
+  font-weight: 700;
+
+  line-height: 1;
+
+  text-decoration: none;
+
+  white-space: nowrap;
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+
+.contact-button:hover {
+
+  transform:
+    translateY(-1px);
+
+  box-shadow:
+    0 7px 18px
+    rgba(0, 0, 0, 0.12);
+}
+
+
+/* ============================================================
+   MOBILE BUTTON
+============================================================ */
+
+.mobile-menu-button {
+
+  display: none;
+
+  align-items: center;
+
+  justify-content: center;
+
+  width: 42px;
+
+  height: 42px;
+
+  margin-left: auto;
+
+  padding: 0;
+
+  color: #001bb7;
+
+  background: transparent;
+
+  border: 0;
+
+  cursor: pointer;
+
+  font-size: 22px;
+
+  line-height: 1;
+}
+
+
+.mobile-menu-button:focus-visible {
+
+  outline:
+    2px solid #001bb7;
+
+  outline-offset:
+    2px;
+}
+
+
+/* ============================================================
+   MOBILE OVERLAY
+============================================================ */
+
+.mobile-overlay {
+
+  position: fixed;
+
+  top: 64px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+
+  z-index: 9997;
+
+  background:
+    rgba(0, 0, 0, 0.42);
+
+  opacity: 0;
+
+  visibility: hidden;
+
+  pointer-events: none;
+
+  transition:
+    opacity 0.25s ease,
+    visibility 0.25s ease;
+}
+
+
+.mobile-overlay.is-open {
+
+  opacity: 1;
+
+  visibility: visible;
+
+  pointer-events: auto;
+}
+
+
+/* ============================================================
+   MOBILE DRAWER
+
+   PENTING:
+   top: 64px
+
+   Drawer TIDAK menutupi logo/header.
+============================================================ */
+
+.mobile-drawer {
+
+  position: fixed;
+
+  top: 64px;
+
+  right: 0;
+
+  bottom: 0;
+
+  z-index: 9998;
+
+  width:
+    min(340px, 88vw);
+
+  background: #ffffff;
+
+  box-shadow:
+    -10px 10px 35px
+    rgba(0, 0, 0, 0.16);
+
+  transform:
+    translateX(100%);
+
+  visibility: hidden;
+
+  transition:
+    transform 0.28s ease,
+    visibility 0.28s ease;
+
+  overflow-y: auto;
+
+  overscroll-behavior:
+    contain;
+}
+
+
+.mobile-drawer.is-open {
+
+  transform:
+    translateX(0);
+
+  visibility: visible;
+}
+
+
+/* ============================================================
+   DRAWER CONTENT
+
+   Tidak ada logo.
+   Tidak ada header putih kedua.
+============================================================ */
+
+.mobile-drawer-content {
+
+  padding:
+    8px 18px 30px;
+}
+
+
+/* ============================================================
+   MOBILE MENU
+============================================================ */
+
+.mobile-menu-list {
+
+  margin: 0;
+
+  padding: 0;
+
+  list-style: none;
+}
+
+
+.mobile-menu-item {
+
+  width: 100%;
+
+  border-bottom:
+    1px solid #eeeeee;
+}
+
+
+/* ============================================================
+   MOBILE NORMAL LINK
+============================================================ */
+
+.mobile-normal-link {
+
+  display: flex;
+
+  align-items: center;
+
+  width: 100%;
+
+  min-height: 50px;
+
+  padding:
+    13px 4px;
+
+  color: #374151;
+
+  font-size: 15px;
+
+  font-weight: 600;
+
+  line-height: 1.35;
+
+  text-decoration: none;
+
+  transition:
+    color 0.18s ease;
+}
+
+
+.mobile-normal-link:hover {
+
+  color: #001bb7;
+}
+
+
+/* ============================================================
+   MOBILE PARENT
+============================================================ */
+
+.mobile-parent-button {
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  width: 100%;
+
+  min-height: 50px;
+
+  padding:
+    13px 4px;
+
+  color: #374151;
+
+  background: transparent;
+
+  border: 0;
+
+  font-family: inherit;
+
+  font-size: 15px;
+
+  font-weight: 600;
+
+  line-height: 1.35;
+
+  text-align: left;
+
+  cursor: pointer;
+}
+
+
+.mobile-parent-button:hover {
+
+  color: #001bb7;
+}
+
+
+.mobile-parent-button i {
+
+  font-size: 9px;
+
+  transition:
+    transform 0.2s ease;
+}
+
+
+.mobile-parent-button.is-open i {
+
+  transform:
+    rotate(180deg);
+}
+
+
+/* ============================================================
+   MOBILE SUBMENU
+============================================================ */
+
+.mobile-submenu {
+
+  display: none;
+
+  width: 100%;
+
+  padding:
+    0 0 8px 14px;
+}
+
+
+.mobile-submenu.is-open {
+
+  display: block;
+}
+
+
+/* ============================================================
+   MOBILE CHILD LINK
+============================================================ */
+
+.mobile-child-link {
+
+  display: flex;
+
+  align-items: center;
+
+  width: 100%;
+
+  min-height: 42px;
+
+  padding:
+    9px 4px;
+
+  color: #4b5563;
+
+  font-size: 14px;
+
+  font-weight: 500;
+
+  line-height: 1.35;
+
+  text-decoration: none;
+}
+
+
+.mobile-child-link:hover {
+
+  color: #001bb7;
+}
+
+
+/* ============================================================
+   MOBILE NESTED ITEM
+============================================================ */
+
+.mobile-nested-item {
+
+  width: 100%;
+}
+
+
+/* ============================================================
+   MOBILE CHILD BUTTON
+   Untuk Artikel
+============================================================ */
+
+.mobile-child-button {
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  width: 100%;
+
+  min-height: 42px;
+
+  padding:
+    9px 4px;
+
+  color: #4b5563;
+
+  background: transparent;
+
+  border: 0;
+
+  font-family: inherit;
+
+  font-size: 14px;
+
+  font-weight: 500;
+
+  line-height: 1.35;
+
+  text-align: left;
+
+  cursor: pointer;
+}
+
+
+.mobile-child-button:hover {
+
+  color: #001bb7;
+}
+
+
+.mobile-child-button i {
+
+  font-size: 9px;
+
+  transition:
+    transform 0.2s ease;
+}
+
+
+.mobile-child-button.is-open i {
+
+  transform:
+    rotate(180deg);
+}
+
+
+/* ============================================================
+   MOBILE NESTED SUBMENU
+
+   PERIZINAN
+   PENANAMAN MODAL
+
+   TURUN KE BAWAH
+============================================================ */
+
+.mobile-nested-submenu {
+
+  display: none;
+
+  width: 100%;
+
+  padding:
+    2px 0 7px 14px;
+}
+
+
+.mobile-nested-submenu.is-open {
+
+  display: block;
+}
+
+
+/* ============================================================
+   GRANDCHILD
+============================================================ */
+
+.mobile-grandchild-link {
+
+  position: relative;
+
+  display: block;
+
+  width: 100%;
+
+  padding:
+    8px 8px 8px 16px;
+
+  color: #001bb7;
+
+  font-size: 13px;
+
+  font-weight: 500;
+
+  line-height: 1.4;
+
+  text-decoration: none;
+
+  transition:
+    color 0.18s ease,
+    background 0.18s ease;
+}
+
+
+.mobile-grandchild-link::before {
+
+  content: "";
+
+  position: absolute;
+
+  left: 2px;
+
+  top: 50%;
+
+  width: 5px;
+
+  height: 5px;
+
+  border-radius: 50%;
+
+  background: #ffd41d;
+
+  transform:
+    translateY(-50%);
+}
+
+
+.mobile-grandchild-link:hover {
+
+  color: #001bb7;
+
+  background:
+    rgba(255, 212, 29, 0.12);
+}
+
+
+/* ============================================================
+   MOBILE CONTACT
+============================================================ */
+
+.mobile-contact-area {
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 8px;
+
+  margin-top: 18px;
+
+  padding-top: 18px;
+
+  border-top:
+    2px solid #f1f1f1;
+}
+
+
+.mobile-contact-button {
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  min-height: 46px;
+
+  padding:
+    0 15px;
+
+  color: #0900c3;
+
+  background: #ffd41d;
+
+  border-radius: 8px;
+
+  font-size: 14px;
+
+  font-weight: 700;
+
+  text-decoration: none;
+}
+
+
+/* ============================================================
+   TABLET / IPAD MINI
+   744px - 1023px
+============================================================ */
+
+@media (min-width: 744px) and (max-width: 1023px) {
 
   .header-container {
-    width: 100%;
 
-    max-width: 1600px;
+    padding-left: 16px;
 
-    margin: 0 auto;
-
-    padding-left: 24px;
-    padding-right: 24px;
+    padding-right: 16px;
   }
 
-
-  /*
-   * 3 kolom:
-   *
-   * kiri  = logo
-   * tengah = navbar
-   * kanan = kontak
-   *
-   * Navbar TIDAK menggunakan absolute.
-   */
 
   .header-grid {
-    display: grid;
 
-    grid-template-columns:
-      minmax(0, 1fr)
-      auto
-      minmax(0, 1fr);
-
-    align-items: center;
-
-    min-height: 80px;
-
-    position: relative;
-  }
-
-
-  /* ========================================================
-     LOGO
-  ======================================================== */
-
-  .header-logo {
-    justify-self: start;
-
-    display: flex;
-
-    align-items: center;
-
-    min-width: 0;
-
-    z-index: 2;
-  }
-
-
-  .header-logo a {
-    display: flex;
-
-    align-items: center;
-  }
-
-
-  .logo-image {
-    display: block;
-
-    width: auto;
-
-    height: 48px;
-
-    max-width: 190px;
-
-    object-fit: contain;
-
-    transition:
-      transform 0.25s ease;
-  }
-
-
-  .logo-image:hover {
-    transform: scale(1.025);
-  }
-
-
-  /* ========================================================
-     DESKTOP NAV
-  ======================================================== */
-
-  .desktop-navigation {
-    grid-column: 2;
-
-    justify-self: center;
-
-    display: block;
-
-    position: relative;
-
-    z-index: 10;
-  }
-
-
-  .desktop-menu {
-    display: flex;
-
-    align-items: center;
-
-    justify-content: center;
-
-    gap: 28px;
-
-    margin: 0;
-    padding: 0;
-
-    list-style: none;
-
-    white-space: nowrap;
+    min-height: 68px;
   }
 
 
   .desktop-menu-item {
-    position: relative;
 
-    display: flex;
+    height: 68px;
+  }
 
-    align-items: center;
+
+  .logo-image {
+
+    height: 34px;
+
+    max-width: 125px;
+  }
+
+
+  .desktop-menu {
+
+    gap: 9px;
+  }
+
+
+  .desktop-menu-link {
+
+    font-size: 9.5px;
+
+    gap: 4px;
+  }
+
+
+  .menu-chevron {
+
+    font-size: 6px;
+  }
+
+
+  .header-contact {
+
+    gap: 4px;
+  }
+
+
+  .contact-button {
+
+    min-height: 32px;
+
+    padding:
+      0 8px;
+
+    border-radius: 6px;
+
+    font-size: 8.5px;
+  }
+
+
+  .desktop-dropdown {
+
+    width: 195px;
+  }
+
+
+  .dropdown-link {
+
+    min-height: 38px;
+
+    padding:
+      8px 11px;
+
+    font-size: 10.5px;
+  }
+
+
+  .nested-dropdown-link {
+
+    padding:
+      8px 11px 8px 24px;
+
+    font-size: 10.5px;
+  }
+
+
+  .mobile-menu-button,
+  .mobile-drawer,
+  .mobile-overlay {
+
+    display: none;
+  }
+
+}
+
+
+/* ============================================================
+   IPAD AIR / TABLET LANDSCAPE
+   1024px - 1199px
+============================================================ */
+
+@media (min-width: 1024px) and (max-width: 1199px) {
+
+  .header-container {
+
+    padding-left: 18px;
+
+    padding-right: 18px;
+  }
+
+
+  .header-grid {
+
+    min-height: 72px;
+  }
+
+
+  .desktop-menu-item {
+
+    height: 72px;
+  }
+
+
+  .logo-image {
+
+    height: 39px;
+
+    max-width: 150px;
+  }
+
+
+  .desktop-menu {
+
+    gap: 12px;
+  }
+
+
+  .desktop-menu-link {
+
+    font-size: 10.5px;
+
+    gap: 4px;
+  }
+
+
+  .menu-chevron {
+
+    font-size: 7px;
+  }
+
+
+  .contact-button {
+
+    min-height: 35px;
+
+    padding:
+      0 10px;
+
+    font-size: 9.5px;
+  }
+
+
+  .desktop-dropdown {
+
+    width: 215px;
+  }
+
+
+  .dropdown-link {
+
+    min-height: 40px;
+
+    padding:
+      9px 12px;
+
+    font-size: 11.5px;
+  }
+
+
+  .nested-dropdown-link {
+
+    padding:
+      9px 12px 9px 26px;
+
+    font-size: 11.5px;
+  }
+
+
+  .mobile-menu-button,
+  .mobile-drawer,
+  .mobile-overlay {
+
+    display: none;
+  }
+
+}
+
+
+/* ============================================================
+   DESKTOP 1200 - 1399
+============================================================ */
+
+@media (min-width: 1200px) and (max-width: 1399px) {
+
+  .desktop-menu {
+
+    gap: 19px;
+  }
+
+
+  .desktop-menu-link {
+
+    font-size: 12px;
+  }
+
+
+  .logo-image {
+
+    height: 44px;
+
+    max-width: 175px;
+  }
+
+
+  .contact-button {
+
+    min-height: 39px;
+
+    padding:
+      0 13px;
+
+    font-size: 12px;
+  }
+
+}
+
+
+/* ============================================================
+   DESKTOP BESAR
+============================================================ */
+
+@media (min-width: 1400px) {
+
+  .header-container {
+
+    padding-left: 30px;
+
+    padding-right: 30px;
+  }
+
+
+  .header-grid {
+
+    min-height: 80px;
+  }
+
+
+  .desktop-menu-item {
 
     height: 80px;
   }
 
 
-  .desktop-menu-link {
-    position: relative;
+  .desktop-menu {
 
-    display: inline-flex;
+    gap: 28px;
+  }
 
-    align-items: center;
+}
 
-    justify-content: center;
 
-    gap: 6px;
+/* ============================================================
+   MOBILE
+   0 - 743px
+============================================================ */
 
-    height: 100%;
+@media (max-width: 743px) {
 
-    padding: 0;
+  .header-container {
 
-    color: #374151;
+    padding-left: 16px;
 
-    font-size: 14px;
-
-    font-weight: 600;
-
-    line-height: 1;
-
-    text-decoration: none;
-
-    white-space: nowrap;
-
-    transition:
-      color 0.2s ease;
+    padding-right: 16px;
   }
 
 
-  .desktop-menu-link:hover {
-    color: #d4a900;
-  }
-
-
-  .menu-chevron {
-    font-size: 9px;
-
-    transition:
-      transform 0.2s ease;
-  }
-
-
-  .has-dropdown:hover
-  > .desktop-menu-link
-  .menu-chevron {
-    transform: rotate(180deg);
-  }
-
-
-  /* ========================================================
-     DROPDOWN LEVEL 1
-     
-     PENTING:
-     left: 0 = lurus dengan sisi kiri menu induk.
-  ======================================================== */
-
-  .desktop-dropdown {
-    position: absolute;
-
-    top: 100%;
-
-    left: 0;
-
-    margin: 0;
-
-    width: 250px;
-
-    padding: 6px 0;
-
-    background: #ffffff;
-
-    border: 1px solid rgba(0, 0, 0, 0.06);
-
-    border-radius: 0 0 10px 10px;
-
-    box-shadow:
-      0 12px 30px rgba(0, 0, 0, 0.12);
-
-    opacity: 0;
-
-    visibility: hidden;
-
-    pointer-events: none;
-
-    transform:
-      translateY(8px);
-
-    transform-origin:
-      top left;
-
-    transition:
-      opacity 0.18s ease,
-      visibility 0.18s ease,
-      transform 0.18s ease;
-
-    z-index: 10000;
-  }
-
-
-  .has-dropdown:hover
-  > .desktop-dropdown {
-    opacity: 1;
-
-    visibility: visible;
-
-    pointer-events: auto;
-
-    transform:
-      translateY(0);
-  }
-
-
-  /* ========================================================
-     DROPDOWN ITEM
-  ======================================================== */
-
-  .dropdown-item {
-    position: relative;
-
-    width: 100%;
-  }
-
-
-  .dropdown-link {
-    position: relative;
+  .header-grid {
 
     display: flex;
 
-    align-items: center;
-
-    justify-content: space-between;
-
     width: 100%;
-
-    min-height: 46px;
-
-    padding: 11px 16px;
-
-    color: #374151;
-
-    font-size: 13px;
-
-    font-weight: 500;
-
-    line-height: 1.35;
-
-    text-decoration: none;
-
-    background: #ffffff;
-
-    transition:
-      background 0.18s ease,
-      color 0.18s ease;
-  }
-
-
-  .dropdown-link:hover {
-    color: #111827;
-
-    background: #ffd41d;
-  }
-
-
-  .dropdown-last {
-    border-radius:
-      0 0 10px 10px;
-  }
-
-
-  /* ========================================================
-     NESTED DESKTOP
-  ======================================================== */
-
-  .nested-trigger {
-    padding-right: 13px;
-  }
-
-
-  .nested-chevron {
-    font-size: 9px;
-
-    margin-left: 12px;
-  }
-
-
-  .nested-dropdown {
-    position: absolute;
-
-    top: 0;
-
-    left: 100%;
-
-    width: 240px;
-
-    padding: 6px 0;
-
-    background: #ffffff;
-
-    border: 1px solid rgba(0, 0, 0, 0.06);
-
-    border-radius: 0 8px 8px 8px;
-
-    box-shadow:
-      0 12px 30px rgba(0, 0, 0, 0.12);
-
-    opacity: 0;
-
-    visibility: hidden;
-
-    pointer-events: none;
-
-    transform:
-      translateX(8px);
-
-    transition:
-      opacity 0.18s ease,
-      visibility 0.18s ease,
-      transform 0.18s ease;
-
-    z-index: 10001;
-  }
-
-
-  .nested-parent:hover
-  > .nested-dropdown {
-    opacity: 1;
-
-    visibility: visible;
-
-    pointer-events: auto;
-
-    transform:
-      translateX(0);
-  }
-
-
-  .nested-dropdown-link {
-    display: block;
-
-    width: 100%;
-
-    padding: 11px 15px;
-
-    color: #374151;
-
-    font-size: 13px;
-
-    font-weight: 500;
-
-    line-height: 1.35;
-
-    text-decoration: none;
-
-    transition:
-      background 0.18s ease,
-      color 0.18s ease;
-  }
-
-
-  .nested-dropdown-link:hover {
-    color: #111827;
-
-    background: #ffd41d;
-  }
-
-
-  /* ========================================================
-     KONTAK
-  ======================================================== */
-
-  .header-contact {
-    grid-column: 3;
-
-    justify-self: end;
-
-    display: flex;
-
-    align-items: center;
-
-    gap: 8px;
-
-    min-width: 0;
-
-    z-index: 2;
-  }
-
-
-  .contact-button {
-    display: inline-flex;
-
-    align-items: center;
-
-    justify-content: center;
-
-    min-height: 42px;
-
-    padding:
-      0 16px;
-
-    color: #0900c3;
-
-    background: #ffd41d;
-
-    border-radius: 9px;
-
-    font-size: 14px;
-
-    font-weight: 700;
-
-    line-height: 1;
-
-    text-decoration: none;
-
-    white-space: nowrap;
-
-    transition:
-      transform 0.2s ease,
-      box-shadow 0.2s ease;
-  }
-
-
-  .contact-button:hover {
-    transform:
-      translateY(-1px);
-
-    box-shadow:
-      0 7px 18px rgba(0, 0, 0, 0.12);
-  }
-
-
-  /* ========================================================
-     MOBILE BUTTON
-  ======================================================== */
-
-  .mobile-menu-button {
-    display: none;
-
-    width: 42px;
-    height: 42px;
-
-    align-items: center;
-    justify-content: center;
-
-    margin-left: auto;
-
-    padding: 0;
-
-    color: #001bb7;
-
-    background: transparent;
-
-    border: 0;
-
-    cursor: pointer;
-
-    font-size: 22px;
-  }
-
-
-  /* ========================================================
-     MOBILE OVERLAY
-  ======================================================== */
-
-  .mobile-overlay {
-    position: fixed;
-
-    inset: 0;
-
-    z-index: 10000;
-
-    background:
-      rgba(0, 0, 0, 0.42);
-
-    opacity: 0;
-
-    visibility: hidden;
-
-    pointer-events: none;
-
-    transition:
-      opacity 0.25s ease,
-      visibility 0.25s ease;
-  }
-
-
-  .mobile-overlay.is-open {
-    opacity: 1;
-
-    visibility: visible;
-
-    pointer-events: auto;
-  }
-
-
-  /* ========================================================
-     MOBILE DRAWER
-     
-     Tidak ada logo.
-  ======================================================== */
-
-  .mobile-drawer {
-    position: fixed;
-
-    top: 0;
-    right: 0;
-    bottom: 0;
-
-    z-index: 10001;
-
-    width: min(340px, 88vw);
-
-    background: #ffffff;
-
-    box-shadow:
-      -10px 0 35px rgba(0, 0, 0, 0.16);
-
-    transform:
-      translateX(100%);
-
-    visibility: hidden;
-
-    transition:
-      transform 0.28s ease,
-      visibility 0.28s ease;
-
-    overflow-y: auto;
-
-    overscroll-behavior:
-      contain;
-  }
-
-
-  .mobile-drawer.is-open {
-    transform:
-      translateX(0);
-
-    visibility: visible;
-  }
-
-
-  .mobile-drawer-header {
-    display: flex;
-
-    align-items: center;
-
-    justify-content: flex-end;
 
     min-height: 64px;
-
-    padding:
-      0 18px;
-
-    border-bottom:
-      1px solid #eeeeee;
   }
 
 
-  .mobile-close-button {
+  .header-logo {
+
+    flex:
+      1 1 auto;
+
+    min-width: 0;
+  }
+
+
+  .logo-image {
+
+    height: 36px;
+
+    max-width: 145px;
+  }
+
+
+  .desktop-navigation,
+  .header-contact {
+
+    display: none;
+  }
+
+
+  .mobile-menu-button {
+
     display: flex;
 
-    align-items: center;
-    justify-content: center;
+    flex:
+      0 0 42px;
+  }
+
+
+  .mobile-overlay {
+
+    top: 64px;
+  }
+
+
+  .mobile-drawer {
+
+    top: 64px;
+  }
+
+}
+
+
+/* ============================================================
+   MOBILE KECIL
+============================================================ */
+
+@media (max-width: 380px) {
+
+  .header-container {
+
+    padding-left: 12px;
+
+    padding-right: 12px;
+  }
+
+
+  .logo-image {
+
+    height: 33px;
+
+    max-width: 130px;
+  }
+
+
+  .mobile-menu-button {
 
     width: 40px;
+
     height: 40px;
 
-    padding: 0;
-
-    color: #001bb7;
-
-    background: transparent;
-
-    border: 0;
-
-    border-radius: 8px;
-
-    cursor: pointer;
-
-    font-size: 22px;
-
-    transition:
-      background 0.2s ease;
+    flex-basis: 40px;
   }
 
 
-  .mobile-close-button:hover {
-    background:
-      #f3f4f6;
+  .mobile-drawer {
+
+    width:
+      min(320px, 90vw);
   }
 
-
-  .mobile-drawer-content {
-    padding:
-      12px 18px 28px;
-  }
+}
 
 
-  .mobile-menu-list {
-    margin: 0;
+/* ============================================================
+   REDUCE MOTION
+============================================================ */
 
-    padding: 0;
+@media (prefers-reduced-motion: reduce) {
 
-    list-style: none;
-  }
-
-
-  .mobile-menu-item {
-    border-bottom:
-      1px solid #eeeeee;
-  }
-
-
-  .mobile-normal-link,
-  .mobile-parent-button {
-    width: 100%;
-
-    min-height: 50px;
-
-    display: flex;
-
-    align-items: center;
-
-    justify-content: space-between;
-
-    padding:
-      13px 4px;
-
-    color: #374151;
-
-    background: transparent;
-
-    border: 0;
-
-    font-family: inherit;
-
-    font-size: 15px;
-
-    font-weight: 600;
-
-    line-height: 1.35;
-
-    text-decoration: none;
-
-    text-align: left;
-
-    cursor: pointer;
-  }
-
-
-  .mobile-normal-link:hover,
-  .mobile-parent-button:hover {
-    color: #001bb7;
-  }
-
-
+  .desktop-dropdown,
+  .nested-dropdown,
+  .mobile-drawer,
+  .mobile-overlay,
+  .logo-image,
+  .contact-button,
   .mobile-parent-button i,
   .mobile-child-button i {
-    font-size: 10px;
 
-    transition:
-      transform 0.2s ease;
+    transition: none;
   }
 
-
-  .mobile-parent-button.is-open
-  i,
-  .mobile-child-button.is-open
-  i {
-    transform:
-      rotate(180deg);
-  }
-
-
-  /* ========================================================
-     MOBILE SUBMENU
-  ======================================================== */
-
-  .mobile-submenu {
-    display: none;
-
-    padding:
-      0 0 9px 14px;
-  }
-
-
-  .mobile-submenu.is-open {
-    display: block;
-  }
-
-
-  .mobile-child-link,
-  .mobile-child-button {
-    width: 100%;
-
-    display: flex;
-
-    align-items: center;
-
-    justify-content: space-between;
-
-    min-height: 42px;
-
-    padding:
-      9px 4px;
-
-    color: #4b5563;
-
-    background: transparent;
-
-    border: 0;
-
-    font-family: inherit;
-
-    font-size: 14px;
-
-    font-weight: 500;
-
-    line-height: 1.35;
-
-    text-decoration: none;
-
-    text-align: left;
-
-    cursor: pointer;
-  }
-
-
-  .mobile-child-link:hover,
-  .mobile-child-button:hover {
-    color: #001bb7;
-  }
-
-
-  .mobile-nested-submenu {
-    display: none;
-
-    padding:
-      0 0 6px 14px;
-  }
-
-
-  .mobile-nested-submenu.is-open {
-    display: block;
-  }
-
-
-  .mobile-grandchild-link {
-    display: block;
-
-    padding:
-      8px 4px;
-
-    color: #001bb7;
-
-    font-size: 13px;
-
-    line-height: 1.4;
-
-    text-decoration: none;
-  }
-
-
-  .mobile-grandchild-link:hover {
-    color: #d4a900;
-  }
-
-
-  /* ========================================================
-     MOBILE CONTACT
-  ======================================================== */
-
-  .mobile-contact-area {
-    display: flex;
-
-    flex-direction: column;
-
-    gap: 8px;
-
-    margin-top: 18px;
-
-    padding-top: 18px;
-
-    border-top:
-      2px solid #f1f1f1;
-  }
-
-
-  .mobile-contact-button {
-    display: flex;
-
-    align-items: center;
-
-    justify-content: center;
-
-    min-height: 46px;
-
-    padding:
-      0 15px;
-
-    color: #0900c3;
-
-    background: #ffd41d;
-
-    border-radius: 8px;
-
-    font-size: 14px;
-
-    font-weight: 700;
-
-    text-decoration: none;
-  }
-
-
-  /* ========================================================
-     TABLET / IPAD
-     
-     iPad Mini portrait:
-     744px -> desktop navbar
-  ======================================================== */
-
-  @media (min-width: 744px) and (max-width: 1023px) {
-
-    .header-container {
-      padding-left: 18px;
-      padding-right: 18px;
-    }
-
-
-    .header-grid {
-      min-height: 68px;
-    }
-
-
-    .desktop-menu-item {
-      height: 68px;
-    }
-
-
-    .logo-image {
-      height: 36px;
-
-      max-width: 135px;
-    }
-
-
-    .desktop-menu {
-      gap: 10px;
-    }
-
-
-    .desktop-menu-link {
-      font-size: 10px;
-
-      gap: 4px;
-    }
-
-
-    .menu-chevron {
-      font-size: 7px;
-    }
-
-
-    .header-contact {
-      gap: 5px;
-    }
-
-
-    .contact-button {
-      min-height: 34px;
-
-      padding:
-        0 9px;
-
-      border-radius: 7px;
-
-      font-size: 9px;
-    }
-
-
-    .desktop-dropdown {
-      width: 205px;
-    }
-
-
-    .dropdown-link {
-      min-height: 39px;
-
-      padding:
-        9px 12px;
-
-      font-size: 11px;
-    }
-
-
-    .nested-dropdown {
-      width: 205px;
-    }
-
-
-    .nested-dropdown-link {
-      padding:
-        9px 12px;
-
-      font-size: 11px;
-    }
-
-
-    .mobile-menu-button,
-    .mobile-drawer,
-    .mobile-overlay {
-      display: none;
-    }
-
-  }
-
-
-  /* ========================================================
-     IPAD AIR / SMALL LAPTOP
-  ======================================================== */
-
-  @media (min-width: 1024px) and (max-width: 1199px) {
-
-    .header-container {
-      padding-left: 20px;
-      padding-right: 20px;
-    }
-
-
-    .header-grid {
-      min-height: 72px;
-    }
-
-
-    .desktop-menu-item {
-      height: 72px;
-    }
-
-
-    .logo-image {
-      height: 40px;
-
-      max-width: 155px;
-    }
-
-
-    .desktop-menu {
-      gap: 13px;
-    }
-
-
-    .desktop-menu-link {
-      font-size: 11px;
-
-      gap: 5px;
-    }
-
-
-    .menu-chevron {
-      font-size: 8px;
-    }
-
-
-    .contact-button {
-      min-height: 36px;
-
-      padding:
-        0 11px;
-
-      font-size: 10px;
-    }
-
-
-    .desktop-dropdown {
-      width: 220px;
-    }
-
-
-    .dropdown-link {
-      font-size: 12px;
-
-      min-height: 41px;
-
-      padding:
-        10px 13px;
-    }
-
-
-    .nested-dropdown {
-      width: 220px;
-    }
-
-
-    .nested-dropdown-link {
-      font-size: 12px;
-    }
-
-  }
-
-
-  /* ========================================================
-     DESKTOP
-  ======================================================== */
-
-  @media (min-width: 1200px) and (max-width: 1399px) {
-
-    .desktop-menu {
-      gap: 20px;
-    }
-
-
-    .desktop-menu-link {
-      font-size: 12px;
-    }
-
-
-    .logo-image {
-      height: 44px;
-
-      max-width: 175px;
-    }
-
-
-    .contact-button {
-      min-height: 39px;
-
-      padding:
-        0 13px;
-
-      font-size: 12px;
-    }
-
-  }
-
-
-  /* ========================================================
-     DESKTOP BESAR
-  ======================================================== */
-
-  @media (min-width: 1400px) {
-
-    .header-container {
-      padding-left: 30px;
-      padding-right: 30px;
-    }
-
-
-    .header-grid {
-      min-height: 80px;
-    }
-
-
-    .desktop-menu-item {
-      height: 80px;
-    }
-
-
-    .desktop-menu {
-      gap: 28px;
-    }
-
-  }
-
-
-  /* ========================================================
-     MOBILE
-     
-     Di bawah 744px benar-benar mobile.
-  ======================================================== */
-
-  @media (max-width: 743px) {
-
-    .header-container {
-      padding-left: 16px;
-      padding-right: 16px;
-    }
-
-
-    .header-grid {
-      display: flex;
-
-      min-height: 64px;
-
-      width: 100%;
-    }
-
-
-    .header-logo {
-      flex: 1 1 auto;
-    }
-
-
-    .logo-image {
-      height: 36px;
-
-      max-width: 145px;
-    }
-
-
-    .desktop-navigation,
-    .header-contact {
-      display: none;
-    }
-
-
-    .mobile-menu-button {
-      display: flex;
-    }
-
-  }
-
-
-  /* ========================================================
-     REDUCE MOTION
-  ======================================================== */
-
-  @media (prefers-reduced-motion: reduce) {
-
-    .desktop-dropdown,
-    .nested-dropdown,
-    .mobile-drawer,
-    .mobile-overlay,
-    .logo-image,
-    .contact-button {
-      transition: none;
-    }
-
-  }
+}
 
 </style>
 
 
 <script is:inline>
 
-  document.addEventListener(
-    "DOMContentLoaded",
-    () => {
+document.addEventListener(
+  "DOMContentLoaded",
+  () => {
 
-      const siteHeader =
-        document.getElementById(
-          "site-header"
-        );
-
-      const headerSpacer =
-        document.getElementById(
-          "header-spacer"
-        );
-
-      const mobileButton =
-        document.getElementById(
-          "mobile-menu-button"
-        );
-
-      const mobileDrawer =
-        document.getElementById(
-          "mobile-drawer"
-        );
-
-      const mobileOverlay =
-        document.getElementById(
-          "mobile-overlay"
-        );
-
-      const mobileClose =
-        document.getElementById(
-          "mobile-close-button"
-        );
-
-
-      // =====================================================
-      // SPACER OTOMATIS
-      // =====================================================
-
-      function updateHeaderSpacer() {
-
-        if (
-          !siteHeader ||
-          !headerSpacer
-        ) {
-          return;
-        }
-
-        headerSpacer.style.height =
-          `${siteHeader.offsetHeight}px`;
-      }
-
-
-      updateHeaderSpacer();
-
-      window.addEventListener(
-        "resize",
-        updateHeaderSpacer
+    const siteHeader =
+      document.getElementById(
+        "site-header"
       );
 
 
-      // =====================================================
-      // MOBILE DRAWER
-      // =====================================================
+    const headerSpacer =
+      document.getElementById(
+        "header-spacer"
+      );
 
-      function openMobileMenu() {
 
-        if (
-          !mobileDrawer ||
-          !mobileOverlay
-        ) {
-          return;
-        }
+    const mobileButton =
+      document.getElementById(
+        "mobile-menu-button"
+      );
 
-        mobileDrawer.classList.add(
-          "is-open"
-        );
 
-        mobileOverlay.classList.add(
-          "is-open"
-        );
+    const mobileMenuIcon =
+      document.getElementById(
+        "mobile-menu-icon"
+      );
 
-        document.body.style.overflow =
-          "hidden";
 
-        if (mobileButton) {
-          mobileButton.setAttribute(
-            "aria-expanded",
-            "true"
-          );
-        }
+    const mobileDrawer =
+      document.getElementById(
+        "mobile-drawer"
+      );
+
+
+    const mobileOverlay =
+      document.getElementById(
+        "mobile-overlay"
+      );
+
+
+    /* ======================================================
+       SPACER HEADER
+    ====================================================== */
+
+    function updateHeaderSpacer() {
+
+      if (
+        !siteHeader ||
+        !headerSpacer
+      ) {
+        return;
       }
 
 
-      function closeMobileMenu() {
+      headerSpacer.style.height =
+        `${siteHeader.offsetHeight}px`;
+    }
 
-        if (
-          !mobileDrawer ||
-          !mobileOverlay
-        ) {
-          return;
-        }
 
-        mobileDrawer.classList.remove(
-          "is-open"
-        );
+    updateHeaderSpacer();
 
-        mobileOverlay.classList.remove(
-          "is-open"
-        );
 
-        document.body.style.overflow =
-          "";
+    window.addEventListener(
+      "resize",
+      updateHeaderSpacer
+    );
 
-        if (mobileButton) {
-          mobileButton.setAttribute(
-            "aria-expanded",
-            "false"
-          );
-        }
+
+    /* ======================================================
+       OPEN MOBILE MENU
+    ====================================================== */
+
+    function openMobileMenu() {
+
+      if (
+        !mobileDrawer ||
+        !mobileOverlay
+      ) {
+        return;
       }
+
+
+      mobileDrawer.classList.add(
+        "is-open"
+      );
+
+
+      mobileOverlay.classList.add(
+        "is-open"
+      );
+
+
+      document.body.style.overflow =
+        "hidden";
 
 
       if (mobileButton) {
 
-        mobileButton.addEventListener(
-          "click",
-          openMobileMenu
+        mobileButton.setAttribute(
+          "aria-expanded",
+          "true"
         );
 
+
+        mobileButton.setAttribute(
+          "aria-label",
+          "Tutup menu"
+        );
       }
 
 
-      if (mobileClose) {
+      if (mobileMenuIcon) {
 
-        mobileClose.addEventListener(
-          "click",
-          closeMobileMenu
+        mobileMenuIcon.classList.remove(
+          "fa-bars"
         );
 
+
+        mobileMenuIcon.classList.add(
+          "fa-xmark"
+        );
+      }
+
+    }
+
+
+    /* ======================================================
+       CLOSE MOBILE MENU
+    ====================================================== */
+
+    function closeMobileMenu() {
+
+      if (
+        !mobileDrawer ||
+        !mobileOverlay
+      ) {
+        return;
       }
 
 
-      if (mobileOverlay) {
+      mobileDrawer.classList.remove(
+        "is-open"
+      );
 
-        mobileOverlay.addEventListener(
-          "click",
-          closeMobileMenu
+
+      mobileOverlay.classList.remove(
+        "is-open"
+      );
+
+
+      document.body.style.overflow =
+        "";
+
+
+      if (mobileButton) {
+
+        mobileButton.setAttribute(
+          "aria-expanded",
+          "false"
         );
 
+
+        mobileButton.setAttribute(
+          "aria-label",
+          "Buka menu"
+        );
       }
 
 
-      // =====================================================
-      // ESCAPE
-      // =====================================================
+      if (mobileMenuIcon) {
 
-      document.addEventListener(
-        "keydown",
-        (event) => {
+        mobileMenuIcon.classList.remove(
+          "fa-xmark"
+        );
 
-          if (
-            event.key === "Escape"
-          ) {
+
+        mobileMenuIcon.classList.add(
+          "fa-bars"
+        );
+      }
+
+    }
+
+
+    /* ======================================================
+       MOBILE BUTTON
+    ====================================================== */
+
+    if (mobileButton) {
+
+      mobileButton.addEventListener(
+        "click",
+        () => {
+
+          const isOpen =
+            mobileDrawer?.classList.contains(
+              "is-open"
+            );
+
+
+          if (isOpen) {
+
             closeMobileMenu();
+
+          } else {
+
+            openMobileMenu();
+
           }
 
         }
       );
 
-
-      // =====================================================
-      // MOBILE PARENT DROPDOWN
-      // =====================================================
-
-      const parentButtons =
-        document.querySelectorAll(
-          ".mobile-parent-button"
-        );
+    }
 
 
-      parentButtons.forEach(
-        (button) => {
+    /* ======================================================
+       OVERLAY
+    ====================================================== */
 
-          button.addEventListener(
-            "click",
-            () => {
+    if (mobileOverlay) {
 
-              const submenu =
-                button.nextElementSibling;
+      mobileOverlay.addEventListener(
+        "click",
+        closeMobileMenu
+      );
 
-              if (!submenu) {
-                return;
-              }
-
-              const isOpen =
-                submenu.classList.contains(
-                  "is-open"
-                );
+    }
 
 
-              submenu.classList.toggle(
-                "is-open"
-              );
+    /* ======================================================
+       ESCAPE
+    ====================================================== */
 
-              button.classList.toggle(
-                "is-open"
-              );
+    document.addEventListener(
+      "keydown",
+      (event) => {
 
-              button.setAttribute(
-                "aria-expanded",
-                String(!isOpen)
-              );
+        if (
+          event.key === "Escape"
+        ) {
 
-            }
-          );
+          closeMobileMenu();
 
         }
+
+      }
+    );
+
+
+    /* ======================================================
+       MOBILE PARENT DROPDOWN
+    ====================================================== */
+
+    const parentButtons =
+      document.querySelectorAll(
+        ".mobile-parent-button"
       );
 
 
-      // =====================================================
-      // MOBILE CHILD DROPDOWN
-      // =====================================================
+    parentButtons.forEach(
+      (button) => {
 
-      const childButtons =
-        document.querySelectorAll(
-          ".mobile-child-button"
+        button.addEventListener(
+          "click",
+          () => {
+
+            const submenu =
+              button.nextElementSibling;
+
+
+            if (!submenu) {
+              return;
+            }
+
+
+            const isOpen =
+              submenu.classList.contains(
+                "is-open"
+              );
+
+
+            submenu.classList.toggle(
+              "is-open"
+            );
+
+
+            button.classList.toggle(
+              "is-open"
+            );
+
+
+            button.setAttribute(
+              "aria-expanded",
+              String(!isOpen)
+            );
+
+          }
         );
 
-
-      childButtons.forEach(
-        (button) => {
-
-          button.addEventListener(
-            "click",
-            () => {
-
-              const submenu =
-                button.nextElementSibling;
-
-              if (!submenu) {
-                return;
-              }
-
-              const isOpen =
-                submenu.classList.contains(
-                  "is-open"
-                );
+      }
+    );
 
 
-              submenu.classList.toggle(
-                "is-open"
-              );
+    /* ======================================================
+       MOBILE CHILD DROPDOWN
+       
+       Contoh:
+       Artikel
+          ↓
+       Perizinan
+       Penanaman Modal
+    ====================================================== */
 
-              button.classList.toggle(
-                "is-open"
-              );
-
-              button.setAttribute(
-                "aria-expanded",
-                String(!isOpen)
-              );
-
-            }
-          );
-
-        }
+    const childButtons =
+      document.querySelectorAll(
+        ".mobile-child-button"
       );
 
 
-      // =====================================================
-      // TUTUP DRAWER KETIKA LINK DIKLIK
-      // =====================================================
+    childButtons.forEach(
+      (button) => {
+
+        button.addEventListener(
+          "click",
+          () => {
+
+            const submenu =
+              button.nextElementSibling;
+
+
+            if (!submenu) {
+              return;
+            }
+
+
+            const isOpen =
+              submenu.classList.contains(
+                "is-open"
+              );
+
+
+            submenu.classList.toggle(
+              "is-open"
+            );
+
+
+            button.classList.toggle(
+              "is-open"
+            );
+
+
+            button.setAttribute(
+              "aria-expanded",
+              String(!isOpen)
+            );
+
+          }
+        );
+
+      }
+    );
+
+
+    /* ======================================================
+       LINK MOBILE
+    ====================================================== */
+
+    if (mobileDrawer) {
 
       const mobileLinks =
-        mobileDrawer
-          ? mobileDrawer.querySelectorAll(
-              "a"
-            )
-          : [];
+        mobileDrawer.querySelectorAll(
+          "a"
+        );
 
 
       mobileLinks.forEach(
@@ -2140,45 +2551,47 @@ const navigationMenus =
         }
       );
 
-
-      // =====================================================
-      // SHADOW SCROLL
-      // =====================================================
-
-      function handleScroll() {
-
-        if (!siteHeader) {
-          return;
-        }
+    }
 
 
-        if (window.scrollY > 5) {
+    /* ======================================================
+       SHADOW SAAT SCROLL
+    ====================================================== */
 
-          siteHeader.style.boxShadow =
-            "0 4px 18px rgba(0,0,0,0.10)";
+    function handleScroll() {
 
-        } else {
-
-          siteHeader.style.boxShadow =
-            "none";
-
-        }
-
+      if (!siteHeader) {
+        return;
       }
 
 
-      window.addEventListener(
-        "scroll",
-        handleScroll,
-        {
-          passive: true
-        }
-      );
+      if (window.scrollY > 5) {
 
+        siteHeader.style.boxShadow =
+          "0 4px 18px rgba(0,0,0,0.10)";
 
-      handleScroll();
+      } else {
+
+        siteHeader.style.boxShadow =
+          "none";
+
+      }
 
     }
-  );
+
+
+    window.addEventListener(
+      "scroll",
+      handleScroll,
+      {
+        passive: true
+      }
+    );
+
+
+    handleScroll();
+
+  }
+);
 
 </script>
