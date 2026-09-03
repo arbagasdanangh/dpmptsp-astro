@@ -1,0 +1,64 @@
+---
+const { file, title } = Astro.props;
+---
+
+<style>
+    .pdf-container {
+        border-radius: 0.75rem;
+        overflow: hidden;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+</style>
+
+<!-- Modal PDF Viewer -->
+<div id="pdfViewerContainer" class="hidden mt-12">
+    <div class="bg-white rounded-2xl shadow-custom p-6">
+        <div class="flex justify-between items-center mb-4">
+            <h4 id="pdfTitle" class="text-lg font-bold text-blue-800">
+                {title}
+            </h4>
+
+            <div class="flex gap-2">
+                <a id="downloadPdf" href={file} target="_blank" download class="inline-flex items-center bg-yellow-400 text-blue-800 font-medium px-4 py-2 rounded-lg hover:bg-yellow-300 transition">
+                    <i class="fas fa-download mr-2"></i> Download
+                </a>
+
+                <button id="closePdf" class="w-10 h-10 flex items-center justify-center rounded-full bg-red-100 text-red-600 hover:bg-red-200 transition">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="pdf-container">
+            <object id="pdfViewer" type="application/pdf" width="100%" height="780px" class="rounded-lg">
+                <p class="text-center p-8 text-gray-600">
+                    Browser tidak mendukung PDF preview.
+                </p>
+            </object>
+        </div>
+    </div>
+</div>
+
+<script is:inline>
+    function openPDF(file, title) {
+        const container = document.getElementById('pdfViewerContainer');
+        const viewer = document.getElementById('pdfViewer');
+        const download = document.getElementById('downloadPdf');
+        const pdfTitle = document.getElementById('pdfTitle');
+
+        viewer.setAttribute('data', file);
+        download.href = file;
+        pdfTitle.innerText = title || 'Dokumen Investasi';
+
+        container.classList.remove('hidden');
+        container.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    document.getElementById('closePdf').addEventListener('click', function () {
+        const container = document.getElementById('pdfViewerContainer');
+        const viewer = document.getElementById('pdfViewer');
+
+        viewer.setAttribute('data', '');
+        container.classList.add('hidden');
+    });
+</script>

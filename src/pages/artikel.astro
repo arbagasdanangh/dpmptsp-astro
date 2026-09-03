@@ -1,0 +1,2617 @@
+---
+import MainLayout from "../layouts/MainLayout.astro";
+import { slugify } from "../utils/slugify";
+
+export const prerender = false;
+
+/* =========================================================
+   CONFIG
+========================================================= */
+
+const API_URL =
+  "https://dpm-ptsp.surabaya.go.id/sso/apiberita.php";
+
+const API_USERNAME =
+  import.meta.env.API_BERITA_USERNAME;
+
+const API_PASSWORD =
+  import.meta.env.API_BERITA_PASSWORD;
+
+const limit = 12;
+
+const url =
+  new URL(Astro.request.url);
+
+const q =
+  url.searchParams.get("q") || "";
+
+const type =
+  url.searchParams.get("type") || "perizinan";
+
+const lang =
+  url.searchParams.get("lang") || "id";
+
+let page =
+  parseInt(
+    url.searchParams.get("page") || "1",
+    10
+  );
+
+
+/* =========================================================
+   TANGGAL API
+========================================================= */
+
+const awal =
+  url.searchParams.get("awal") ||
+  "2024-01-01";
+
+const akhir =
+  url.searchParams.get("akhir") ||
+  "2026-12-31";
+
+
+/* =========================================================
+   DATA
+========================================================= */
+
+let allArticles = [];
+let apiError = "";
+
+
+/* =========================================================
+   AMBIL DATA API
+========================================================= */
+
+try {
+
+  if (!API_USERNAME || !API_PASSWORD) {
+
+    throw new Error(
+      "Credential API belum tersedia. Pastikan API_BERITA_USERNAME dan API_BERITA_PASSWORD ada di .env"
+    );
+
+  }
+
+
+  const formData =
+    new URLSearchParams();
+
+  formData.append(
+    "awal",
+    awal
+  );
+
+  formData.append(
+    "akhir",
+    akhir
+  );
+
+
+  const response =
+    await fetch(
+      API_URL,
+      {
+        method: "POST",
+
+        headers: {
+          username:
+            API_USERNAME,
+
+          password:
+            API_PASSWORD,
+
+          Accept:
+            "application/json",
+
+          "Content-Type":
+            "application/x-www-form-urlencoded"
+        },
+
+        body:
+          formData.toString()
+      }
+    );
+
+
+  const responseText =
+    await response.text();
+
+
+  if (!response.ok) {
+
+    throw new Error(
+      `HTTP ${response.status}: ${responseText}`
+    );
+
+  }
+
+
+  let payload;
+
+  try {
+
+    payload =
+      JSON.parse(
+        responseText
+      );
+
+  } catch {
+
+    throw new Error(
+      "Response API bukan JSON."
+    );
+
+  }
+
+
+  const apiData =
+    Array.isArray(payload)
+      ? payload
+      : Array.isArray(payload?.data)
+        ? payload.data
+        : Array.isArray(payload?.results)
+          ? payload.results
+          : [];
+
+
+  /* =======================================================
+     NORMALISASI
+  ======================================================= */
+
+  allArticles =
+    apiData.map(
+      (item) => ({
+
+        id_post:
+          Number(
+            item.id_post
+          ) || 0,
+
+        id_category:
+          Number(
+            item.id_category
+          ) || 0,
+
+        title:
+          item.title ??
+          item.judul ??
+          "",
+
+        content:
+          item.content ??
+          item.isi ??
+          "",
+
+        ref_content:
+          item.ref_content ??
+          "",
+
+        seotitle:
+          item.seotitle ??
+          "",
+
+        tag:
+          item.tag ??
+          "",
+
+        date:
+          item.date ??
+          item.tanggal ??
+          "",
+
+        time:
+          item.time ??
+          "",
+
+        editor:
+          item.editor ??
+          "",
+
+        active:
+          item.active ??
+          "Y",
+
+        headline:
+          item.headline ??
+          "N",
+
+        picture:
+          item.picture ??
+          item.foto ??
+          "",
+
+        hits:
+          Number(
+            item.hits
+          ) || 0,
+
+        title_en:
+          item.title_en ??
+          "",
+
+        content_en:
+          item.content_en ??
+          ""
+
+      })
+    );
+
+
+  /* =======================================================
+     HANYA ARTIKEL
+     
+     CATEGORY:
+     2 = Artikel Perizinan
+     3 = Penanaman Modal
+  ======================================================= */
+
+  allArticles =
+    allArticles.filter(
+      (item) =>
+        [2, 3].includes(
+          Number(
+            item.id_category
+          )
+        )
+    );
+
+
+  /* =======================================================
+     HANYA AKTIF
+  ======================================================= */
+
+  allArticles =
+    allArticles.filter(
+      (item) =>
+        String(
+          item.active
+        )
+          .toUpperCase() === "Y"
+    );
+
+
+  /* =======================================================
+     FILTER KATEGORI
+  ======================================================= */
+
+  if (
+    type === "perizinan"
+  ) {
+
+    allArticles =
+      allArticles.filter(
+        (item) =>
+          Number(
+            item.id_category
+          ) === 2
+      );
+
+  }
+
+
+  if (
+    type === "penanaman-modal"
+  ) {
+
+    allArticles =
+      allArticles.filter(
+        (item) =>
+          Number(
+            item.id_category
+          ) === 3
+      );
+
+  }
+
+
+  /* =======================================================
+     PENCARIAN
+  ======================================================= */
+
+  if (q) {
+
+    const keyword =
+      q
+        .toLowerCase()
+        .trim();
+
+
+    allArticles =
+      allArticles.filter(
+        (item) => {
+
+          const fields = [
+
+            item.title,
+
+            item.content,
+
+            item.ref_content,
+
+            item.tag,
+
+            item.title_en,
+
+            item.content_en
+
+          ];
+
+
+          return fields
+            .filter(Boolean)
+            .some(
+              (value) =>
+                String(value)
+                  .toLowerCase()
+                  .includes(keyword)
+            );
+
+        }
+      );
+
+  }
+
+
+  /* =======================================================
+     SORT TERBARU
+  ======================================================= */
+
+  allArticles.sort(
+    (a, b) => {
+
+      const dateA =
+        `${a.date || ""} ${a.time || ""}`;
+
+      const dateB =
+        `${b.date || ""} ${b.time || ""}`;
+
+      return dateB.localeCompare(
+        dateA
+      );
+
+    }
+  );
+
+
+} catch (error) {
+
+  console.error(
+    "API ARTIKEL ERROR:",
+    error
+  );
+
+  apiError =
+    error instanceof Error
+      ? error.message
+      : "Gagal mengambil data artikel.";
+
+  allArticles = [];
+
+}
+
+
+/* =========================================================
+   PAGINATION
+========================================================= */
+
+const totalItems =
+  allArticles.length;
+
+const totalPages =
+  Math.ceil(
+    totalItems / limit
+  ) || 1;
+
+
+if (page < 1) {
+
+  page = 1;
+
+}
+
+if (page > totalPages) {
+
+  page = totalPages;
+
+}
+
+
+const offset =
+  (page - 1) * limit;
+
+
+const rows =
+  allArticles.slice(
+    offset,
+    offset + limit
+  );
+
+
+/* =========================================================
+   NAMA KATEGORI
+========================================================= */
+
+const getCategoryName =
+  (categoryId) => {
+
+    if (
+      Number(categoryId) === 2
+    ) {
+
+      return "Artikel Perizinan";
+
+    }
+
+    if (
+      Number(categoryId) === 3
+    ) {
+
+      return "Penanaman Modal";
+
+    }
+
+    return "Artikel";
+
+  };
+
+
+/* =========================================================
+   ICON KATEGORI
+========================================================= */
+
+const getCategoryIcon =
+  (categoryId) => {
+
+    if (
+      Number(categoryId) === 2
+    ) {
+
+      return "fa-file-circle-check";
+
+    }
+
+    if (
+      Number(categoryId) === 3
+    ) {
+
+      return "fa-chart-line";
+
+    }
+
+    return "fa-newspaper";
+
+  };
+
+
+/* =========================================================
+   LINK
+========================================================= */
+
+const getLink =
+  (
+    p,
+    t = type
+  ) => {
+
+    const params =
+      new URLSearchParams();
+
+    params.set(
+      "page",
+      String(p)
+    );
+
+    params.set(
+      "type",
+      t
+    );
+
+    params.set(
+      "awal",
+      awal
+    );
+
+    params.set(
+      "akhir",
+      akhir
+    );
+
+
+    if (q) {
+
+      params.set(
+        "q",
+        q
+      );
+
+    }
+
+
+    if (lang) {
+
+      params.set(
+        "lang",
+        lang
+      );
+
+    }
+
+
+    return `?${params.toString()}`;
+
+  };
+
+
+/* =========================================================
+   EXCERPT
+========================================================= */
+
+const getExcerpt =
+  (content) => {
+
+    if (!content) {
+
+      return "Informasi artikel DPMPTSP Kota Surabaya.";
+
+    }
+
+
+    return String(content)
+      .replace(
+        /<[^>]*>/g,
+        " "
+      )
+      .replace(
+        /\s+/g,
+        " "
+      )
+      .trim()
+      .substring(
+        0,
+        150
+      );
+
+  };
+
+
+/* =========================================================
+   FORMAT TANGGAL
+========================================================= */
+
+const formatDate =
+  (date) => {
+
+    if (!date) {
+
+      return "";
+
+    }
+
+
+    const parsed =
+      new Date(date);
+
+
+    if (
+      Number.isNaN(
+        parsed.getTime()
+      )
+    ) {
+
+      return date;
+
+    }
+
+
+    return parsed.toLocaleDateString(
+      "id-ID",
+      {
+        day: "numeric",
+        month: "long",
+        year: "numeric"
+      }
+    );
+
+  };
+---
+
+<MainLayout
+  title="Artikel | DPMPTSP Kota Surabaya"
+  description="Artikel perizinan dan penanaman modal DPMPTSP Kota Surabaya."
+>
+
+  <!-- =====================================================
+       HERO
+  ====================================================== -->
+
+  <section class="article-hero">
+
+  <!-- WATERMARK -->
+  <div class="article-hero-watermark" aria-hidden="true">
+    IKHLAS, CERDAS
+    <br />
+    &amp; TERDEPAN
+  </div>
+
+  <div class="hero-orb orb-one"></div>
+  <div class="hero-orb orb-two"></div>
+
+  <div class="container">
+    <div class="hero-content">
+
+      <div class="hero-badge">
+        <span>
+          <i class="fa-solid fa-book-open"></i>
+        </span>
+        MEDIA INFORMASI
+      </div>
+
+      <h1>
+        Artikel
+        <strong>DPMPTSP Surabaya</strong>
+      </h1>
+
+      <p>
+        Informasi seputar perizinan, penanaman modal, dan kemudahan
+        berusaha di Kota Surabaya.
+      </p>
+
+    </div>
+  </div>
+
+</section>
+
+
+  <!-- =====================================================
+       FILTER
+  ====================================================== -->
+
+  <section class="filter-section">
+
+    <div class="container">
+
+      <div class="filter-box">
+
+        <div class="search-wrapper">
+
+          <i class="fa-solid fa-magnifying-glass"></i>
+
+          <input
+            id="searchBox"
+            type="text"
+            value={q}
+            placeholder="Cari artikel..."
+          />
+
+        </div>
+
+
+        <div class="category-tabs">
+
+          <a
+            href={getLink(1, "perizinan")}
+            class:list={[
+              "category-tab",
+              {
+                active:
+                  type === "perizinan"
+              }
+            ]}
+          >
+
+            <i
+              class="fa-solid fa-file-circle-check"
+            ></i>
+
+            <span>
+              Artikel Perizinan
+            </span>
+
+          </a>
+
+
+          <a
+            href={getLink(
+              1,
+              "penanaman-modal"
+            )}
+            class:list={[
+              "category-tab",
+              {
+                active:
+                  type ===
+                  "penanaman-modal"
+              }
+            ]}
+          >
+
+            <i
+              class="fa-solid fa-chart-line"
+            ></i>
+
+            <span>
+              Penanaman Modal
+            </span>
+
+          </a>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- =====================================================
+       CONTENT
+  ====================================================== -->
+
+  <main class="article-main">
+
+    <div class="container">
+
+
+      <!-- HEADER -->
+
+      <div class="content-header">
+
+        <div>
+
+          <span class="section-label">
+
+            {
+              type ===
+              "penanaman-modal"
+                ? "PENANAMAN MODAL"
+                : "ARTIKEL PERIZINAN"
+            }
+
+          </span>
+
+
+          <h2>
+
+            {
+              type ===
+              "penanaman-modal"
+                ? "Informasi Penanaman Modal"
+                : "Artikel Perizinan"
+            }
+
+          </h2>
+
+        </div>
+
+
+        <div class="total-data">
+
+          <strong>
+            {totalItems}
+          </strong>
+
+          <span>
+            Artikel
+          </span>
+
+        </div>
+
+      </div>
+
+
+      <!-- ERROR -->
+
+      {
+        apiError && (
+
+          <div class="error-box">
+
+            <i
+              class="fa-solid fa-circle-exclamation"
+            ></i>
+
+            <div>
+
+              <strong>
+                Data belum dapat dimuat
+              </strong>
+
+              <p>
+                {apiError}
+              </p>
+
+            </div>
+
+          </div>
+
+        )
+      }
+
+
+      <!-- EMPTY -->
+
+      {
+        !apiError &&
+        rows.length === 0 && (
+
+          <div class="empty-box">
+
+            <div class="empty-icon">
+
+              <i
+                class="fa-regular fa-folder-open"
+              ></i>
+
+            </div>
+
+
+            <h3>
+              Artikel tidak ditemukan
+            </h3>
+
+
+            <p>
+              Belum ada artikel pada kategori
+              ini atau kata kunci pencarian
+              tidak ditemukan.
+            </p>
+
+
+            <a
+              href="/artikel"
+              class="reset-button"
+            >
+
+              <i
+                class="fa-solid fa-rotate-left"
+              ></i>
+
+              Reset Pencarian
+
+            </a>
+
+          </div>
+
+        )
+      }
+
+
+      <!-- =================================================
+           ARTICLE GRID
+      ================================================== -->
+
+      {
+        rows.length > 0 && (
+
+          <div class="article-grid">
+
+            {
+              rows.map(
+                (item) => (
+
+                  <article
+                    class="article-card"
+                  >
+
+                    <!-- IMAGE -->
+
+                    <a
+                      href={`/media/${slugify(item.title)}`}
+                      class="article-image"
+                    >
+
+                      <img
+                        src={
+                          item.picture
+                            ? `https://dpm-ptsp.surabaya.go.id/fileberita/${item.picture}`
+                            : "/no-image.jpg"
+                        }
+                        alt={item.title}
+                        loading="lazy"
+                      />
+
+
+                      <div
+                        class="image-overlay"
+                      ></div>
+
+
+                      <span
+                        class="category-badge"
+                      >
+
+                        <i
+                          class={`fa-solid ${getCategoryIcon(item.id_category)}`}
+                        ></i>
+
+                        {
+                          getCategoryName(
+                            item.id_category
+                          )
+                        }
+
+                      </span>
+
+                    </a>
+
+
+                    <!-- CONTENT -->
+
+                    <div class="article-body">
+
+
+                      <div class="article-meta">
+
+                        <span>
+
+                          <i
+                            class="fa-regular fa-calendar"
+                          ></i>
+
+                          {
+                            formatDate(
+                              item.date
+                            )
+                          }
+
+                        </span>
+
+
+                        {
+                          item.hits > 0 && (
+
+                            <span>
+
+                              <i
+                                class="fa-regular fa-eye"
+                              ></i>
+
+                              {item.hits}
+
+                            </span>
+
+                          )
+                        }
+
+                      </div>
+
+
+                      <a
+                        href={`/media/${slugify(item.title)}`}
+                      >
+
+                        <h3>
+
+                          {
+                            lang === "en"
+                              ? (
+                                item.title_en ||
+                                item.title
+                              )
+                              : item.title
+                          }
+
+                        </h3>
+
+                      </a>
+
+
+                      <p>
+
+                        {
+                          getExcerpt(
+                            lang === "en"
+                              ? (
+                                item.content_en ||
+                                item.content
+                              )
+                              : item.content
+                          )
+                        }
+
+                        ...
+
+                      </p>
+
+
+                      <div
+                        class="article-footer"
+                      >
+
+                        <span>
+
+                          Baca Artikel
+
+                        </span>
+
+
+                        <a
+                          href={`/media/${slugify(item.title)}`}
+                          aria-label={`Baca ${item.title}`}
+                        >
+
+                          <i
+                            class="fa-solid fa-arrow-right"
+                          ></i>
+
+                        </a>
+
+                      </div>
+
+                    </div>
+
+                  </article>
+
+                )
+              )
+            }
+
+          </div>
+
+        )
+      }
+
+
+      <!-- =================================================
+           PAGINATION
+      ================================================== -->
+
+      {
+        totalPages > 1 && (
+
+          <nav
+            class="pagination"
+            aria-label="Pagination"
+          >
+
+            <a
+              href={
+                page > 1
+                  ? getLink(page - 1)
+                  : "#"
+              }
+              class:list={[
+                "page-button",
+                {
+                  disabled:
+                    page <= 1
+                }
+              ]}
+            >
+
+              <i
+                class="fa-solid fa-chevron-left"
+              ></i>
+
+            </a>
+
+
+            <div class="page-numbers">
+
+              {
+                Array.from(
+                  {
+                    length:
+                      totalPages
+                  },
+                  (_, i) =>
+                    i + 1
+                )
+                .filter(
+                  (p) =>
+                    p === 1 ||
+                    p === totalPages ||
+                    Math.abs(
+                      p - page
+                    ) <= 1
+                )
+                .map(
+                  (
+                    p,
+                    index,
+                    array
+                  ) => (
+
+                    <Fragment>
+
+                      {
+                        index > 0 &&
+                        array[
+                          index - 1
+                        ] !== p - 1 && (
+
+                          <span class="dots">
+                            ...
+                          </span>
+
+                        )
+                      }
+
+
+                      <a
+                        href={getLink(p)}
+                        class:list={[
+                          "page-number",
+                          {
+                            active:
+                              page === p
+                          }
+                        ]}
+                      >
+
+                        {p}
+
+                      </a>
+
+                    </Fragment>
+
+                  )
+                )
+              }
+
+            </div>
+
+
+            <a
+              href={
+                page <
+                totalPages
+                  ? getLink(
+                      page + 1
+                    )
+                  : "#"
+              }
+              class:list={[
+                "page-button",
+                {
+                  disabled:
+                    page >=
+                    totalPages
+                }
+              ]}
+            >
+
+              <i
+                class="fa-solid fa-chevron-right"
+              ></i>
+
+            </a>
+
+          </nav>
+
+        )
+      }
+
+    </div>
+
+  </main>
+
+</MainLayout>
+
+
+<!-- =======================================================
+     STYLE
+======================================================= -->
+
+<style>
+
+:global(*) {
+  box-sizing: border-box;
+}
+
+
+:global(html) {
+  scroll-behavior: smooth;
+}
+
+
+:global(body) {
+  margin: 0;
+  background: #f8fafc;
+  color: #334155;
+  font-family:
+    Inter,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+}
+
+
+:global(a) {
+  text-decoration: none;
+}
+
+
+.container {
+  width: min(
+    1180px,
+    calc(100% - 40px)
+  );
+
+  margin-inline: auto;
+}
+
+
+/* =====================================================
+   HERO
+===================================================== */
+
+.article-hero {
+  position: relative;
+
+  overflow: hidden;
+
+  padding:
+    78px 0 125px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #172554 0%,
+      #1e40af 55%,
+      #2563eb 100%
+    );
+}
+
+
+.hero-orb {
+  position: absolute;
+
+  border-radius: 50%;
+
+  pointer-events: none;
+}
+
+
+.orb-one {
+  width: 420px;
+  height: 420px;
+
+  top: -270px;
+  right: -80px;
+
+  background:
+    rgba(255,255,255,.09);
+}
+
+
+.orb-two {
+  width: 300px;
+  height: 300px;
+
+  bottom: -220px;
+  left: -100px;
+
+  background:
+    rgba(255,255,255,.06);
+}
+
+
+.hero-content {
+  position: relative;
+
+  z-index: 2;
+
+  max-width: 760px;
+}
+
+
+.hero-badge {
+  display: inline-flex;
+
+  align-items: center;
+
+  gap: 9px;
+
+  margin-bottom: 20px;
+
+  color: #bfdbfe;
+
+  font-size: 10px;
+
+  font-weight: 900;
+
+  letter-spacing: .15em;
+}
+
+
+.hero-badge span {
+  width: 30px;
+  height: 30px;
+
+  display: grid;
+
+  place-items: center;
+
+  border-radius: 9px;
+
+  background:
+    rgba(255,255,255,.12);
+
+  color: #fff;
+}
+
+
+.hero-content h1 {
+  margin: 0;
+
+  color: #fff;
+
+  font-size:
+    clamp(40px, 6vw, 68px);
+
+  line-height: 1;
+
+  letter-spacing: -.05em;
+
+  font-weight: 900;
+}
+
+
+.hero-content h1 strong {
+  display: block;
+
+  color: #fde047;
+
+  font-weight: 900;
+}
+
+
+.hero-content p {
+  max-width: 620px;
+
+  margin:
+    22px 0 0;
+
+  color:
+    rgba(255,255,255,.72);
+
+  font-size: 15px;
+
+  line-height: 1.8;
+}
+
+.article-hero {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+
+  min-height: 610px;
+
+  display: flex;
+  align-items: center;
+
+  background:
+    linear-gradient(
+      120deg,
+      #18265f 0%,
+      #243e9b 45%,
+      #2864e8 100%
+    );
+}
+
+/* =========================================================
+   WATERMARK
+========================================================= */
+
+.article-hero-watermark {
+  position: absolute !important;
+
+  z-index: 1;
+
+  top: 50% !important;
+  left: 56% !important;
+
+  transform: translate(-50%, -50%) rotate(-8deg) !important;
+
+  width: max-content;
+
+  font-family: inherit;
+
+  font-size: clamp(80px, 10vw, 180px) !important;
+  font-weight: 900;
+
+  line-height: 0.82;
+
+  letter-spacing: -0.055em;
+
+  text-align: center;
+
+  white-space: nowrap;
+
+  color: rgba(255, 255, 255, 0.075) !important;
+
+  pointer-events: none;
+  user-select: none;
+
+  text-transform: uppercase;
+}
+
+/* =========================================================
+   CONTENT HARUS DI DEPAN WATERMARK
+========================================================= */
+
+.article-hero .container {
+  position: relative;
+  z-index: 5;
+
+  width: 100%;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 5;
+
+  max-width: 850px;
+
+  padding: 90px 0 120px;
+}
+
+/* =========================================================
+   ORB
+========================================================= */
+
+.hero-orb {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.orb-one {
+  width: 430px;
+  height: 430px;
+
+  top: -220px;
+  right: -80px;
+
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.orb-two {
+  width: 300px;
+  height: 300px;
+
+  bottom: -210px;
+  left: -100px;
+
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* =========================================================
+   BADGE
+========================================================= */
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+
+  padding: 8px 16px 8px 8px;
+
+  border-radius: 999px;
+
+  background: rgba(255, 255, 255, 0.12);
+
+  color: #dbe7ff;
+
+  font-size: 13px;
+  font-weight: 800;
+
+  letter-spacing: 0.16em;
+}
+
+.hero-badge span {
+  width: 38px;
+  height: 38px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 12px;
+
+  background: rgba(255, 255, 255, 0.18);
+
+  color: #fff;
+}
+
+/* =========================================================
+   TITLE
+========================================================= */
+
+.article-hero h1 {
+  position: relative;
+  z-index: 6;
+
+  margin-top: 28px;
+
+  font-size: clamp(56px, 6.5vw, 92px);
+
+  line-height: 0.95;
+
+  font-weight: 900;
+
+  letter-spacing: -0.055em;
+
+  color: #fff;
+}
+
+.article-hero h1 strong {
+  display: block;
+
+  margin-top: 8px;
+
+  color: #ffd41d;
+
+  font-weight: 900;
+}
+
+/* =========================================================
+   DESCRIPTION
+========================================================= */
+
+.article-hero p {
+  position: relative;
+  z-index: 6;
+
+  max-width: 720px;
+
+  margin-top: 28px;
+
+  color: rgba(255, 255, 255, 0.78);
+
+  font-size: 18px;
+
+  line-height: 1.75;
+}
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 768px) {
+
+  .article-hero {
+    min-height: 520px;
+  }
+
+  .article-hero-watermark {
+    top: 58% !important;
+    left: 50% !important;
+
+    transform:
+      translate(-50%, -50%)
+      rotate(-8deg) !important;
+
+    font-size: 62px !important;
+
+    line-height: 0.85;
+
+    color: rgba(255, 255, 255, 0.07) !important;
+  }
+
+  .hero-content {
+    padding: 70px 20px 100px;
+  }
+
+  .article-hero h1 {
+    font-size: 52px;
+
+    line-height: 0.95;
+  }
+
+  .article-hero p {
+    max-width: 100%;
+
+    margin-top: 22px;
+
+    font-size: 15px;
+
+    line-height: 1.65;
+  }
+
+  .hero-badge {
+    font-size: 10px;
+
+    letter-spacing: 0.12em;
+  }
+
+  .hero-badge span {
+    width: 34px;
+    height: 34px;
+  }
+
+  .orb-one {
+    width: 280px;
+    height: 280px;
+
+    top: -160px;
+    right: -130px;
+  }
+
+  .orb-two {
+    width: 220px;
+    height: 220px;
+
+    bottom: -150px;
+    left: -100px;
+  }
+}
+/* =====================================================
+   FILTER
+===================================================== */
+
+.filter-section {
+  position: relative;
+
+  z-index: 10;
+
+  margin-top: -65px;
+}
+
+
+.filter-box {
+  display: flex;
+
+  align-items: center;
+
+  gap: 15px;
+
+  padding: 12px;
+
+  border:
+    1px solid #e2e8f0;
+
+  border-radius: 20px;
+
+  background:
+    rgba(255,255,255,.96);
+
+  box-shadow:
+    0 20px 50px
+    rgba(15,23,42,.10);
+
+  backdrop-filter:
+    blur(15px);
+}
+
+
+.search-wrapper {
+  position: relative;
+
+  flex: 1;
+
+  min-width: 200px;
+}
+
+
+.search-wrapper i {
+  position: absolute;
+
+  top: 50%;
+  left: 18px;
+
+  transform:
+    translateY(-50%);
+
+  color: #94a3b8;
+
+  font-size: 14px;
+}
+
+
+.search-wrapper input {
+  width: 100%;
+
+  height: 48px;
+
+  padding:
+    0 18px 0 46px;
+
+  border: 0;
+
+  outline: 0;
+
+  border-radius: 13px;
+
+  background: #f8fafc;
+
+  color: #334155;
+
+  font-family: inherit;
+
+  font-size: 12px;
+}
+
+
+.search-wrapper input:focus {
+  background: #eff6ff;
+
+  box-shadow:
+    inset 0 0 0 1px
+    #bfdbfe;
+}
+
+
+.category-tabs {
+  display: flex;
+
+  gap: 6px;
+
+  padding: 4px;
+
+  border-radius: 15px;
+
+  background: #f1f5f9;
+}
+
+
+.category-tab {
+  min-height: 42px;
+
+  display: inline-flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 8px;
+
+  padding:
+    0 17px;
+
+  border-radius: 11px;
+
+  color: #64748b;
+
+  font-size: 10px;
+
+  font-weight: 900;
+
+  white-space: nowrap;
+
+  transition:
+    .2s ease;
+}
+
+
+.category-tab:hover {
+  color: #2563eb;
+}
+
+
+.category-tab.active {
+  background: #fff;
+
+  color: #2563eb;
+
+  box-shadow:
+    0 4px 12px
+    rgba(15,23,42,.08);
+}
+
+
+.category-tab i {
+  font-size: 12px;
+}
+
+
+/* =====================================================
+   MAIN
+===================================================== */
+
+.article-main {
+  padding:
+    75px 0 100px;
+}
+
+
+.content-header {
+  display: flex;
+
+  align-items: flex-end;
+
+  justify-content: space-between;
+
+  gap: 30px;
+
+  margin-bottom: 30px;
+}
+
+
+.section-label {
+  display: block;
+
+  margin-bottom: 7px;
+
+  color: #2563eb;
+
+  font-size: 9px;
+
+  font-weight: 900;
+
+  letter-spacing: .15em;
+}
+
+
+.content-header h2 {
+  margin: 0;
+
+  color: #172554;
+
+  font-size:
+    clamp(27px, 4vw, 38px);
+
+  line-height: 1.15;
+
+  letter-spacing: -.04em;
+
+  font-weight: 900;
+}
+
+
+.total-data {
+  display: flex;
+
+  align-items: baseline;
+
+  gap: 7px;
+
+  color: #94a3b8;
+
+  font-size: 11px;
+
+  font-weight: 700;
+}
+
+
+.total-data strong {
+  color: #2563eb;
+
+  font-size: 22px;
+
+  font-weight: 900;
+}
+
+
+/* =====================================================
+   ERROR
+===================================================== */
+
+.error-box {
+  display: flex;
+
+  align-items: center;
+
+  gap: 15px;
+
+  margin-bottom: 30px;
+
+  padding: 18px;
+
+  border:
+    1px solid #fecaca;
+
+  border-radius: 14px;
+
+  background: #fff1f2;
+
+  color: #b91c1c;
+}
+
+
+.error-box > i {
+  font-size: 22px;
+}
+
+
+.error-box strong {
+  font-size: 12px;
+}
+
+
+.error-box p {
+  margin: 4px 0 0;
+
+  font-size: 10px;
+}
+
+
+/* =====================================================
+   GRID
+===================================================== */
+
+.article-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr));
+
+  gap: 24px;
+}
+
+
+.article-card {
+  display: flex;
+
+  flex-direction: column;
+
+  overflow: hidden;
+
+  border:
+    1px solid #e2e8f0;
+
+  border-radius: 18px;
+
+  background: #fff;
+
+  box-shadow:
+    0 5px 18px
+    rgba(15,23,42,.035);
+
+  transition:
+    transform .25s ease,
+    box-shadow .25s ease,
+    border-color .25s ease;
+}
+
+
+.article-card:hover {
+  transform:
+    translateY(-6px);
+
+  border-color:
+    #bfdbfe;
+
+  box-shadow:
+    0 20px 45px
+    rgba(15,23,42,.10);
+}
+
+
+/* =====================================================
+   IMAGE
+===================================================== */
+
+.article-image {
+  position: relative;
+
+  display: block;
+
+  height: 220px;
+
+  overflow: hidden;
+
+  background: #e2e8f0;
+}
+
+
+.article-image img {
+  width: 100%;
+  height: 100%;
+
+  display: block;
+
+  object-fit: cover;
+
+  transition:
+    transform .6s ease;
+}
+
+
+.article-card:hover
+.article-image img {
+  transform:
+    scale(1.08);
+}
+
+
+.image-overlay {
+  position: absolute;
+
+  inset: 0;
+
+  background:
+    linear-gradient(
+      to bottom,
+      transparent 45%,
+      rgba(15,23,42,.45)
+    );
+}
+
+
+.category-badge {
+  position: absolute;
+
+  left: 14px;
+  bottom: 14px;
+
+  display: inline-flex;
+
+  align-items: center;
+
+  gap: 6px;
+
+  padding:
+    7px 10px;
+
+  border-radius: 8px;
+
+  background:
+    rgba(255,255,255,.94);
+
+  color: #1e40af;
+
+  font-size: 8px;
+
+  font-weight: 900;
+
+  box-shadow:
+    0 5px 15px
+    rgba(15,23,42,.12);
+}
+
+
+.category-badge i {
+  font-size: 9px;
+}
+
+
+/* =====================================================
+   BODY
+===================================================== */
+
+.article-body {
+  display: flex;
+
+  flex-direction: column;
+
+  flex: 1;
+
+  padding: 20px;
+}
+
+
+.article-meta {
+  display: flex;
+
+  align-items: center;
+
+  gap: 14px;
+
+  margin-bottom: 11px;
+
+  color: #94a3b8;
+
+  font-size: 9px;
+
+  font-weight: 700;
+}
+
+
+.article-meta span {
+  display: inline-flex;
+
+  align-items: center;
+
+  gap: 5px;
+}
+
+
+.article-meta i {
+  color: #2563eb;
+}
+
+
+.article-body h3 {
+  margin: 0;
+
+  color: #172554;
+
+  font-size: 16px;
+
+  line-height: 1.35;
+
+  font-weight: 900;
+
+  display: -webkit-box;
+
+  -webkit-line-clamp: 2;
+
+  -webkit-box-orient: vertical;
+
+  overflow: hidden;
+
+  transition:
+    color .2s ease;
+}
+
+
+.article-body h3:hover {
+  color: #2563eb;
+}
+
+
+.article-body > p {
+  margin:
+    10px 0 18px;
+
+  color: #64748b;
+
+  font-size: 10px;
+
+  line-height: 1.7;
+
+  display: -webkit-box;
+
+  -webkit-line-clamp: 3;
+
+  -webkit-box-orient: vertical;
+
+  overflow: hidden;
+}
+
+
+.article-footer {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  margin-top: auto;
+
+  padding-top: 14px;
+
+  border-top:
+    1px solid #f1f5f9;
+
+  color: #2563eb;
+
+  font-size: 9px;
+
+  font-weight: 900;
+
+  text-transform: uppercase;
+
+  letter-spacing: .08em;
+}
+
+
+.article-footer a {
+  width: 31px;
+  height: 31px;
+
+  display: grid;
+
+  place-items: center;
+
+  border-radius: 8px;
+
+  background: #eff6ff;
+
+  color: #2563eb;
+
+  transition:
+    .2s ease;
+}
+
+
+.article-card:hover
+.article-footer a {
+  background: #2563eb;
+
+  color: #fff;
+
+  transform:
+    translateX(3px);
+}
+
+
+/* =====================================================
+   EMPTY
+===================================================== */
+
+.empty-box {
+  padding:
+    80px 20px;
+
+  text-align: center;
+
+  border:
+    1px dashed #cbd5e1;
+
+  border-radius: 18px;
+
+  background: #fff;
+}
+
+
+.empty-icon {
+  width: 65px;
+  height: 65px;
+
+  display: grid;
+
+  place-items: center;
+
+  margin:
+    0 auto 17px;
+
+  border-radius: 18px;
+
+  background: #eff6ff;
+
+  color: #93c5fd;
+
+  font-size: 25px;
+}
+
+
+.empty-box h3 {
+  margin: 0;
+
+  color: #172554;
+
+  font-size: 19px;
+
+  font-weight: 900;
+}
+
+
+.empty-box p {
+  max-width: 420px;
+
+  margin:
+    8px auto 20px;
+
+  color: #64748b;
+
+  font-size: 11px;
+
+  line-height: 1.7;
+}
+
+
+.reset-button {
+  display: inline-flex;
+
+  align-items: center;
+
+  gap: 7px;
+
+  min-height: 38px;
+
+  padding:
+    0 15px;
+
+  border-radius: 9px;
+
+  background: #2563eb;
+
+  color: #fff;
+
+  font-size: 10px;
+
+  font-weight: 900;
+}
+
+
+/* =====================================================
+   PAGINATION
+===================================================== */
+
+.pagination {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 8px;
+
+  margin-top: 50px;
+}
+
+
+.page-button {
+  width: 40px;
+  height: 40px;
+
+  display: grid;
+
+  place-items: center;
+
+  border:
+    1px solid #e2e8f0;
+
+  border-radius: 10px;
+
+  background: #fff;
+
+  color: #475569;
+
+  font-size: 10px;
+
+  transition:
+    .2s ease;
+}
+
+
+.page-button:hover {
+  background: #172554;
+
+  color: #fff;
+
+  border-color:
+    #172554;
+}
+
+
+.page-button.disabled {
+  opacity: .3;
+
+  pointer-events: none;
+}
+
+
+.page-numbers {
+  display: flex;
+
+  align-items: center;
+
+  gap: 5px;
+
+  padding: 4px;
+
+  border-radius: 13px;
+
+  background: #f1f5f9;
+}
+
+
+.page-number {
+  width: 34px;
+  height: 34px;
+
+  display: grid;
+
+  place-items: center;
+
+  border-radius: 9px;
+
+  color: #64748b;
+
+  font-size: 10px;
+
+  font-weight: 900;
+}
+
+
+.page-number:hover {
+  color: #2563eb;
+}
+
+
+.page-number.active {
+  background: #fff;
+
+  color: #2563eb;
+
+  box-shadow:
+    0 3px 10px
+    rgba(15,23,42,.08);
+}
+
+
+.dots {
+  padding:
+    0 3px;
+
+  color: #94a3b8;
+
+  font-size: 10px;
+}
+
+
+/* =====================================================
+   RESPONSIVE
+===================================================== */
+
+@media (max-width: 1000px) {
+
+  .filter-box {
+    flex-direction: column;
+
+    align-items: stretch;
+  }
+
+
+  .category-tabs {
+    overflow-x: auto;
+  }
+
+
+  .category-tab {
+    flex: 1;
+  }
+
+
+  .article-grid {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+}
+
+
+@media (max-width: 650px) {
+
+  .container {
+    width:
+      calc(100% - 30px);
+  }
+
+
+  .article-hero {
+    padding:
+      55px 0 105px;
+  }
+
+
+  .hero-content h1 {
+    font-size: 42px;
+  }
+
+
+  .hero-content p {
+    font-size: 12px;
+  }
+
+
+  .filter-section {
+    margin-top: -50px;
+  }
+
+
+  .filter-box {
+    padding: 9px;
+
+    border-radius: 15px;
+  }
+
+
+  .category-tabs {
+    width: 100%;
+  }
+
+
+  .category-tab {
+    padding:
+      0 13px;
+
+    font-size: 8px;
+  }
+
+
+  .category-tab i {
+    display: none;
+  }
+
+
+  .article-main {
+    padding:
+      55px 0 70px;
+  }
+
+
+  .content-header {
+    align-items: flex-start;
+
+    flex-direction: column;
+
+    gap: 10px;
+  }
+
+
+  .content-header h2 {
+    font-size: 28px;
+  }
+
+
+  .article-grid {
+    grid-template-columns: 1fr;
+
+    gap: 17px;
+  }
+
+
+  .article-image {
+    height: 215px;
+  }
+
+
+  .article-body {
+    padding: 17px;
+  }
+
+
+  .pagination {
+    margin-top: 35px;
+  }
+
+}
+
+</style>
+
+
+<!-- =======================================================
+     SEARCH SCRIPT
+======================================================= -->
+
+<script is:inline>
+
+  const searchBox =
+    document.getElementById(
+      "searchBox"
+    );
+
+
+  searchBox?.addEventListener(
+    "keypress",
+    (event) => {
+
+      if (
+        event.key !==
+        "Enter"
+      ) {
+
+        return;
+
+      }
+
+
+      const value =
+        searchBox.value.trim();
+
+
+      const params =
+        new URLSearchParams(
+          window.location.search
+        );
+
+
+      if (value) {
+
+        params.set(
+          "q",
+          value
+        );
+
+      } else {
+
+        params.delete(
+          "q"
+        );
+
+      }
+
+
+      params.set(
+        "page",
+        "1"
+      );
+
+
+      window.location.href =
+        `/artikel?${params.toString()}`;
+
+    }
+  );
+
+</script>

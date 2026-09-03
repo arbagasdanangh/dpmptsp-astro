@@ -1,0 +1,1043 @@
+---
+import MainLayout from "../../layouts/MainLayout.astro";
+
+export const prerender = false;
+
+/* =========================================================
+   SLUGIFY
+========================================================= */
+
+function slugify(text = "") {
+  return String(text)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-");
+}
+
+/* =========================================================
+   URL SLUG
+========================================================= */
+
+const { id: slug } = Astro.params;
+
+let berita = [];
+let post = null;
+
+/* =========================================================
+   API BERITA
+========================================================= */
+
+try {
+  const response = await fetch(
+    "https://dpm-ptsp.surabaya.go.id/sso/apiberita.php",
+    {
+      method: "POST",
+
+      headers: {
+        username: import.meta.env.API_BERITA_USERNAME,
+        password: import.meta.env.API_BERITA_PASSWORD,
+        Accept: "application/json",
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+
+      body: new URLSearchParams({
+        awal: "2024-01-01",
+        akhir: new Date().toISOString().split("T")[0],
+        id_category: "",
+        active: "",
+        headline: "",
+      }).toString(),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`API Error ${response.status}`);
+  }
+
+  const text = await response.text();
+
+  console.log("API RESPONSE:", text.substring(0, 500));
+
+  const json = JSON.parse(text);
+
+  /* =======================================================
+     AMBIL DATA
+  ======================================================= */
+
+  const data = Array.isArray(json)
+    ? json
+    : Array.isArray(json?.data)
+      ? json.data
+      : Array.isArray(json?.results)
+        ? json.results
+        : [];
+
+  /* =======================================================
+     NORMALISASI
+  ======================================================= */
+
+  berita = data
+    .map((item) => ({
+      id_post: item.id_post ?? item.id ?? null,
+
+      title:
+        item.title ??
+        item.judul ??
+        "",
+
+      content:
+        item.content ??
+        item.isi ??
+        item.konten ??
+        "",
+
+      picture:
+        item.picture ??
+        item.gambar ??
+        item.image ??
+        "",
+
+      date:
+        item.date ??
+        item.tanggal ??
+        item.created_at ??
+        null,
+
+      time:
+        item.time ??
+        item.jam ??
+        "",
+
+      hits:
+        item.hits ??
+        item.view ??
+        item.views ??
+        0,
+
+      category:
+        item.category_title ??
+        item.category ??
+        item.nama_category ??
+        "BERITA",
+
+      seotitle:
+        item.seotitle ??
+        item.slug ??
+        "",
+    }))
+    .filter((item) => item.title);
+
+  /* =======================================================
+     CARI BERDASARKAN SLUG
+     
+     contoh:
+     /media/pelayanan-perizinan-berusaha
+  ======================================================= */
+
+  post = berita.find((item) => {
+    const titleSlug = slugify(item.title);
+
+    const seoSlug = item.seotitle
+      ? slugify(item.seotitle)
+      : "";
+
+    return (
+      titleSlug === slug ||
+      seoSlug === slug
+    );
+  });
+
+  console.log("================================");
+  console.log("SLUG URL     :", slug);
+  console.log("TOTAL BERITA :", berita.length);
+  console.log("POST         :", post);
+  console.log("================================");
+
+} catch (error) {
+  console.error("ERROR API BERITA:", error);
+}
+
+
+/* =========================================================
+   404
+========================================================= */
+
+if (!post) {
+  return new Response(
+    `
+      <!DOCTYPE html>
+      <html lang="id">
+      <head>
+        <meta charset="UTF-8">
+        <title>Berita Tidak Ditemukan</title>
+      </head>
+      <body style="
+        font-family: Arial, sans-serif;
+        text-align: center;
+        padding: 80px 20px;
+      ">
+        <h1>Berita Tidak Ditemukan</h1>
+        <p>Berita yang kamu cari tidak tersedia.</p>
+        <a href="/berita">← Kembali ke Berita</a>
+      </body>
+      </html>
+    `,
+    {
+      status: 404,
+      headers: {
+        "Content-Type": "text/html; charset=utf-8",
+      },
+    }
+  );
+}
+
+
+/* =========================================================
+   HELPER
+========================================================= */
+
+function formatDate(value) {
+  if (!value) return "";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return date.toLocaleDateString("id-ID", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+
+function getImageUrl(value) {
+  if (!value) return "";
+
+  const image = String(value).trim();
+
+  if (
+    image.startsWith("http://") ||
+    image.startsWith("https://")
+  ) {
+    return image;
+  }
+
+  if (image.startsWith("//")) {
+    return `https:${image}`;
+  }
+
+  return image;
+}
+
+
+/* =========================================================
+   DATA
+========================================================= */
+
+const tanggal = formatDate(post.date);
+
+const gambar = getImageUrl(post.picture);
+
+const isi =
+  post.content ||
+  "<p>Isi berita belum tersedia.</p>";
+
+const beritaTerkait = berita
+  .filter(
+    (item) =>
+      String(item.id_post) !==
+      String(post.id_post)
+  )
+  .slice(0, 6);
+
+
+/* =========================================================
+   SHARE URL
+========================================================= */
+
+const currentUrl =
+  new URL(Astro.request.url).href;
+
+const encodedUrl =
+  encodeURIComponent(currentUrl);
+
+const encodedTitle =
+  encodeURIComponent(post.title);
+
+---
+
+<MainLayout title={post.title}>
+
+  <!-- =====================================================
+       HERO
+  ====================================================== -->
+
+  <section class="relative overflow-hidden bg-gradient-to-r from-blue-800 to-blue-900 py-14">
+
+    <div class="container mx-auto px-4 text-center text-white">
+
+      <h1 class="text-3xl md:text-4xl font-bold mb-4">
+        Detail Berita
+      </h1>
+
+      <p class="text-lg opacity-90 max-w-3xl mx-auto">
+        Informasi lengkap seputar kegiatan dan perkembangan
+        terbaru DPMPTSP Surabaya
+      </p>
+
+      <div class="mt-6">
+
+        <a
+          href="/berita"
+          class="inline-flex items-center bg-yellow-400 text-blue-800 font-bold px-6 py-3 rounded-lg hover:bg-yellow-300 transition"
+        >
+          <i class="fas fa-arrow-left mr-2"></i>
+          Kembali ke Berita
+        </a>
+
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- =====================================================
+       CONTENT
+  ====================================================== -->
+
+  <section class="container mx-auto px-4 py-10">
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+
+      <!-- =================================================
+           ARTIKEL
+      ================================================== -->
+
+      <article class="lg:col-span-2 bg-white rounded-2xl shadow-custom overflow-hidden">
+
+
+        <!-- HEADER -->
+
+        <div class="p-6 md:p-8 border-b">
+
+          <div class="flex flex-wrap justify-between items-center gap-3 mb-4">
+
+            <span class="bg-blue-700 text-white px-4 py-2 rounded-full text-sm font-semibold">
+
+              <i class="fas fa-newspaper mr-1"></i>
+
+              {post.category}
+
+            </span>
+
+
+            <span class="text-sm text-gray-500">
+
+              <i class="far fa-calendar-alt mr-1"></i>
+
+              {tanggal}
+
+            </span>
+
+          </div>
+
+
+          <h1 class="text-2xl md:text-3xl font-bold text-gray-900 leading-tight mb-5">
+
+            {post.title}
+
+          </h1>
+
+
+          <div class="flex flex-wrap items-center gap-5 text-gray-600 text-sm">
+
+            <div class="flex items-center gap-2">
+
+              <i class="fas fa-user text-blue-700"></i>
+
+              <span>Admin DPMPTSP</span>
+
+            </div>
+
+
+            <div class="flex items-center gap-2">
+
+              <i class="fas fa-eye text-blue-700"></i>
+
+              <span>{post.hits} views</span>
+
+            </div>
+
+
+            <div class="flex items-center gap-2">
+
+              <i class="fas fa-clock text-blue-700"></i>
+
+              <span>1 min read</span>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <!-- GAMBAR -->
+
+        {gambar && (
+
+          <div class="px-6 md:px-8 mt-6">
+
+            <img
+              src={gambar}
+              alt={post.title}
+              class="w-full max-h-[550px] object-cover rounded-xl"
+            />
+
+          </div>
+
+        )}
+
+
+        <!-- ISI BERITA -->
+
+        <div
+          class="p-6 md:p-8 prose prose-lg max-w-none text-justify text-gray-700"
+          set:html={isi}
+        />
+
+
+        <!-- TAG -->
+
+        <div class="px-6 md:px-8 pb-8">
+
+          <div class="pt-6 border-t border-gray-100">
+
+            <div class="flex items-center gap-2">
+
+              <span class="font-semibold text-gray-700">
+                Tags:
+              </span>
+
+              <span class="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm">
+
+                #{post.category}
+
+              </span>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </article>
+
+
+
+      <!-- =================================================
+           SIDEBAR
+      ================================================== -->
+
+      <aside class="space-y-6">
+
+
+        <!-- BERITA TERKAIT -->
+
+        <div class="bg-white rounded-2xl shadow-custom p-6">
+
+          <h2 class="text-xl font-bold mb-5 border-b pb-3">
+            Berita Terkait
+          </h2>
+
+
+          <div class="space-y-5">
+
+            {beritaTerkait.map((item) => (
+
+              <a
+                href={`/media/${slugify(item.title)}`}
+                class="flex gap-4 group"
+              >
+
+                {item.picture && (
+
+                  <img
+                    src={getImageUrl(item.picture)}
+                    alt={item.title}
+                    class="w-20 h-20 rounded-lg object-cover shrink-0"
+                  />
+
+                )}
+
+
+                <div class="min-w-0">
+
+                  <span class="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded">
+
+                    {item.category}
+
+                  </span>
+
+
+                  <h3 class="font-semibold text-sm line-clamp-2 mt-1 group-hover:text-blue-700">
+
+                    {item.title}
+
+                  </h3>
+
+
+                  <p class="text-xs text-gray-500 mt-1">
+
+                    <i class="far fa-calendar-alt mr-1"></i>
+
+                    {formatDate(item.date)}
+
+                  </p>
+
+                </div>
+
+              </a>
+
+            ))}
+
+          </div>
+
+
+          <a
+            href="/berita"
+            class="block text-center bg-blue-700 text-white py-3 rounded-lg hover:bg-blue-800 transition mt-6"
+          >
+            Lihat Semua Berita
+          </a>
+
+        </div>
+
+
+
+        <!-- QUICK LINKS -->
+
+        <div class="bg-gradient-to-r from-blue-700 to-blue-900 rounded-2xl shadow-custom p-6 text-white">
+
+          <h2 class="text-xl font-bold mb-6">
+            Layanan Cepat
+          </h2>
+
+
+          <div class="space-y-3">
+
+            <a
+              href="/Aplikasi#ijinusaha-sec"
+              class="flex items-center justify-between p-3 bg-white/10 rounded-lg hover:bg-white/20"
+            >
+              <span>Perizinan Online</span>
+              <i class="fas fa-arrow-right text-yellow-300"></i>
+            </a>
+
+
+            <a
+              href="/Aplikasi#pengaduan-sec"
+              class="flex items-center justify-between p-3 bg-white/10 rounded-lg hover:bg-white/20"
+            >
+              <span>Pengaduan Layanan</span>
+              <i class="fas fa-arrow-right text-yellow-300"></i>
+            </a>
+
+
+            <a
+              href="/kontak"
+              class="flex items-center justify-between p-3 bg-white/10 rounded-lg hover:bg-white/20"
+            >
+              <span>Konsultasi Investasi</span>
+              <i class="fas fa-arrow-right text-yellow-300"></i>
+            </a>
+
+
+            <a
+              href="/tentang-kami#faq-sec"
+              class="flex items-center justify-between p-3 bg-white/10 rounded-lg hover:bg-white/20"
+            >
+              <span>FAQ & Bantuan</span>
+              <i class="fas fa-arrow-right text-yellow-300"></i>
+            </a>
+
+          </div>
+
+        </div>
+
+
+
+        <!-- SHARE -->
+
+        <div class="bg-white rounded-2xl shadow-custom p-6">
+
+          <h2 class="text-xl font-bold mb-5 border-b pb-3">
+            Bagikan Artikel
+          </h2>
+
+
+          <div class="grid grid-cols-2 gap-3">
+
+
+            <a
+              href={`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-lg flex flex-col items-center"
+            >
+              <i class="fab fa-facebook-f text-lg mb-2"></i>
+              <span class="text-xs">Facebook</span>
+            </a>
+
+
+            <a
+              href={`https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="bg-blue-400 hover:bg-blue-500 text-white p-3 rounded-lg flex flex-col items-center"
+            >
+              <i class="fab fa-twitter text-lg mb-2"></i>
+              <span class="text-xs">Twitter</span>
+            </a>
+
+
+            <a
+              href={`https://wa.me/?text=${encodedTitle}%20${encodedUrl}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="bg-green-500 hover:bg-green-600 text-white p-3 rounded-lg flex flex-col items-center"
+            >
+              <i class="fab fa-whatsapp text-lg mb-2"></i>
+              <span class="text-xs">WhatsApp</span>
+            </a>
+
+
+            <a
+              href={`mailto:?subject=${encodedTitle}&body=${encodedUrl}`}
+              class="bg-red-500 hover:bg-red-600 text-white p-3 rounded-lg flex flex-col items-center"
+            >
+              <i class="fas fa-envelope text-lg mb-2"></i>
+              <span class="text-xs">Email</span>
+            </a>
+
+          </div>
+
+
+          <!-- COPY LINK -->
+
+          <div class="mt-6 pt-4 border-t">
+
+            <div class="flex">
+
+              <input
+                type="text"
+                id="article-link"
+                value={currentUrl}
+                readonly
+                class="flex-grow px-3 py-2 text-sm border border-gray-300 rounded-l-lg focus:outline-none"
+              />
+
+
+              <button
+                id="copy-link"
+                class="bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded-r-lg"
+              >
+                <i class="fas fa-copy"></i>
+              </button>
+
+            </div>
+
+
+            <p
+              id="copy-message"
+              class="text-xs text-green-600 mt-2 hidden"
+            >
+              Link berhasil disalin!
+            </p>
+
+          </div>
+
+        </div>
+
+      </aside>
+
+    </div>
+
+  </section>
+
+</MainLayout>
+
+
+<!-- =======================================================
+     JAVASCRIPT
+======================================================= -->
+
+<script>
+
+  const button =
+    document.getElementById("copy-link");
+
+  const input =
+    document.getElementById("article-link");
+
+  const message =
+    document.getElementById("copy-message");
+
+
+  button?.addEventListener("click", async () => {
+
+    try {
+
+      await navigator.clipboard.writeText(
+        input.value
+      );
+
+      message.classList.remove("hidden");
+
+      setTimeout(() => {
+        message.classList.add("hidden");
+      }, 2000);
+
+    } catch (error) {
+
+      input.select();
+
+      document.execCommand("copy");
+
+      message.classList.remove("hidden");
+
+    }
+
+  });
+
+</script>
+
+
+<style>
+
+  @import url(
+    'https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap'
+  );
+
+  body {
+    font-family: 'Poppins', sans-serif;
+  }
+
+  .shadow-custom {
+    box-shadow:
+      0 10px 30px rgba(0, 0, 0, 0.08);
+  }
+
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .prose img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  .prose iframe {
+    max-width: 100%;
+  }
+
+  .prose table {
+    width: 100%;
+    overflow-x: auto;
+    display: block;
+  }
+
+</style>
+
+ <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        /* Animasi custom */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .animate-fadeInUp {
+            animation: fadeInUp 0.5s ease-out;
+        }
+        
+        /* Hover effect untuk kartu */
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        /* Custom shadow untuk elemen */
+        .shadow-custom {
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        }
+        
+        /* Glow effect untuk ikon */
+        .icon-glow {
+            filter: drop-shadow(0 4px 6px rgba(37, 99, 235, 0.3));
+        }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #1d4ed8;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #1e40af;
+        }
+        
+        /* First letter styling for article */
+        .first-letter::first-letter {
+            font-size: 3.5rem;
+            font-weight: 800;
+            float: left;
+            line-height: 1;
+            margin-right: 0.5rem;
+            color: #1d4ed8;
+            padding-top: 0.5rem;
+        }
+        
+        /* Gradient backgrounds */
+        .gradient-blue {
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+        }
+        
+        .gradient-yellow {
+            background: linear-gradient(135deg, #fbbf24 0%, #fcd34d 100%);
+        }
+        
+        /* Line clamp for text */
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .line-clamp-3 {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+    </style>
+<MainLayout title={post.judul}>
+
+  <!-- HERO -->
+  <section class="relative overflow-hidden bg-gradient-to-r from-blue-800 to-blue-900 py-14">
+    <div class="container mx-auto px-4 text-center text-white">
+      <h1 class="text-3xl md:text-4xl font-bold mb-4 animate-fadeInUp">
+        Detail Berita
+      </h1>
+      <p class="text-lg opacity-90 max-w-3xl mx-auto">
+        Informasi lengkap seputar kegiatan dan perkembangan terbaru DPMPTSP Surabaya
+      </p>
+      <div class="mt-6">
+        <a href="/berita"
+          class="inline-flex items-center bg-yellow-400 text-blue-800 font-bold px-6 py-3 rounded-lg hover:bg-yellow-300 transition">
+          <i class="fas fa-arrow-left mr-2"></i> Kembali ke Berita
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTENT -->
+  <section class="container mx-auto px-4 py-10">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+      <!-- ARTIKEL -->
+      <article class="lg:col-span-2 bg-white rounded-2xl shadow-custom overflow-hidden animate-fadeInUp">
+
+        <!-- Header -->
+        <div class="p-6 md:p-8 border-b">
+          <div class="flex justify-between items-center mb-4">
+            <span class="bg-blue-700 text-white px-4 py-2 rounded-full text-sm font-semibold">
+              <i class="fas fa-newspaper mr-1"></i> Berita
+            </span>
+            <span class="text-sm text-gray-500"><i class="far fa-calendar-alt mr-1"></i> {new Date(post.tanggal).toLocaleDateString("id-ID")}</span>
+          </div>
+
+          <h1 class="text-2xl md:text-3xl font-bold text-gray-900 leading-tight">
+            {post.judul}
+          </h1>
+                            
+          <div class="flex flex-wrap items-center gap-4 text-gray-600">
+              <div class="flex items-center space-x-2">
+                  <i class="fas fa-user text-blue-700"></i>
+                  <span>Admin DPMPTSP</span>
+              </div>
+              <div class="flex items-center space-x-2">
+                  <i class="fas fa-eye text-blue-700"></i>
+                  <span>20 views</span>
+              </div>
+              <div class="flex items-center space-x-2">
+                  <i class="fas fa-clock text-blue-700"></i>
+                  <span> 1 min read </span>
+              </div>
+          </div>
+        </div>
+
+        <!-- Gambar -->
+        {post.gambar && (
+          <div class="px-6 mt-6">
+            <img
+              src={post.gambar}
+              alt={post.judul}
+              class="w-full h-64 md:h-96 object-cover rounded-xl hover:scale-105 transition"
+            />
+          </div>
+        )}
+
+        <!-- Isi -->
+        <div
+          class="p-6 md:p-8 prose prose-lg max-w-none first-letter text-justify text-gray-700"
+          set:html={post.konten}
+        />
+        
+        <!-- Tags -->
+        <div class="mt-8 pt-6 border-t border-gray-100">
+            <div class="flex items-center space-x-2">
+                <span class="font-semibold text-gray-700">Tags:</span>
+                <div class="flex flex-wrap gap-2">
+                    <span class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm cursor-pointer transition-colors">
+                      #{post.kategori}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+      </article>
+
+      <!-- SIDEBAR -->
+      <aside class="space-y-6">
+
+        <!-- Berita Terkait (Dummy dulu) -->
+        <div class="bg-white rounded-2xl shadow-custom p-6">
+          <h2 class="text-xl font-bold mb-4 border-b pb-2">
+            Berita Terkait
+          </h2>
+
+          <a href={`/media/${post.id}`} class="flex gap-4 mb-4 group">
+            <img src={post.gambar} class="w-20 h-20 rounded-lg object-cover">
+            <div>
+              <span class="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded">
+                {post.kategori}
+              </span>
+              <h3 class="font-semibold text-sm line-clamp-2 group-hover:text-blue-700">
+                {post.judul}
+              </h3>
+              <p class="text-xs text-gray-500 mt-1">
+                <i class="far fa-calendar-alt mr-1"></i> {new Date(post.tanggal).toLocaleDateString("id-ID")}
+              </p>
+            </div>
+          </a>
+
+          <a href="/berita"
+            class="block text-center bg-blue-700 text-white py-3 rounded-lg hover:bg-blue-800 transition">
+            Lihat Semua Berita
+          </a>
+        </div>
+
+        <!-- Quick Links -->
+        <div class="bg-gradient-to-r from-blue-700 to-blue-900 rounded-2xl shadow-custom p-6 text-white card-hover">
+            <h2 class="text-xl font-bold mb-6">Layanan Cepat</h2>
+            <div class="space-y-4">
+                <a href="/Aplikasi#ijinusaha-sec" class="flex items-center justify-between p-3 bg-white/10 rounded-lg hover:bg-white/20 transition-colors">
+                    <span class="font-medium">Perizinan Online</span>
+                    <i class="fas fa-arrow-right text-yellow-300"></i>
+                </a>
+                <a href="/Aplikasi#pengaduan-sec" class="flex items-center justify-between p-3 bg-white/10 rounded-lg hover:bg-white/20 transition-colors">
+                    <span class="font-medium">Pengaduan Layanan</span>
+                    <i class="fas fa-arrow-right text-yellow-300"></i>
+                </a>
+                <a href="kontak.html" class="flex items-center justify-between p-3 bg-white/10 rounded-lg hover:bg-white/20 transition-colors">
+                    <span class="font-medium">Konsultasi Investasi</span>
+                    <i class="fas fa-arrow-right text-yellow-300"></i>
+                </a>
+                <a href="tentangkm.html#kontak-sec" class="flex items-center justify-between p-3 bg-white/10 rounded-lg hover:bg-white/20 transition-colors">
+                    <span class="font-medium">FAQ & Bantuan</span>
+                    <i class="fas fa-arrow-right text-yellow-300"></i>
+                </a>
+            </div>
+        </div>
+
+        <!-- Share -->
+        <div class="bg-white rounded-2xl shadow-custom p-6">
+          <h2 class="text-xl font-bold mb-4 border-b pb-2">
+            Bagikan Artikel
+          </h2>
+
+          <div class="grid grid-cols-2 gap-3">
+                            <a href="#" class="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-lg flex flex-col items-center justify-center transition-all duration-300 card-hover">
+                                <i class="fab fa-facebook-f text-lg mb-2"></i>
+                                <span class="text-xs font-medium">Facebook</span>
+                            </a>
+                            <a href="#" class="bg-blue-400 hover:bg-blue-500 text-white p-3 rounded-lg flex flex-col items-center justify-center transition-all duration-300 card-hover">
+                                <i class="fab fa-twitter text-lg mb-2"></i>
+                                <span class="text-xs font-medium">Twitter</span>
+                            </a>
+                            <a href="#" class="bg-green-500 hover:bg-green-600 text-white p-3 rounded-lg flex flex-col items-center justify-center transition-all duration-300 card-hover">
+                                <i class="fab fa-whatsapp text-lg mb-2"></i>
+                                <span class="text-xs font-medium">WhatsApp</span>
+                            </a>
+                            <a href="#" class="bg-red-500 hover:bg-red-600 text-white p-3 rounded-lg flex flex-col items-center justify-center transition-all duration-300 card-hover">
+                                <i class="fas fa-envelope text-lg mb-2"></i>
+                                <span class="text-xs font-medium">Email</span>
+                            </a>
+                        </div>
+                        
+          <!-- Copy Link -->
+          <div class="mt-6 pt-4 border-t border-gray-100">
+              <div class="flex">
+                  <input type="text" id="article-link" value={`/media/${post.id}`} 
+                                       readonly class="flex-grow px-3 py-2 text-sm border border-gray-300 rounded-l-lg focus:outline-none">
+                  <button id="copy-link" class="bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded-r-lg transition-colors">
+                      <i class="fas fa-copy"></i>
+                  </button>
+              </div>
+              <p id="copy-message" class="text-xs text-green-600 mt-2 hidden">Link berhasil disalin!</p>
+          </div>
+        </div>
+
+      </aside>
+    </div>
+  </section>
+
+</MainLayout>
