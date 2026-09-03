@@ -1,32 +1,16 @@
 ---
-//import { db } from "../lib/db.js";
+// =========================================================
+// HEADER.astro
+// =========================================================
+// DPM-PTSP KOTA SURABAYA
+//
+// RESPONSIVE:
+// < 768px     = MOBILE / DRAWER KANAN
+// 768-1023px  = IPAD AIR / DESKTOP COMPACT
+// 1024-1279px = IPAD PRO / DESKTOP COMPACT
+// >=1280px    = DESKTOP NORMAL
+// =========================================================
 
-/*
-|--------------------------------------------------------------------------
-| WEBSITE PENGATURAN
-|--------------------------------------------------------------------------
-
-
-const [settingRows] = await db.query(`
-  SELECT
-    nama,
-    logo
-  FROM website_pengaturan
-  WHERE id = 1
-  LIMIT 1
-`);
-
-const setting = settingRows?.[0] || {
-  nama: "DPM-PTSP Surabaya",
-  logo: "https://github.com/arbagasdanangh/pps/blob/main/logo.png?raw=true"
-};*/
-
-
-/*
-|--------------------------------------------------------------------------
-| AMBIL SEMUA MENU HEADER DARI DATABASE
-|--------------------------------------------------------------------------
-*/
 
 /*
 |--------------------------------------------------------------------------
@@ -35,6 +19,7 @@ const setting = settingRows?.[0] || {
 */
 
 let allMenuRows = [];
+
 
 try {
 
@@ -68,6 +53,12 @@ try {
 
   }
 
+
+  /*
+  |--------------------------------------------------------------------------
+  | PARSE JSON
+  |--------------------------------------------------------------------------
+  */
 
   let payload;
 
@@ -144,7 +135,6 @@ try {
 
       }))
 
-
       /*
       |--------------------------------------------------------------------------
       | HANYA MENU AKTIF
@@ -174,6 +164,7 @@ try {
 
 }
 
+
 /*
 |--------------------------------------------------------------------------
 | BENTUK TREE MENU
@@ -182,21 +173,26 @@ try {
 
 const menuMap = new Map();
 
+
 for (const item of allMenuRows) {
 
-  menuMap.set(Number(item.id), {
-    ...item,
+  menuMap.set(
+    Number(item.id),
+    {
+      ...item,
 
-    id: Number(item.id),
+      id:
+        Number(item.id),
 
-    parent_id:
-      item.parent_id === null ||
-      Number(item.parent_id) === 0
-        ? null
-        : Number(item.parent_id),
+      parent_id:
+        item.parent_id === null ||
+        Number(item.parent_id) === 0
+          ? null
+          : Number(item.parent_id),
 
-    children: []
-  });
+      children: []
+    }
+  );
 
 }
 
@@ -208,6 +204,7 @@ for (const item of allMenuRows) {
 */
 
 const menuTree = [];
+
 
 for (const item of menuMap.values()) {
 
@@ -247,25 +244,40 @@ const sortMenu = (items) => {
       const urutanB =
         Number(b.urutan || 0);
 
-      if (urutanA !== urutanB) {
-        return urutanA - urutanB;
+
+      if (
+        urutanA !== urutanB
+      ) {
+
+        return (
+          urutanA -
+          urutanB
+        );
+
       }
 
-      return Number(a.id || 0) -
-             Number(b.id || 0);
+
+      return (
+        Number(a.id || 0) -
+        Number(b.id || 0)
+      );
 
     }
   );
 
 
-  for (const item of items) {
+  for (
+    const item of items
+  ) {
 
     if (
       item.children &&
       item.children.length
     ) {
 
-      sortMenu(item.children);
+      sortMenu(
+        item.children
+      );
 
     }
 
@@ -273,26 +285,31 @@ const sortMenu = (items) => {
 
 };
 
+
 sortMenu(menuTree);
 
 
 /*
 |--------------------------------------------------------------------------
-| PISAHKAN NAVIGATION DAN TOMBOL KONTAK
+| PISAHKAN NAVIGATION DAN KONTAK
 |--------------------------------------------------------------------------
 */
 
 const contactMenus =
   menuTree.filter(
     (menu) =>
-      Number(menu.tombol_kontak) === 1
+      Number(
+        menu.tombol_kontak
+      ) === 1
   );
 
 
 const navigationMenus =
   menuTree.filter(
     (menu) =>
-      Number(menu.tombol_kontak) !== 1
+      Number(
+        menu.tombol_kontak
+      ) !== 1
   );
 
 ---
@@ -304,10 +321,12 @@ const navigationMenus =
 
 <header
   id="site-header"
+
   class="
     fixed
     top-0
     left-0
+
     w-full
 
     z-[9999]
@@ -318,6 +337,11 @@ const navigationMenus =
   "
 >
 
+
+  <!-- =======================================================
+       CONTAINER
+  ======================================================== -->
+
   <div
     class="
       container
@@ -325,9 +349,11 @@ const navigationMenus =
 
       px-4
       sm:px-6
-      md:px-8
+      md:px-5
+      lg:px-8
     "
   >
+
 
     <!-- =====================================================
          HEADER WRAPPER
@@ -335,12 +361,11 @@ const navigationMenus =
 
     <div
       class="
+        header-wrapper
+
         flex
         items-center
         justify-between
-
-        py-3
-        md:py-4
 
         relative
       "
@@ -353,10 +378,14 @@ const navigationMenus =
 
       <div
         class="
+          header-logo
+
           flex
           items-center
 
-          z-10
+          z-20
+
+          shrink-0
         "
       >
 
@@ -366,7 +395,6 @@ const navigationMenus =
           class="
             flex
             items-center
-            space-x-3
 
             ripple
           "
@@ -375,17 +403,12 @@ const navigationMenus =
           <img
             src="https://github.com/arbagasdanangh/pps/blob/main/logo.png?raw=true"
 
-            alt=""
+            alt="DPM-PTSP Kota Surabaya"
 
             class="
-              h-8
-              sm:h-10
-              md:h-12
+              logo-image
 
               w-auto
-
-              max-w-[140px]
-              sm:max-w-[180px]
 
               object-contain
 
@@ -402,33 +425,40 @@ const navigationMenus =
 
 
       <!-- ===================================================
-           DESKTOP NAV
+           DESKTOP / TABLET NAV
+
+           MULAI DARI 768PX
+
+           Jadi:
+           iPad Air 820  = DESKTOP
+           iPad Pro 1024 = DESKTOP
       ==================================================== -->
 
       <nav
         class="
+          desktop-nav
+
           hidden
-          lg:block
+
+          md:block
 
           absolute
 
           left-1/2
 
-          transform
           -translate-x-1/2
         "
       >
 
         <ul
           class="
+            nav-list
+
             flex
             items-center
-
-            space-x-8
-
-            stagger-children
           "
         >
+
 
           {
 
@@ -442,7 +472,7 @@ const navigationMenus =
 
                 /*
                 |--------------------------------------------------------------------------
-                | MENU DROPDOWN
+                | MENU DENGAN CHILD
                 |--------------------------------------------------------------------------
                 */
 
@@ -452,12 +482,18 @@ const navigationMenus =
 
                     <li
                       class="
+                        nav-item
+
                         relative
+
                         group
                       "
 
-                      key={menu.id}
+                      key={
+                        menu.id
+                      }
                     >
+
 
                       <!-- MENU UTAMA -->
 
@@ -470,46 +506,49 @@ const navigationMenus =
                         }
 
                         class="
+                          nav-link
+
                           text-gray-700
 
                           font-semibold
 
                           hover:text-yellow-400
 
-                          transition
+                          transition-all
                           duration-300
 
                           flex
                           items-center
 
                           whitespace-nowrap
-
-                          animate-pulse-soft
                         "
                       >
 
-                        {menu.nama}
+                        {
+                          menu.nama
+                        }
+
 
                         <i
                           class="
                             fas
                             fa-chevron-down
 
-                            ml-1
-
-                            text-xs
+                            nav-chevron
                           "
                         ></i>
 
                       </a>
 
 
-                      <!-- =================================================
+                      <!-- =================================
                            DROPDOWN
-                      ================================================== -->
+                      ================================== -->
 
                       <div
                         class="
+                          dropdown-menu
+
                           absolute
 
                           left-0
@@ -522,29 +561,34 @@ const navigationMenus =
 
                           rounded-b-lg
 
-                          translate-y-5
-
-                          shadow-lg
+                          shadow-xl
 
                           opacity-0
                           invisible
 
+                          translate-y-3
+
                           group-hover:opacity-100
                           group-hover:visible
+                          group-hover:translate-y-0
 
                           transition-all
-                          duration-300
+                          duration-200
 
-                          z-[9999]
+                          z-[99999]
 
-                          animate-drop-in
+                          overflow-hidden
                         "
                       >
+
 
                         {
 
                           menu.children.map(
-                            (child, childIndex) => {
+                            (
+                              child,
+                              childIndex
+                            ) => {
 
                               const childHasChildren =
                                 child.children &&
@@ -553,43 +597,55 @@ const navigationMenus =
 
                               /*
                               |--------------------------------------------------------------------------
-                              | CHILD DENGAN NESTED MENU
+                              | CHILD NESTED
                               |--------------------------------------------------------------------------
                               */
 
-                              if (childHasChildren) {
+                              if (
+                                childHasChildren
+                              ) {
 
                                 return (
 
                                   <div
                                     class="
+                                      nested-parent
+
                                       relative
 
                                       group/artikel
 
                                       border-t
+                                      border-gray-100
                                     "
 
-                                    key={child.id}
+                                    key={
+                                      child.id
+                                    }
                                   >
 
                                     <div
                                       class="
-                                        px-4
-                                        py-3
+                                        dropdown-child
 
                                         flex
+                                        items-center
                                         justify-between
 
                                         cursor-pointer
 
                                         hover:bg-[#FFD41D]
+
+                                        transition
                                       "
                                     >
 
                                       <span>
-                                        {child.nama}
+                                        {
+                                          child.nama
+                                        }
                                       </span>
+
 
                                       <i
                                         class="
@@ -603,10 +659,12 @@ const navigationMenus =
                                     </div>
 
 
-                                    <!-- NESTED DROPDOWN -->
+                                    <!-- NESTED -->
 
                                     <div
                                       class="
+                                        nested-dropdown
+
                                         opacity-0
                                         invisible
 
@@ -614,21 +672,23 @@ const navigationMenus =
 
                                         group-hover/artikel:opacity-100
                                         group-hover/artikel:visible
-                                        group-hover/artikel:max-h-40
-
-                                        transition-all
-                                        duration-300
+                                        group-hover/artikel:max-h-96
 
                                         overflow-hidden
 
                                         bg-white
+
+                                        transition-all
+                                        duration-300
                                       "
                                     >
 
                                       {
 
                                         child.children.map(
-                                          (grandchild) => (
+                                          (
+                                            grandchild
+                                          ) => (
 
                                             <a
                                               href={
@@ -646,6 +706,8 @@ const navigationMenus =
                                                 text-[#001BB7]
 
                                                 hover:bg-gray-50
+
+                                                transition
                                               "
 
                                               key={
@@ -688,18 +750,17 @@ const navigationMenus =
                                   }
 
                                   class={`
+                                    dropdown-link
+
                                     block
 
                                     font-medium
-                                    text-gray-700
 
-                                    px-4
-                                    py-3
+                                    text-gray-700
 
                                     hover:bg-[#FFD41D]
 
                                     transition
-                                    duration-200
 
                                     ${
                                       childIndex ===
@@ -714,7 +775,9 @@ const navigationMenus =
                                   }
                                 >
 
-                                  {child.nama}
+                                  {
+                                    child.nama
+                                  }
 
                                 </a>
 
@@ -743,7 +806,11 @@ const navigationMenus =
                 return (
 
                   <li
-                    key={menu.id}
+                    class="nav-item"
+
+                    key={
+                      menu.id
+                    }
                   >
 
                     <a
@@ -753,22 +820,24 @@ const navigationMenus =
                       }
 
                       class="
+                        nav-link
+
                         text-gray-700
 
                         font-semibold
 
                         hover:text-yellow-400
 
-                        transition
+                        transition-all
                         duration-300
-
-                        hover-scale-shadow
 
                         whitespace-nowrap
                       "
                     >
 
-                      {menu.nama}
+                      {
+                        menu.nama
+                      }
 
                     </a>
 
@@ -787,19 +856,20 @@ const navigationMenus =
 
 
       <!-- ===================================================
-           TOMBOL KONTAK
+           CONTACT DESKTOP / IPAD
       ==================================================== -->
 
       <div
         class="
+          desktop-contact-wrapper
+
           hidden
-          lg:flex
+
+          md:flex
 
           items-center
 
-          gap-3
-
-          z-10
+          z-20
 
           shrink-0
         "
@@ -837,10 +907,14 @@ const navigationMenus =
                   hover:-translate-y-0.5
                 "
 
-                key={menu.id}
+                key={
+                  menu.id
+                }
               >
 
-                {menu.nama}
+                {
+                  menu.nama
+                }
 
               </a>
 
@@ -854,6 +928,8 @@ const navigationMenus =
 
       <!-- ===================================================
            MOBILE BUTTON
+
+           HANYA < 768PX
       ==================================================== -->
 
       <button
@@ -862,335 +938,435 @@ const navigationMenus =
         type="button"
 
         class="
-          lg:hidden
+          mobile-menu-button
+
+          md:hidden
 
           text-blue-600
 
-          ml-2
+          shrink-0
         "
 
         aria-label="Buka menu"
+
+        aria-expanded="false"
       >
 
         <i
           class="
             fas
             fa-bars
-
-            text-2xl
           "
         ></i>
 
       </button>
 
+
     </div>
 
 
-    <!-- =====================================================
-         MOBILE MENU
-    ====================================================== -->
+  </div>
 
-    <div
-      id="mobile-menu"
+</header>
+
+
+<!-- =========================================================
+     MOBILE OVERLAY
+========================================================== -->
+
+<div
+  id="mobile-overlay"
+
+  class="
+    fixed
+
+    inset-0
+
+    z-[10000]
+
+    bg-black/30
+
+    opacity-0
+
+    invisible
+
+    transition-all
+    duration-300
+
+    md:hidden
+  "
+></div>
+
+
+<!-- =========================================================
+     MOBILE DRAWER
+     
+     PENTING:
+     top mengikuti tinggi header.
+     
+     TIDAK ADA LOGO KEDUA.
+========================================================== -->
+
+<aside
+  id="mobile-menu"
+
+  class="
+    mobile-menu
+
+    fixed
+
+    right-0
+
+    z-[10001]
+
+    bg-white
+
+    shadow-2xl
+
+    translate-x-full
+
+    transition-transform
+    duration-300
+    ease-out
+
+    md:hidden
+
+    overflow-y-auto
+  "
+>
+
+
+  <!-- =======================================================
+       DRAWER TOP
+  ======================================================== -->
+
+  <div
+    class="
+      mobile-drawer-header
+
+      flex
+      items-center
+      justify-end
+
+      border-b
+      border-gray-200
+    "
+  >
+
+    <button
+      id="mobile-menu-close"
+
+      type="button"
 
       class="
-        hidden
+        mobile-close-button
 
-        lg:hidden
+        text-blue-600
 
-        pb-4
+        hover:text-blue-800
 
-        border-t
-
-        mt-2
-
-        space-y-2
+        transition
       "
+
+      aria-label="Tutup menu"
     >
 
-      {
+      <i
+        class="
+          fas
+          fa-xmark
+        "
+      ></i>
 
-        navigationMenus.map(
-          (menu) => {
+    </button>
 
-            const hasChildren =
-              menu.children &&
-              menu.children.length > 0;
+  </div>
 
 
-            /*
-            |--------------------------------------------------------------------------
-            | MOBILE DROPDOWN
-            |--------------------------------------------------------------------------
-            */
+  <!-- =======================================================
+       MOBILE CONTENT
+  ======================================================== -->
 
-            if (hasChildren) {
+  <div
+    class="
+      mobile-menu-content
 
-              return (
+      space-y-1
+    "
+  >
 
-                <div
-                  key={menu.id}
+
+    {
+
+      navigationMenus.map(
+        (menu) => {
+
+          const hasChildren =
+            menu.children &&
+            menu.children.length > 0;
+
+
+          /*
+          |--------------------------------------------------------------------------
+          | MOBILE MENU DENGAN CHILD
+          |--------------------------------------------------------------------------
+          */
+
+          if (hasChildren) {
+
+            return (
+
+              <div
+                class="mobile-menu-item"
+
+                key={
+                  menu.id
+                }
+              >
+
+                <button
+                  type="button"
+
+                  class="
+                    mobile-dropdown-btn
+
+                    w-full
+
+                    flex
+                    items-center
+                    justify-between
+
+                    font-semibold
+
+                    text-gray-700
+
+                    hover:text-blue-600
+
+                    transition
+                  "
                 >
 
-                  <button
-                    type="button"
-
-                    class="
-                      mobile-dropdown-btn
-
-                      w-full
-
-                      flex
-                      justify-between
-
-                      py-2
-
-                      font-semibold
-
-                      text-gray-700
-                    "
-                  >
-
-                    <span>
-                      {menu.nama}
-                    </span>
-
-                    <i
-                      class="
-                        fas
-                        fa-chevron-down
-
-                        text-xs
-                      "
-                    ></i>
-
-                  </button>
-
-
-                  <div
-                    class="
-                      hidden
-
-                      pl-4
-
-                      space-y-1
-                    "
-                  >
-
+                  <span>
                     {
-
-                      menu.children.map(
-                        (child) => {
-
-                          const childHasChildren =
-                            child.children &&
-                            child.children.length > 0;
+                      menu.nama
+                    }
+                  </span>
 
 
-                          /*
-                          |--------------------------------------------------------------------------
-                          | MOBILE NESTED
-                          |--------------------------------------------------------------------------
-                          */
+                  <i
+                    class="
+                      fas
+                      fa-chevron-down
 
-                          if (
-                            childHasChildren
-                          ) {
+                      text-xs
 
-                            return (
+                      transition-transform
+                      duration-200
+                    "
+                  ></i>
 
-                              <div
-                                key={
-                                  child.id
-                                }
-                              >
-
-                                <button
-                                  type="button"
-
-                                  class="
-                                    mobile-dropdown-btn
-
-                                    w-full
-
-                                    flex
-                                    justify-between
-
-                                    py-1
-                                    pl-2
-
-                                    text-sm
-
-                                    text-gray-700
-                                  "
-                                >
-
-                                  <span>
-                                    {child.nama}
-                                  </span>
-
-                                  <i
-                                    class="
-                                      fas
-                                      fa-chevron-down
-
-                                      text-xs
-                                    "
-                                  ></i>
-
-                                </button>
+                </button>
 
 
-                                <div
-                                  class="
-                                    hidden
+                <!-- CHILD -->
 
-                                    pl-4
-                                  "
-                                >
+                <div
+                  class="
+                    mobile-dropdown-content
 
-                                  {
+                    hidden
 
-                                    child.children.map(
-                                      (grandchild) => (
+                    pl-4
 
-                                        <a
-                                          href={
-                                            grandchild.url ||
-                                            "#"
-                                          }
+                    border-l
+                    border-gray-200
 
-                                          class="
-                                            block
+                    space-y-1
+                  "
+                >
 
-                                            py-1
+                  {
 
-                                            text-[#001BB7]
-                                          "
+                    menu.children.map(
+                      (child) => {
 
-                                          key={
-                                            grandchild.id
-                                          }
-                                        >
-
-                                          {
-                                            grandchild.nama
-                                          }
-
-                                        </a>
-
-                                      )
-                                    )
-
-                                  }
-
-                                </div>
-
-                              </div>
-
-                            );
-
-                          }
+                        const childHasChildren =
+                          child.children &&
+                          child.children.length > 0;
 
 
-                          /*
-                          |--------------------------------------------------------------------------
-                          | MOBILE CHILD BIASA
-                          |--------------------------------------------------------------------------
-                          */
+                        /*
+                        |--------------------------------------------------------------------------
+                        | MOBILE NESTED
+                        |--------------------------------------------------------------------------
+                        */
+
+                        if (
+                          childHasChildren
+                        ) {
 
                           return (
 
-                            <a
-                              href={
-                                child.url ||
-                                "#"
-                              }
-
-                              class="
-                                block
-
-                                py-1
-
-                                text-gray-700
-
-                                hover:text-yellow-400
-                              "
-
+                            <div
                               key={
                                 child.id
                               }
                             >
 
-                              {child.nama}
+                              <button
+                                type="button"
 
-                            </a>
+                                class="
+                                  mobile-dropdown-btn
+
+                                  w-full
+
+                                  flex
+                                  items-center
+                                  justify-between
+
+                                  text-gray-700
+                                "
+                              >
+
+                                <span>
+                                  {
+                                    child.nama
+                                  }
+                                </span>
+
+
+                                <i
+                                  class="
+                                    fas
+                                    fa-chevron-down
+
+                                    text-xs
+
+                                    transition-transform
+                                    duration-200
+                                  "
+                                ></i>
+
+                              </button>
+
+
+                              <div
+                                class="
+                                  hidden
+
+                                  pl-4
+
+                                  space-y-1
+                                "
+                              >
+
+                                {
+
+                                  child.children.map(
+                                    (
+                                      grandchild
+                                    ) => (
+
+                                      <a
+                                        href={
+                                          grandchild.url ||
+                                          "#"
+                                        }
+
+                                        class="
+                                          block
+
+                                          text-[#001BB7]
+
+                                          hover:text-blue-600
+                                        "
+
+                                        key={
+                                          grandchild.id
+                                        }
+                                      >
+
+                                        {
+                                          grandchild.nama
+                                        }
+
+                                      </a>
+
+                                    )
+                                  )
+
+                                }
+
+                              </div>
+
+                            </div>
 
                           );
 
                         }
-                      )
 
-                    }
 
-                  </div>
+                        /*
+                        |--------------------------------------------------------------------------
+                        | MOBILE CHILD BIASA
+                        |--------------------------------------------------------------------------
+                        */
+
+                        return (
+
+                          <a
+                            href={
+                              child.url ||
+                              "#"
+                            }
+
+                            class="
+                              mobile-child-link
+
+                              block
+
+                              text-gray-700
+
+                              hover:text-blue-600
+
+                              transition
+                            "
+
+                            key={
+                              child.id
+                            }
+                          >
+
+                            {
+                              child.nama
+                            }
+
+                          </a>
+
+                        );
+
+                      }
+                    )
+
+                  }
 
                 </div>
 
-              );
-
-            }
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | MOBILE MENU BIASA
-            |--------------------------------------------------------------------------
-            */
-
-            return (
-
-              <a
-                href={
-                  menu.url ||
-                  "#"
-                }
-
-                class="
-                  block
-
-                  py-2
-
-                  font-semibold
-
-                  text-gray-700
-
-                  hover:text-yellow-400
-                "
-
-                key={menu.id}
-              >
-
-                {menu.nama}
-
-              </a>
+              </div>
 
             );
 
           }
-        )
-
-      }
 
 
-      <!-- ===================================================
-           MOBILE KONTAK
-      ==================================================== -->
+          /*
+          |--------------------------------------------------------------------------
+          | MOBILE MENU BIASA
+          |--------------------------------------------------------------------------
+          */
 
-      {
-
-        contactMenus.map(
-          (menu) => (
+          return (
 
             <a
               href={
@@ -1199,220 +1375,755 @@ const navigationMenus =
               }
 
               class="
+                mobile-main-link
+
                 block
 
-                py-2
+                font-semibold
 
-                font-bold
+                text-gray-700
 
-                text-[#0900C3]
+                hover:text-blue-600
+
+                transition
               "
 
-              key={menu.id}
+              key={
+                menu.id
+              }
             >
 
-              {menu.nama}
+              {
+                menu.nama
+              }
 
             </a>
 
-          )
+          );
+
+        }
+      )
+
+    }
+
+
+    <!-- =====================================================
+         MOBILE CONTACT
+    ====================================================== -->
+
+    {
+
+      contactMenus.map(
+        (menu) => (
+
+          <a
+            href={
+              menu.url ||
+              "#"
+            }
+
+            class="
+              mobile-contact
+
+              block
+
+              font-bold
+
+              text-[#0900C3]
+
+              bg-[#FFD41D]
+
+              rounded-lg
+
+              text-center
+
+              transition-all
+
+              hover:shadow-lg
+            "
+
+            key={
+              menu.id
+            }
+          >
+
+            {
+              menu.nama
+            }
+
+          </a>
+
         )
+      )
 
-      }
-
-    </div>
+    }
 
   </div>
 
-</header>
+</aside>
 
 
 <!-- =========================================================
-     SPACER HEADER
-     
-     Karena header fixed keluar dari flow,
-     spacer menjaga konten tidak ketutup header.
+     HEADER SPACER
 ========================================================== -->
 
 <div
   id="header-spacer"
+
   aria-hidden="true"
 ></div>
 
 
 <!-- =========================================================
-     STYLE
+     CSS
 ========================================================== -->
 
 <style>
 
-  /*
-  |--------------------------------------------------------------------------
-  | HEADER FIXED
-  |--------------------------------------------------------------------------
-  */
 
-  #site-header {
+/* ==========================================================
+   HEADER BASE
+========================================================== */
 
-    width: 100%;
+#site-header {
 
-    left: 0;
-    right: 0;
+  width: 100%;
 
-    transition:
-      box-shadow 0.25s ease;
+  left: 0;
+  right: 0;
+
+  transition:
+    box-shadow 0.25s ease;
+
+}
+
+
+/* ==========================================================
+   HEADER WRAPPER
+========================================================== */
+
+.header-wrapper {
+
+  min-height: 80px;
+
+}
+
+
+/* ==========================================================
+   LOGO
+========================================================== */
+
+.logo-image {
+
+  height: 46px;
+
+  max-width: 180px;
+
+}
+
+
+/* ==========================================================
+   NAV
+========================================================== */
+
+.nav-list {
+
+  gap: 28px;
+
+}
+
+
+.nav-link {
+
+  font-size: 14px;
+
+}
+
+
+.nav-chevron {
+
+  margin-left: 5px;
+
+  font-size: 9px;
+
+}
+
+
+/* ==========================================================
+   DROPDOWN
+========================================================== */
+
+.dropdown-link {
+
+  padding:
+    12px
+    16px;
+
+  font-size: 14px;
+
+}
+
+
+.dropdown-child {
+
+  padding:
+    12px
+    16px;
+
+  font-size: 14px;
+
+}
+
+
+/* ==========================================================
+   CONTACT
+========================================================== */
+
+.desktop-contact {
+
+  padding:
+    12px
+    16px;
+
+  font-size: 14px;
+
+}
+
+
+.desktop-contact-wrapper {
+
+  margin-left: auto;
+
+}
+
+
+/* ==========================================================
+   SPACER
+========================================================== */
+
+#header-spacer {
+
+  width: 100%;
+
+  height: 80px;
+
+}
+
+
+/* ==========================================================
+   MOBILE DRAWER
+========================================================== */
+
+.mobile-menu {
+
+  top: 64px;
+
+  height:
+    calc(100vh - 64px);
+
+  width: 82vw;
+
+  max-width: 360px;
+
+}
+
+
+/* ==========================================================
+   MOBILE DRAWER HEADER
+========================================================== */
+
+.mobile-drawer-header {
+
+  height: 58px;
+
+  padding:
+    0 20px;
+
+}
+
+
+.mobile-close-button {
+
+  font-size: 22px;
+
+}
+
+
+/* ==========================================================
+   MOBILE CONTENT
+========================================================== */
+
+.mobile-menu-content {
+
+  padding:
+    18px
+    22px
+    40px;
+
+}
+
+
+/* ==========================================================
+   MOBILE LINK
+========================================================== */
+
+.mobile-main-link {
+
+  padding:
+    13px
+    0;
+
+  font-size: 15px;
+
+}
+
+
+.mobile-dropdown-btn {
+
+  padding:
+    13px
+    0;
+
+  font-size: 15px;
+
+}
+
+
+.mobile-child-link {
+
+  padding:
+    9px
+    0;
+
+  font-size: 14px;
+
+}
+
+
+/* ==========================================================
+   MOBILE CONTACT
+========================================================== */
+
+.mobile-contact {
+
+  margin-top: 18px;
+
+  padding:
+    13px
+    14px;
+
+  font-size: 15px;
+
+}
+
+
+/* ==========================================================
+   MOBILE BUTTON
+========================================================== */
+
+.mobile-menu-button {
+
+  font-size: 22px;
+
+}
+
+
+/* ==========================================================
+   MOBILE < 768
+========================================================== */
+
+@media (
+  max-width: 767px
+) {
+
+  .header-wrapper {
+
+    min-height: 64px;
 
   }
 
 
-  /*
-  |--------------------------------------------------------------------------
-  | SPACER
-  |--------------------------------------------------------------------------
-  */
+  #header-spacer {
+
+    height: 64px;
+
+  }
+
+
+  .logo-image {
+
+    height: 34px;
+
+    max-width: 140px;
+
+  }
+
+}
+
+
+/* ==========================================================
+   HP KECIL
+========================================================== */
+
+@media (
+  max-width: 480px
+) {
+
+  .mobile-menu {
+
+    width: 84vw;
+
+    max-width: none;
+
+  }
+
+
+  .mobile-menu-content {
+
+    padding:
+      16px
+      20px
+      35px;
+
+  }
+
+
+  .mobile-drawer-header {
+
+    height: 56px;
+
+    padding:
+      0 18px;
+
+  }
+
+}
+
+
+/* ==========================================================
+   IPAD AIR
+   768 - 1023
+========================================================== */
+
+@media (
+  min-width: 768px
+) and (
+  max-width: 1023px
+) {
+
+  .header-wrapper {
+
+    min-height: 68px;
+
+  }
+
 
   #header-spacer {
 
-    width: 100%;
+    height: 68px;
+
+  }
+
+
+  .logo-image {
+
+    height: 36px;
+
+    max-width: 145px;
+
+  }
+
+
+  .nav-list {
+
+    gap: 10px;
+
+  }
+
+
+  .nav-link {
+
+    font-size: 10px;
+
+  }
+
+
+  .nav-chevron {
+
+    margin-left: 3px;
+
+    font-size: 7px;
+
+  }
+
+
+  .desktop-contact {
+
+    padding:
+      8px
+      9px;
+
+    font-size: 9px;
+
+    border-radius: 6px;
+
+  }
+
+
+  .desktop-nav {
+
+    /*
+    |--------------------------------------------------------------------------
+    | Lebar area menu
+    |--------------------------------------------------------------------------
+    */
+
+    max-width: 58%;
+
+  }
+
+
+  .dropdown-link {
+
+    padding:
+      10px
+      13px;
+
+    font-size: 12px;
+
+  }
+
+
+  .dropdown-child {
+
+    padding:
+      10px
+      13px;
+
+    font-size: 12px;
+
+  }
+
+}
+
+
+/* ==========================================================
+   IPAD PRO
+   1024 - 1279
+========================================================== */
+
+@media (
+  min-width: 1024px
+) and (
+  max-width: 1279px
+) {
+
+  .header-wrapper {
+
+    min-height: 72px;
+
+  }
+
+
+  #header-spacer {
+
+    height: 72px;
+
+  }
+
+
+  .logo-image {
+
+    height: 40px;
+
+    max-width: 160px;
+
+  }
+
+
+  .nav-list {
+
+    gap: 14px;
+
+  }
+
+
+  .nav-link {
+
+    font-size: 11px;
+
+  }
+
+
+  .nav-chevron {
+
+    margin-left: 4px;
+
+    font-size: 8px;
+
+  }
+
+
+  .desktop-contact {
+
+    padding:
+      9px
+      11px;
+
+    font-size: 10px;
+
+    border-radius: 7px;
+
+  }
+
+
+  .desktop-nav {
+
+    max-width: 62%;
+
+  }
+
+
+  .dropdown-link {
+
+    padding:
+      11px
+      14px;
+
+    font-size: 13px;
+
+  }
+
+
+  .dropdown-child {
+
+    padding:
+      11px
+      14px;
+
+    font-size: 13px;
+
+  }
+
+}
+
+
+/* ==========================================================
+   DESKTOP NORMAL
+   >= 1280
+========================================================== */
+
+@media (
+  min-width: 1280px
+) {
+
+  .header-wrapper {
+
+    min-height: 80px;
+
+  }
+
+
+  #header-spacer {
 
     height: 80px;
 
   }
 
 
-  /*
-  |--------------------------------------------------------------------------
-  | TOMBOL KONTAK
-  |--------------------------------------------------------------------------
-  */
+  .logo-image {
 
-  .desktop-contact {
+    height: 46px;
 
-    padding: 12px 16px;
+    max-width: 180px;
+
+  }
+
+
+  .nav-list {
+
+    gap: 28px;
+
+  }
+
+
+  .nav-link {
 
     font-size: 14px;
 
   }
 
 
-  /*
-  |--------------------------------------------------------------------------
-  | DROPDOWN
-  |--------------------------------------------------------------------------
-  */
+  .desktop-contact {
 
-  nav > ul > li > div {
+    padding:
+      12px
+      16px;
 
-    min-height: 0;
+    font-size: 14px;
+
+  }
+
+}
+
+
+/* ==========================================================
+   DESKTOP BESAR
+   >= 1536
+========================================================== */
+
+@media (
+  min-width: 1536px
+) {
+
+  .header-wrapper {
+
+    min-height: 82px;
 
   }
 
 
-  /*
-  |--------------------------------------------------------------------------
-  | IPAD / TABLET
-  |--------------------------------------------------------------------------
-  */
+  #header-spacer {
 
-  @media (
-    min-width: 1024px
-  ) and (
-    max-width: 1279px
-  ) {
-
-    .desktop-contact {
-
-      padding: 10px 12px;
-
-      font-size: 12px;
-
-    }
+    height: 82px;
 
   }
 
 
-  /*
-  |--------------------------------------------------------------------------
-  | IPAD PRO
-  |--------------------------------------------------------------------------
-  */
+  .logo-image {
 
-  @media (
-    min-width: 1100px
-  ) and (
-    max-width: 1279px
-  ) {
+    height: 48px;
 
-    .desktop-contact {
-
-      padding: 10px 13px;
-
-      font-size: 12.5px;
-
-    }
+    max-width: 190px;
 
   }
 
 
-  /*
-  |--------------------------------------------------------------------------
-  | DESKTOP NORMAL
-  |--------------------------------------------------------------------------
-  */
+  .nav-list {
 
-  @media (
-    min-width: 1280px
-  ) {
-
-    .desktop-contact {
-
-      padding: 12px 16px;
-
-      font-size: 14px;
-
-    }
+    gap: 32px;
 
   }
 
 
-  /*
-  |--------------------------------------------------------------------------
-  | DESKTOP BESAR
-  |--------------------------------------------------------------------------
-  */
+  .nav-link {
 
-  @media (
-    min-width: 1536px
-  ) {
-
-    .desktop-contact {
-
-      padding: 13px 18px;
-
-      font-size: 14px;
-
-    }
+    font-size: 14px;
 
   }
 
 
-  /*
-  |--------------------------------------------------------------------------
-  | MOBILE
-  |--------------------------------------------------------------------------
-  */
+  .desktop-contact {
 
-  @media (
-    max-width: 1023px
-  ) {
+    padding:
+      13px
+      18px;
 
-    .desktop-contact {
-
-      display: none;
-
-    }
+    font-size: 14px;
 
   }
+
+}
 
 </style>
 
@@ -1430,7 +2141,7 @@ document.addEventListener(
 
     /*
     |--------------------------------------------------------------------------
-    | HEADER
+    | ELEMENT
     |--------------------------------------------------------------------------
     */
 
@@ -1446,9 +2157,33 @@ document.addEventListener(
       );
 
 
+    const mobileBtn =
+      document.getElementById(
+        "mobile-menu-button"
+      );
+
+
+    const mobileMenu =
+      document.getElementById(
+        "mobile-menu"
+      );
+
+
+    const mobileClose =
+      document.getElementById(
+        "mobile-menu-close"
+      );
+
+
+    const mobileOverlay =
+      document.getElementById(
+        "mobile-overlay"
+      );
+
+
     /*
     |--------------------------------------------------------------------------
-    | ATUR TINGGI SPACER OTOMATIS
+    | SET HEADER HEIGHT
     |--------------------------------------------------------------------------
     */
 
@@ -1459,8 +2194,39 @@ document.addEventListener(
         headerSpacer
       ) {
 
+        const height =
+          siteHeader.offsetHeight;
+
+
         headerSpacer.style.height =
-          siteHeader.offsetHeight + "px";
+          height + "px";
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | MOBILE DRAWER DIMENSIONS
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+          window.innerWidth <
+          768
+        ) {
+
+          if (
+            mobileMenu
+          ) {
+
+            mobileMenu.style.top =
+              height + "px";
+
+
+            mobileMenu.style.height =
+              `calc(100vh - ${height}px)`;
+
+          }
+
+        }
 
       }
 
@@ -1478,39 +2244,182 @@ document.addEventListener(
 
     /*
     |--------------------------------------------------------------------------
-    | MOBILE MENU
+    | OPEN MOBILE MENU
     |--------------------------------------------------------------------------
     */
 
-    const mobileBtn =
-      document.getElementById(
-        "mobile-menu-button"
+    function openMobileMenu() {
+
+      if (
+        !mobileMenu
+      ) {
+
+        return;
+
+      }
+
+
+      mobileMenu.classList.remove(
+        "translate-x-full"
       );
 
 
-    const mobileMenu =
-      document.getElementById(
-        "mobile-menu"
+      if (
+        mobileOverlay
+      ) {
+
+        mobileOverlay.classList.remove(
+          "opacity-0",
+          "invisible"
+        );
+
+      }
+
+
+      if (
+        mobileBtn
+      ) {
+
+        mobileBtn.setAttribute(
+          "aria-expanded",
+          "true"
+        );
+
+      }
+
+
+      document.body.style.overflow =
+        "hidden";
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | CLOSE MOBILE MENU
+    |--------------------------------------------------------------------------
+    */
+
+    function closeMobileMenu() {
+
+      if (
+        !mobileMenu
+      ) {
+
+        return;
+
+      }
+
+
+      mobileMenu.classList.add(
+        "translate-x-full"
       );
 
+
+      if (
+        mobileOverlay
+      ) {
+
+        mobileOverlay.classList.add(
+          "opacity-0",
+          "invisible"
+        );
+
+      }
+
+
+      if (
+        mobileBtn
+      ) {
+
+        mobileBtn.setAttribute(
+          "aria-expanded",
+          "false"
+        );
+
+      }
+
+
+      document.body.style.overflow =
+        "";
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | OPEN BUTTON
+    |--------------------------------------------------------------------------
+    */
 
     if (
-      mobileBtn &&
-      mobileMenu
+      mobileBtn
     ) {
 
       mobileBtn.addEventListener(
         "click",
-        function () {
-
-          mobileMenu.classList.toggle(
-            "hidden"
-          );
-
-        }
+        openMobileMenu
       );
 
     }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | CLOSE BUTTON
+    |--------------------------------------------------------------------------
+    */
+
+    if (
+      mobileClose
+    ) {
+
+      mobileClose.addEventListener(
+        "click",
+        closeMobileMenu
+      );
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | OVERLAY CLOSE
+    |--------------------------------------------------------------------------
+    */
+
+    if (
+      mobileOverlay
+    ) {
+
+      mobileOverlay.addEventListener(
+        "click",
+        closeMobileMenu
+      );
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | ESC CLOSE
+    |--------------------------------------------------------------------------
+    */
+
+    document.addEventListener(
+      "keydown",
+      function (event) {
+
+        if (
+          event.key === "Escape"
+        ) {
+
+          closeMobileMenu();
+
+        }
+
+      }
+    );
 
 
     /*
@@ -1542,7 +2451,9 @@ document.addEventListener(
               );
 
 
-            if (content) {
+            if (
+              content
+            ) {
 
               content.classList.toggle(
                 "hidden"
@@ -1551,7 +2462,9 @@ document.addEventListener(
             }
 
 
-            if (icon) {
+            if (
+              icon
+            ) {
 
               icon.classList.toggle(
                 "rotate-180"
@@ -1568,23 +2481,81 @@ document.addEventListener(
 
     /*
     |--------------------------------------------------------------------------
-    | EFEK SHADOW SAAT SCROLL
+    | LINK MOBILE
     |--------------------------------------------------------------------------
-    |
-    | Navbar TETAP DI ATAS.
-    | Tidak disembunyikan.
-    | Tidak naik turun.
-    |
+    */
+
+    if (
+      mobileMenu
+    ) {
+
+      const links =
+        mobileMenu.querySelectorAll(
+          "a"
+        );
+
+
+      links.forEach(
+        function (link) {
+
+          link.addEventListener(
+            "click",
+            function () {
+
+              closeMobileMenu();
+
+            }
+          );
+
+        }
+      );
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | JIKA BERUBAH KE TABLET/DESKTOP
+    |--------------------------------------------------------------------------
+    */
+
+    window.addEventListener(
+      "resize",
+      function () {
+
+        if (
+          window.innerWidth >=
+          768
+        ) {
+
+          closeMobileMenu();
+
+        }
+
+      }
+    );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | HEADER SHADOW
+    |--------------------------------------------------------------------------
     */
 
     function handleScroll() {
 
-      if (!siteHeader) {
+      if (
+        !siteHeader
+      ) {
+
         return;
+
       }
 
 
-      if (window.scrollY > 5) {
+      if (
+        window.scrollY > 5
+      ) {
 
         siteHeader.style.boxShadow =
           "0 4px 18px rgba(0,0,0,0.10)";
