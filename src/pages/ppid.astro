@@ -50,6 +50,7 @@ let apiError = "";
 ========================================================= */
 
 try {
+
   const response = await fetch(
     API_KATEGORI,
     {
@@ -68,27 +69,35 @@ try {
   );
 
   if (!response.ok) {
+
     throw new Error(
       result?.message ||
       `HTTP ${response.status}`
     );
+
   }
 
   if (
     Array.isArray(result?.data)
   ) {
+
     kategori =
       result.data;
+
   } else if (
     Array.isArray(result)
   ) {
+
     kategori =
       result;
+
   } else {
+
     throw new Error(
       result?.message ||
       "Data kategori PPID tidak ditemukan."
     );
+
   }
 
 } catch (error) {
@@ -102,6 +111,7 @@ try {
     error instanceof Error
       ? error.message
       : "Gagal mengambil kategori PPID.";
+
 }
 
 
@@ -141,7 +151,6 @@ try {
     );
 
   }
-
 
   if (
     Array.isArray(result?.data)
@@ -288,7 +297,9 @@ items.sort(
     if (
       kategoriCompare !== 0
     ) {
+
       return kategoriCompare;
+
     }
 
     const urutanCompare =
@@ -298,7 +309,9 @@ items.sort(
     if (
       urutanCompare !== 0
     ) {
+
       return urutanCompare;
+
     }
 
     return (
@@ -418,7 +431,6 @@ const getDescription = (
 
 /* =========================================================
    HTML → TEXT
-   UNTUK PREVIEW KARTU
 ========================================================= */
 
 const getExcerpt = (
@@ -426,7 +438,9 @@ const getExcerpt = (
 ) => {
 
   if (!html) {
+
     return "";
+
   }
 
   return String(html)
@@ -619,6 +633,7 @@ const getExcerpt = (
 
     {
       apiError && (
+
         <section class="api-error-section">
 
           <div class="container">
@@ -644,6 +659,7 @@ const getExcerpt = (
           </div>
 
         </section>
+
       )
     }
 
@@ -753,10 +769,6 @@ const getExcerpt = (
 
         <div class="information-layout">
 
-          <!-- ===============================================
-               MAIN
-          ================================================ -->
-
           <div class="information-main">
 
             <div class="section-heading left">
@@ -778,10 +790,6 @@ const getExcerpt = (
             </div>
 
 
-            <!-- =============================================
-                 KATEGORI
-            ============================================== -->
-
             {
               kategori.map((kat) => {
 
@@ -794,8 +802,6 @@ const getExcerpt = (
                     id={`kategori-${kat.slug}`}
                     class="db-category"
                   >
-
-                    <!-- HEADER KATEGORI -->
 
                     <div class="db-category-header">
 
@@ -825,8 +831,6 @@ const getExcerpt = (
                     </div>
 
 
-                    <!-- DATA -->
-
                     {
                       data.length > 0 ? (
 
@@ -839,16 +843,12 @@ const getExcerpt = (
                                 class="db-item"
                               >
 
-                                <!-- ICON -->
-
                                 <div class="db-item-icon">
 
                                   <i class="fa-solid fa-file-lines"></i>
 
                                 </div>
 
-
-                                <!-- CONTENT -->
 
                                 <div class="db-item-content">
 
@@ -878,8 +878,6 @@ const getExcerpt = (
 
                                 </div>
 
-
-                                <!-- ACTION -->
 
                                 {
                                   item.file_url ? (
@@ -919,12 +917,6 @@ const getExcerpt = (
                                   )
                                 }
 
-
-                                <!--
-                                  HTML ASLI DARI API
-                                  disimpan dalam template
-                                  agar tidak rusak di data-* attribute
-                                -->
 
                                 {
                                   !item.file_url && (
@@ -985,8 +977,6 @@ const getExcerpt = (
             class="ppid-sidebar"
           >
 
-            <!-- CONTACT -->
-
             <div class="contact-card">
 
               <div class="contact-card-header">
@@ -1015,8 +1005,6 @@ const getExcerpt = (
 
               <div class="contact-list">
 
-                <!-- ALAMAT -->
-
                 <div class="contact-item">
 
                   <div>
@@ -1042,8 +1030,6 @@ const getExcerpt = (
                 </div>
 
 
-                <!-- TELEPON -->
-
                 <div class="contact-item">
 
                   <div>
@@ -1067,8 +1053,6 @@ const getExcerpt = (
                 </div>
 
 
-                <!-- EMAIL -->
-
                 <div class="contact-item">
 
                   <div>
@@ -1091,8 +1075,6 @@ const getExcerpt = (
 
                 </div>
 
-
-                <!-- WEBSITE -->
 
                 <div class="contact-item">
 
@@ -1122,8 +1104,6 @@ const getExcerpt = (
 
               </div>
 
-
-              <!-- SOCIAL -->
 
               <div class="social-section">
 
@@ -1206,8 +1186,6 @@ const getExcerpt = (
 
             </div>
 
-
-            <!-- REQUEST -->
 
             <div class="request-card">
 
@@ -1350,8 +1328,7 @@ const getExcerpt = (
       <div
         id="modalContent"
         class="modal-content"
-      >
-      </div>
+      ></div>
 
     </div>
 
@@ -1620,7 +1597,8 @@ const getExcerpt = (
 
       gap: 12px;
 
-      padding: 14px 16px;
+      padding:
+        14px 16px;
 
       border:
         1px solid #fed7aa;
@@ -1649,7 +1627,7 @@ const getExcerpt = (
 
       margin-bottom: 3px;
 
-      font-size: 12px;
+      font-size: 13px;
 
     }
 
@@ -1658,7 +1636,7 @@ const getExcerpt = (
 
       margin: 0;
 
-      font-size: 10px;
+      font-size: 11px;
 
       line-height: 1.5;
 
@@ -1747,7 +1725,7 @@ const getExcerpt = (
 
       color: #2563eb;
 
-      font-size: 10px;
+      font-size: 12px;
 
       font-weight: 900;
 
@@ -1758,9 +1736,9 @@ const getExcerpt = (
 
     .hero-badge-icon {
 
-      width: 27px;
+      width: 29px;
 
-      height: 27px;
+      height: 29px;
 
       display: grid;
 
@@ -1770,7 +1748,7 @@ const getExcerpt = (
 
       background: #dbeafe;
 
-      font-size: 12px;
+      font-size: 13px;
 
     }
 
@@ -1817,7 +1795,7 @@ const getExcerpt = (
 
       color: #64748b;
 
-      font-size: 15px;
+      font-size: 16px;
 
       line-height: 1.8;
 
@@ -1854,7 +1832,7 @@ const getExcerpt = (
 
       border-radius: 10px;
 
-      font-size: 11px;
+      font-size: 12px;
 
       font-weight: 800;
 
@@ -1967,7 +1945,7 @@ const getExcerpt = (
 
       color: #64748b;
 
-      font-size: 10px;
+      font-size: 11px;
 
       line-height: 1.5;
 
@@ -1980,7 +1958,7 @@ const getExcerpt = (
 
       color: #172554;
 
-      font-size: 18px;
+      font-size: 19px;
 
       font-weight: 900;
 
@@ -1994,7 +1972,7 @@ const getExcerpt = (
 
       color: #64748b;
 
-      font-size: 11px;
+      font-size: 12px;
 
       line-height: 1.6;
 
@@ -2043,11 +2021,11 @@ const getExcerpt = (
 
       display: block;
 
-      margin-bottom: 8px;
+      margin-bottom: 9px;
 
       color: #2563eb;
 
-      font-size: 10px;
+      font-size: 12px;
 
       font-weight: 900;
 
@@ -2064,9 +2042,9 @@ const getExcerpt = (
 
       font-size:
         clamp(
-          27px,
+          29px,
           4vw,
-          38px
+          40px
         );
 
       line-height: 1.15;
@@ -2093,7 +2071,7 @@ const getExcerpt = (
 
       color: #64748b;
 
-      font-size: 12px;
+      font-size: 13px;
 
       line-height: 1.7;
 
@@ -2162,9 +2140,9 @@ const getExcerpt = (
 
     .category-icon {
 
-      width: 44px;
+      width: 46px;
 
-      height: 44px;
+      height: 46px;
 
       display: grid;
 
@@ -2178,7 +2156,7 @@ const getExcerpt = (
 
       color: #2563eb;
 
-      font-size: 17px;
+      font-size: 18px;
 
     }
 
@@ -2189,9 +2167,9 @@ const getExcerpt = (
 
       color: #172554;
 
-      font-size: 15px;
+      font-size: 17px;
 
-      line-height: 1.3;
+      line-height: 1.35;
 
       font-weight: 900;
 
@@ -2203,13 +2181,13 @@ const getExcerpt = (
       min-height: 64px;
 
       margin:
-        8px 0 18px;
+        9px 0 20px;
 
       color: #64748b;
 
-      font-size: 11px;
+      font-size: 13px;
 
-      line-height: 1.65;
+      line-height: 1.7;
 
     }
 
@@ -2222,16 +2200,23 @@ const getExcerpt = (
 
       justify-content: space-between;
 
-      padding-top: 12px;
+      padding-top: 13px;
 
       border-top:
         1px solid #f1f5f9;
 
       color: #2563eb;
 
-      font-size: 10px;
+      font-size: 12px;
 
       font-weight: 800;
+
+    }
+
+
+    .category-bottom i {
+
+      font-size: 12px;
 
     }
 
@@ -2305,9 +2290,9 @@ const getExcerpt = (
 
     .db-category-icon {
 
-      width: 42px;
+      width: 44px;
 
-      height: 42px;
+      height: 44px;
 
       display: grid;
 
@@ -2321,6 +2306,8 @@ const getExcerpt = (
 
       color: #2563eb;
 
+      font-size: 16px;
+
     }
 
 
@@ -2328,11 +2315,11 @@ const getExcerpt = (
 
       display: block;
 
-      margin-bottom: 2px;
+      margin-bottom: 3px;
 
       color: #2563eb;
 
-      font-size: 8px;
+      font-size: 10px;
 
       font-weight: 900;
 
@@ -2347,7 +2334,9 @@ const getExcerpt = (
 
       color: #172554;
 
-      font-size: 17px;
+      font-size: 19px;
+
+      line-height: 1.35;
 
       font-weight: 900;
 
@@ -2404,9 +2393,9 @@ const getExcerpt = (
 
     .db-item-icon {
 
-      width: 38px;
+      width: 40px;
 
-      height: 38px;
+      height: 40px;
 
       display: grid;
 
@@ -2420,7 +2409,7 @@ const getExcerpt = (
 
       color: #2563eb;
 
-      font-size: 13px;
+      font-size: 14px;
 
     }
 
@@ -2440,7 +2429,7 @@ const getExcerpt = (
 
       color: #172554;
 
-      font-size: 12px;
+      font-size: 14px;
 
       line-height: 1.45;
 
@@ -2455,11 +2444,11 @@ const getExcerpt = (
 
     .db-item-description {
 
-      margin-top: 4px;
+      margin-top: 5px;
 
       color: #64748b;
 
-      font-size: 10px;
+      font-size: 12px;
 
       line-height: 1.6;
 
@@ -2478,11 +2467,11 @@ const getExcerpt = (
 
       display: block;
 
-      margin-top: 3px;
+      margin-top: 4px;
 
       color: #94a3b8;
 
-      font-size: 8px;
+      font-size: 10px;
 
     }
 
@@ -2494,9 +2483,9 @@ const getExcerpt = (
     .download-button,
     .detail-button {
 
-      min-width: 72px;
+      min-width: 78px;
 
-      height: 34px;
+      height: 36px;
 
       display: inline-flex;
 
@@ -2518,7 +2507,7 @@ const getExcerpt = (
 
       font-family: inherit;
 
-      font-size: 9px;
+      font-size: 10px;
 
       font-weight: 900;
 
@@ -2560,7 +2549,7 @@ const getExcerpt = (
 
       margin-bottom: 8px;
 
-      font-size: 25px;
+      font-size: 27px;
 
     }
 
@@ -2569,7 +2558,7 @@ const getExcerpt = (
 
       margin: 0;
 
-      font-size: 10px;
+      font-size: 12px;
 
     }
 
@@ -2641,9 +2630,9 @@ const getExcerpt = (
 
     .contact-icon {
 
-      width: 42px;
+      width: 44px;
 
-      height: 42px;
+      height: 44px;
 
       display: grid;
 
@@ -2655,6 +2644,8 @@ const getExcerpt = (
 
       color: #2563eb;
 
+      font-size: 16px;
+
     }
 
 
@@ -2662,11 +2653,11 @@ const getExcerpt = (
 
       display: block;
 
-      margin-bottom: 2px;
+      margin-bottom: 3px;
 
       color: #2563eb;
 
-      font-size: 8px;
+      font-size: 10px;
 
       font-weight: 900;
 
@@ -2679,7 +2670,7 @@ const getExcerpt = (
 
       color: #172554;
 
-      font-size: 17px;
+      font-size: 19px;
 
       font-weight: 900;
 
@@ -2720,9 +2711,9 @@ const getExcerpt = (
 
     .contact-item > div {
 
-      width: 27px;
+      width: 29px;
 
-      height: 27px;
+      height: 29px;
 
       flex-shrink: 0;
 
@@ -2736,7 +2727,7 @@ const getExcerpt = (
 
       color: #2563eb;
 
-      font-size: 10px;
+      font-size: 11px;
 
     }
 
@@ -2756,7 +2747,7 @@ const getExcerpt = (
 
       color: #94a3b8;
 
-      font-size: 8px;
+      font-size: 9px;
 
       font-weight: 800;
 
@@ -2774,7 +2765,7 @@ const getExcerpt = (
 
       color: #475569;
 
-      font-size: 10px;
+      font-size: 11px;
 
       line-height: 1.6;
 
@@ -2813,7 +2804,7 @@ const getExcerpt = (
 
       color: #64748b;
 
-      font-size: 9px;
+      font-size: 10px;
 
       font-weight: 900;
 
@@ -2833,9 +2824,9 @@ const getExcerpt = (
 
     .social-list a {
 
-      width: 32px;
+      width: 34px;
 
-      height: 32px;
+      height: 34px;
 
       display: grid;
 
@@ -2847,7 +2838,7 @@ const getExcerpt = (
 
       color: #475569;
 
-      font-size: 12px;
+      font-size: 13px;
 
       transition: .2s ease;
 
@@ -2879,7 +2870,7 @@ const getExcerpt = (
 
       color: #64748b;
 
-      font-size: 9px;
+      font-size: 10px;
 
     }
 
@@ -2917,9 +2908,9 @@ const getExcerpt = (
 
     .request-icon {
 
-      width: 42px;
+      width: 44px;
 
-      height: 42px;
+      height: 44px;
 
       display: grid;
 
@@ -2937,6 +2928,8 @@ const getExcerpt = (
           .12
         );
 
+      font-size: 16px;
+
     }
 
 
@@ -2944,7 +2937,7 @@ const getExcerpt = (
 
       margin: 0;
 
-      font-size: 17px;
+      font-size: 19px;
 
       font-weight: 900;
 
@@ -2964,7 +2957,7 @@ const getExcerpt = (
           .72
         );
 
-      font-size: 10px;
+      font-size: 12px;
 
       line-height: 1.7;
 
@@ -2990,7 +2983,7 @@ const getExcerpt = (
 
       color: #1e40af;
 
-      font-size: 10px;
+      font-size: 11px;
 
       font-weight: 900;
 
@@ -3045,9 +3038,9 @@ const getExcerpt = (
 
     .bottom-icon {
 
-      width: 48px;
+      width: 50px;
 
-      height: 48px;
+      height: 50px;
 
       flex-shrink: 0;
 
@@ -3061,6 +3054,8 @@ const getExcerpt = (
 
       color: #2563eb;
 
+      font-size: 18px;
+
     }
 
 
@@ -3068,7 +3063,7 @@ const getExcerpt = (
 
       color: #2563eb;
 
-      font-size: 9px;
+      font-size: 10px;
 
       font-weight: 900;
 
@@ -3084,7 +3079,7 @@ const getExcerpt = (
 
       color: #172554;
 
-      font-size: 24px;
+      font-size: 26px;
 
       line-height: 1.25;
 
@@ -3101,7 +3096,7 @@ const getExcerpt = (
 
       color: #64748b;
 
-      font-size: 11px;
+      font-size: 12px;
 
       line-height: 1.7;
 
@@ -3233,9 +3228,9 @@ const getExcerpt = (
 
       right: 15px;
 
-      width: 36px;
+      width: 38px;
 
-      height: 36px;
+      height: 38px;
 
       display: grid;
 
@@ -3267,9 +3262,9 @@ const getExcerpt = (
 
     .modal-icon {
 
-      width: 48px;
+      width: 50px;
 
-      height: 48px;
+      height: 50px;
 
       display: grid;
 
@@ -3283,7 +3278,7 @@ const getExcerpt = (
 
       color: #2563eb;
 
-      font-size: 18px;
+      font-size: 19px;
 
     }
 
@@ -3292,7 +3287,7 @@ const getExcerpt = (
 
       color: #2563eb;
 
-      font-size: 9px;
+      font-size: 10px;
 
       font-weight: 900;
 
@@ -3310,7 +3305,7 @@ const getExcerpt = (
 
       color: #172554;
 
-      font-size: 24px;
+      font-size: 26px;
 
       line-height: 1.3;
 
@@ -3332,7 +3327,7 @@ const getExcerpt = (
 
       color: #475569;
 
-      font-size: 13px;
+      font-size: 14px;
 
       line-height: 1.8;
 
@@ -3441,7 +3436,7 @@ const getExcerpt = (
       margin:
         15px 0;
 
-      font-size: 12px;
+      font-size: 13px;
 
     }
 
@@ -3564,6 +3559,13 @@ const getExcerpt = (
       }
 
 
+      .hero-content > p {
+
+        font-size: 14px;
+
+      }
+
+
       .hero-actions {
 
         flex-direction: column;
@@ -3601,9 +3603,37 @@ const getExcerpt = (
       }
 
 
+      .section-heading h2 {
+
+        font-size: 30px;
+
+      }
+
+
       .category-grid {
 
         grid-template-columns: 1fr;
+
+      }
+
+
+      .category-content h3 {
+
+        font-size: 17px;
+
+      }
+
+
+      .category-content p {
+
+        font-size: 13px;
+
+      }
+
+
+      .category-bottom {
+
+        font-size: 12px;
 
       }
 
@@ -3623,6 +3653,20 @@ const getExcerpt = (
           calc(
             100% - 55px
           );
+
+      }
+
+
+      .db-item-content h4 {
+
+        font-size: 14px;
+
+      }
+
+
+      .db-item-description {
+
+        font-size: 12px;
 
       }
 
@@ -3667,6 +3711,13 @@ const getExcerpt = (
       }
 
 
+      .bottom-card p {
+
+        font-size: 12px;
+
+      }
+
+
       .modal-box {
 
         padding:
@@ -3677,7 +3728,7 @@ const getExcerpt = (
 
       .modal-box h3 {
 
-        font-size: 20px;
+        font-size: 21px;
 
       }
 
@@ -3686,7 +3737,7 @@ const getExcerpt = (
 
         padding: 15px;
 
-        font-size: 12px;
+        font-size: 13px;
 
       }
 
