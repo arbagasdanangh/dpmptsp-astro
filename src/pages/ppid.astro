@@ -3,10 +3,6 @@ import MainLayout from "../layouts/MainLayout.astro";
 
 export const prerender = false;
 
-/* =========================================================
-   CONFIG
-========================================================= */
-
 const title = "PPID - DPMPTSP Kota Surabaya";
 
 const API_KATEGORI =
@@ -21,11 +17,6 @@ const API_USERNAME =
 const API_PASSWORD =
   import.meta.env.API_BERITA_PASSWORD;
 
-
-/* =========================================================
-   API HEADERS
-========================================================= */
-
 const API_HEADERS = {
   username: API_USERNAME,
   password: API_PASSWORD,
@@ -34,70 +25,41 @@ const API_HEADERS = {
     "application/x-www-form-urlencoded",
 };
 
-
-/* =========================================================
-   DATA
-========================================================= */
-
 let kategori = [];
 let items = [];
-
 let apiError = "";
 
-
 /* =========================================================
-   FETCH KATEGORI
+   API KATEGORI
 ========================================================= */
 
 try {
+  const response = await fetch(API_KATEGORI, {
+    method: "POST",
+    headers: API_HEADERS,
+    body: new URLSearchParams(),
+  });
 
-  const response = await fetch(
-    API_KATEGORI,
-    {
-      method: "POST",
-      headers: API_HEADERS,
-      body: new URLSearchParams(),
-    }
-  );
+  const result = await response.json();
 
-  const result =
-    await response.json();
-
-  console.log(
-    "API PPID KATEGORI:",
-    result
-  );
+  console.log("API PPID KATEGORI:", result);
 
   if (!response.ok) {
-
     throw new Error(
       result?.message ||
       `HTTP ${response.status}`
     );
-
   }
 
-  if (
-    Array.isArray(result?.data)
-  ) {
-
-    kategori =
-      result.data;
-
-  } else if (
-    Array.isArray(result)
-  ) {
-
-    kategori =
-      result;
-
+  if (Array.isArray(result?.data)) {
+    kategori = result.data;
+  } else if (Array.isArray(result)) {
+    kategori = result;
   } else {
-
     throw new Error(
       result?.message ||
       "Data kategori PPID tidak ditemukan."
     );
-
   }
 
 } catch (error) {
@@ -111,60 +73,43 @@ try {
     error instanceof Error
       ? error.message
       : "Gagal mengambil kategori PPID.";
-
 }
 
 
 /* =========================================================
-   FETCH ITEM
+   API ITEM
 ========================================================= */
 
 try {
 
-  const response = await fetch(
-    API_ITEM,
-    {
-      method: "POST",
-      headers: API_HEADERS,
+  const response = await fetch(API_ITEM, {
+    method: "POST",
+    headers: API_HEADERS,
 
-      body:
-        new URLSearchParams({
-          id: "",
-          kategori_id: "",
-        }),
-    }
-  );
+    body: new URLSearchParams({
+      id: "",
+      kategori_id: "",
+    }),
+  });
 
-  const result =
-    await response.json();
+  const result = await response.json();
 
-  console.log(
-    "API PPID ITEM:",
-    result
-  );
+  console.log("API PPID ITEM:", result);
 
   if (!response.ok) {
-
     throw new Error(
       result?.message ||
       `HTTP ${response.status}`
     );
-
   }
 
-  if (
-    Array.isArray(result?.data)
-  ) {
+  if (Array.isArray(result?.data)) {
 
-    items =
-      result.data;
+    items = result.data;
 
-  } else if (
-    Array.isArray(result)
-  ) {
+  } else if (Array.isArray(result)) {
 
-    items =
-      result;
+    items = result;
 
   } else {
 
@@ -195,85 +140,85 @@ try {
 
 
 /* =========================================================
-   NORMALIZE KATEGORI
+   NORMALISASI KATEGORI
 ========================================================= */
 
-kategori =
-  kategori.map((kat) => {
+kategori = kategori.map((kat) => {
 
-    const nama =
-      kat.nama_kategori ||
-      kat.nama ||
-      kat.judul ||
-      "Kategori PPID";
+  const nama =
+    kat.nama_kategori ||
+    kat.nama ||
+    kat.judul ||
+    "Kategori PPID";
 
-    const slug =
-      kat.slug ||
-      String(nama)
-        .toLowerCase()
-        .trim()
-        .replace(
-          /[^a-z0-9]+/g,
-          "-"
-        )
-        .replace(
-          /^-+|-+$/g,
-          "");
+  const slug =
+    kat.slug ||
+    String(nama)
+      .toLowerCase()
+      .trim()
+      .replace(
+        /[^a-z0-9]+/g,
+        "-"
+      )
+      .replace(
+        /^-+|-+$/g,
+        "");
 
-    return {
-      ...kat,
+  return {
 
-      id:
-        Number(kat.id),
+    ...kat,
 
-      nama_kategori:
-        nama,
+    id:
+      Number(kat.id),
 
-      slug:
-        slug,
-    };
+    nama_kategori:
+      nama,
 
-  });
+    slug:
+      slug,
+
+  };
+
+});
 
 
 /* =========================================================
-   NORMALIZE ITEM
+   NORMALISASI ITEM
 ========================================================= */
 
-items =
-  items.map((item) => {
+items = items.map((item) => {
 
-    return {
+  return {
 
-      ...item,
+    ...item,
 
-      id:
-        Number(item.id),
+    id:
+      Number(item.id),
 
-      kategori_id:
-        Number(item.kategori_id),
+    kategori_id:
+      Number(item.kategori_id),
 
-      judul:
-        item.judul || "",
+    judul:
+      item.judul || "",
 
-      isi:
-        item.isi || "",
+    isi:
+      item.isi || "",
 
-      file_url:
-        item.file_url || "",
+    file_url:
+      item.file_url || "",
 
-      urutan:
-        Number(item.urutan || 0),
+    urutan:
+      Number(item.urutan || 0),
 
-      nama_kategori:
-        item.nama_kategori || "",
+    nama_kategori:
+      item.nama_kategori || "",
 
-      slug:
-        item.slug || "",
+    slug:
+      item.slug || "",
 
-    };
+  };
 
-  });
+});
 
 
 /* =========================================================
@@ -287,49 +232,37 @@ kategori.sort(
 );
 
 
-items.sort(
-  (a, b) => {
+items.sort((a, b) => {
 
-    const kategoriCompare =
-      Number(a.kategori_id || 0) -
-      Number(b.kategori_id || 0);
+  const kategoriCompare =
+    Number(a.kategori_id || 0) -
+    Number(b.kategori_id || 0);
 
-    if (
-      kategoriCompare !== 0
-    ) {
-
-      return kategoriCompare;
-
-    }
-
-    const urutanCompare =
-      Number(a.urutan || 0) -
-      Number(b.urutan || 0);
-
-    if (
-      urutanCompare !== 0
-    ) {
-
-      return urutanCompare;
-
-    }
-
-    return (
-      Number(a.id || 0) -
-      Number(b.id || 0)
-    );
-
+  if (kategoriCompare !== 0) {
+    return kategoriCompare;
   }
-);
+
+  const urutanCompare =
+    Number(a.urutan || 0) -
+    Number(b.urutan || 0);
+
+  if (urutanCompare !== 0) {
+    return urutanCompare;
+  }
+
+  return (
+    Number(a.id || 0) -
+    Number(b.id || 0)
+  );
+
+});
 
 
 /* =========================================================
-   HELPER
+   HELPERS
 ========================================================= */
 
-const getItems = (
-  kategoriId
-) => {
+const getItems = (kategoriId) => {
 
   return items.filter(
     (item) =>
@@ -340,20 +273,12 @@ const getItems = (
 };
 
 
-const getKategoriCount = (
-  kategoriId
-) => {
+const getKategoriCount = (kategoriId) => {
 
-  return getItems(
-    kategoriId
-  ).length;
+  return getItems(kategoriId).length;
 
 };
 
-
-/* =========================================================
-   ICON KATEGORI
-========================================================= */
 
 const iconKategori = {
 
@@ -372,10 +297,6 @@ const iconKategori = {
 };
 
 
-/* =========================================================
-   DESKRIPSI KATEGORI
-========================================================= */
-
 const descKategori = {
 
   berkala:
@@ -393,54 +314,30 @@ const descKategori = {
 };
 
 
-/* =========================================================
-   ICON
-========================================================= */
-
-const getIcon = (
-  slug
-) => {
+const getIcon = (slug) => {
 
   return (
-    iconKategori[
-      slug
-    ] ||
+    iconKategori[slug] ||
     "fa-folder"
   );
 
 };
 
 
-/* =========================================================
-   DESCRIPTION
-========================================================= */
-
-const getDescription = (
-  slug
-) => {
+const getDescription = (slug) => {
 
   return (
-    descKategori[
-      slug
-    ] ||
+    descKategori[slug] ||
     "Informasi publik DPMPTSP Kota Surabaya."
   );
 
 };
 
 
-/* =========================================================
-   HTML → TEXT
-========================================================= */
-
-const getExcerpt = (
-  html
-) => {
+const getExcerpt = (html) => {
 
   if (!html) {
-
     return "";
-
   }
 
   return String(html)
@@ -522,11 +419,15 @@ const getExcerpt = (
 
   <main class="ppid-page">
 
+
     <!-- =====================================================
          HERO
     ====================================================== -->
 
     <section class="ppid-hero">
+
+      <div class="hero-orb hero-orb-one"></div>
+      <div class="hero-orb hero-orb-two"></div>
 
       <div class="container">
 
@@ -536,11 +437,11 @@ const getExcerpt = (
 
             <div class="hero-badge">
 
-              <span class="hero-badge-icon">
-                <i class="fa-solid fa-circle-info"></i>
+              <span>
+                <i class="fa-solid fa-building-columns"></i>
               </span>
 
-              PPID DPMPTSP KOTA SURABAYA
+              PPID DPMPTSP
 
             </div>
 
@@ -551,11 +452,12 @@ const getExcerpt = (
             </h1>
 
 
-            <p>
-              Platform layanan keterbukaan informasi publik
-              DPMPTSP Kota Surabaya. Anda dapat mengunduh
-              berbagai dokumen dan informasi secara mudah,
-              cepat, dan transparan.
+            <p class="hero-description">
+
+              Akses informasi publik DPMPTSP Kota Surabaya
+              dengan mudah, cepat, transparan, dan dapat
+              dipertanggungjawabkan.
+
             </p>
 
 
@@ -589,34 +491,28 @@ const getExcerpt = (
           </div>
 
 
-          <div class="hero-information">
+          <div class="hero-card">
 
-            <div class="hero-information-icon">
+            <div class="hero-card-icon">
 
               <i class="fa-solid fa-building-columns"></i>
 
             </div>
 
+            <strong>
+              PPID DPMPTSP
+            </strong>
 
-            <div>
+            <span>
+              Pejabat Pengelola Informasi dan Dokumentasi
+            </span>
 
-              <span>
-                Pejabat Pengelola
-                Informasi dan Dokumentasi
-              </span>
+            <div class="hero-card-line"></div>
 
-
-              <strong>
-                PPID DPMPTSP
-              </strong>
-
-
-              <p>
-                Menyediakan akses informasi publik
-                yang mudah dan transparan.
-              </p>
-
-            </div>
+            <small>
+              Melayani kebutuhan informasi publik
+              masyarakat Kota Surabaya.
+            </small>
 
           </div>
 
@@ -627,45 +523,45 @@ const getExcerpt = (
     </section>
 
 
+
     <!-- =====================================================
-         ERROR API
+         ERROR
     ====================================================== -->
 
-    {
-      apiError && (
+    {apiError && (
 
-        <section class="api-error-section">
+      <section class="api-error">
 
-          <div class="container">
+        <div class="container">
 
-            <div class="api-error">
+          <div class="error-box">
 
-              <i class="fa-solid fa-triangle-exclamation"></i>
+            <i class="fa-solid fa-triangle-exclamation"></i>
 
-              <div>
+            <div>
 
-                <strong>
-                  Data API belum dapat dimuat
-                </strong>
+              <strong>
+                Data PPID belum dapat dimuat
+              </strong>
 
-                <p>
-                  {apiError}
-                </p>
-
-              </div>
+              <p>
+                {apiError}
+              </p>
 
             </div>
 
           </div>
 
-        </section>
+        </div>
 
-      )
-    }
+      </section>
+
+    )}
+
 
 
     <!-- =====================================================
-         KATEGORI
+         INFORMASI
     ====================================================== -->
 
     <section
@@ -680,77 +576,118 @@ const getExcerpt = (
           <div>
 
             <span class="section-eyebrow">
+
               INFORMASI PUBLIK
+
             </span>
 
 
             <h2>
-              Akses informasi
-              <span>secara mudah</span>
+
+              Temukan informasi
+              <span>yang Anda butuhkan</span>
+
             </h2>
 
           </div>
 
 
           <p>
-            Pilih kategori informasi yang ingin
-            Anda lihat atau unduh.
+
+            Pilih kategori informasi publik
+            untuk melihat dokumen dan informasi
+            yang tersedia.
+
           </p>
 
         </div>
 
 
-        <div class="category-grid">
+        <div class="information-guide">
 
-          {
-            kategori.map((kat) => (
+          <span class="guide-icon">
 
-              <a
-                href={`#kategori-${kat.slug}`}
-                class="category-card"
-              >
+            <i class="fa-solid fa-hand-pointer"></i>
 
-                <div class="category-icon">
+          </span>
 
-                  <i
-                    class={`fa-solid ${getIcon(kat.slug)}`}
-                  ></i>
+          <span>
 
-                </div>
+            Silakan pilih salah satu kategori
+            informasi di bawah.
 
+          </span>
 
-                <div class="category-content">
-
-                  <h3>
-                    {kat.nama_kategori}
-                  </h3>
+        </div>
 
 
-                  <p>
-                    {getDescription(
-                      kat.slug
-                    )}
-                  </p>
+        <div class="category-scroll">
+
+          <div class="category-grid">
+
+            {
+              kategori.map((kat) => (
+
+                <a
+                  href={`#kategori-${kat.slug}`}
+                  class="category-card"
+                >
+
+                  <div class="category-top-line"></div>
 
 
-                  <div class="category-bottom">
+                  <div class="category-icon">
 
-                    <span>
-                      {getKategoriCount(kat.id)}
-                      &nbsp;Informasi
-                    </span>
-
-
-                    <i class="fa-solid fa-arrow-right"></i>
+                    <i
+                      class={`fa-solid ${getIcon(kat.slug)}`}
+                    ></i>
 
                   </div>
 
-                </div>
 
-              </a>
+                  <div class="category-content">
 
-            ))
-          }
+                    <h3>
+                      {kat.nama_kategori}
+                    </h3>
+
+
+                    <p>
+                      {getDescription(kat.slug)}
+                    </p>
+
+
+                    <div class="category-bottom">
+
+                      <span>
+
+                        <strong>
+                          {getKategoriCount(kat.id)}
+                        </strong>
+
+                        informasi
+
+                      </span>
+
+
+                      <span class="category-cta">
+
+                        Lihat
+
+                        <i class="fa-solid fa-arrow-right"></i>
+
+                      </span>
+
+                    </div>
+
+                  </div>
+
+                </a>
+
+              ))
+            }
+
+          </div>
 
         </div>
 
@@ -759,8 +696,9 @@ const getExcerpt = (
     </section>
 
 
+
     <!-- =====================================================
-         KONTEN INFORMASI
+         CONTENT
     ====================================================== -->
 
     <section class="information-section">
@@ -769,31 +707,16 @@ const getExcerpt = (
 
         <div class="information-layout">
 
+
+          <!-- MAIN -->
+
           <div class="information-main">
 
-            <div class="section-heading left">
-
-              <div>
-
-                <span class="section-eyebrow">
-                  DOKUMEN & INFORMASI
-                </span>
-
-
-                <h2>
-                  Informasi yang
-                  <span>tersedia</span>
-                </h2>
-
-              </div>
-
-            </div>
-
-
             {
+
               kategori.map((kat) => {
 
-                const data =
+                const categoryItems =
                   getItems(kat.id);
 
                 return (
@@ -803,7 +726,7 @@ const getExcerpt = (
                     class="db-category"
                   >
 
-                    <div class="db-category-header">
+                    <div class="db-category-heading">
 
                       <div class="db-category-icon">
 
@@ -817,14 +740,16 @@ const getExcerpt = (
                       <div>
 
                         <span>
-                          {data.length}
-                          &nbsp;INFORMASI
+                          INFORMASI PUBLIK
                         </span>
 
-
-                        <h3>
+                        <h2>
                           {kat.nama_kategori}
-                        </h3>
+                        </h2>
+
+                        <p>
+                          {getDescription(kat.slug)}
+                        </p>
 
                       </div>
 
@@ -832,130 +757,157 @@ const getExcerpt = (
 
 
                     {
-                      data.length > 0 ? (
+                      categoryItems.length > 0 ? (
 
-                        <div class="db-item-list">
+                        <div class="db-list">
 
                           {
-                            data.map((item) => (
 
-                              <article
-                                class="db-item"
-                              >
+                            categoryItems.map(
+                              (item) => (
 
-                                <div class="db-item-icon">
+                                <article
+                                  class="db-item"
+                                >
 
-                                  <i class="fa-solid fa-file-lines"></i>
+                                  <div class="db-item-icon">
 
-                                </div>
+                                    <i class="fa-solid fa-file-lines"></i>
+
+                                  </div>
 
 
-                                <div class="db-item-content">
+                                  <div class="db-item-content">
 
-                                  <h4>
-                                    {item.judul}
-                                  </h4>
+                                    <small>
+
+                                      {item.nama_kategori ||
+                                        kat.nama_kategori}
+
+                                    </small>
+
+
+                                    <h3>
+                                      {item.judul}
+                                    </h3>
+
+
+                                    {
+                                      item.isi && (
+
+                                        <p class="db-item-description">
+
+                                          {getExcerpt(
+                                            item.isi
+                                          )}
+
+                                          {getExcerpt(
+                                            item.isi
+                                          ).length >= 180
+                                            ? "..."
+                                            : ""}
+
+                                        </p>
+
+                                      )
+                                    }
+
+                                  </div>
+
+
+                                  <div class="db-item-action">
+
+                                    {
+
+                                      item.file_url ? (
+
+                                        <a
+                                          href={item.file_url}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          class="download-button"
+                                        >
+
+                                          <span>
+                                            Unduh
+                                          </span>
+
+                                          <i class="fa-solid fa-download"></i>
+
+                                        </a>
+
+                                      ) : (
+
+                                        <button
+                                          type="button"
+                                          class="detail-button"
+                                          data-title={item.judul}
+                                          data-id={item.id}
+                                        >
+
+                                          <span>
+                                            Detail
+                                          </span>
+
+                                          <i class="fa-solid fa-arrow-right"></i>
+
+                                        </button>
+
+                                      )
+
+                                    }
+
+                                  </div>
 
 
                                   {
-                                    item.isi && (
 
-                                      <div class="db-item-description">
+                                    !item.file_url && (
 
-                                        {getExcerpt(
-                                          item.isi
-                                        )}
+                                      <template
+                                        id={`ppid-content-${item.id}`}
+                                      >
 
-                                      </div>
+                                        <Fragment
+                                          set:html={
+                                            item.isi || ""
+                                          }
+                                        />
+
+                                      </template>
 
                                     )
+
                                   }
 
+                                </article>
 
-                                  <small>
-                                    {kat.nama_kategori}
-                                  </small>
+                              )
+                            )
 
-                                </div>
-
-
-                                {
-                                  item.file_url ? (
-
-                                    <a
-                                      href={item.file_url}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      class="download-button"
-                                    >
-
-                                      <span>
-                                        Unduh
-                                      </span>
-
-                                      <i class="fa-solid fa-download"></i>
-
-                                    </a>
-
-                                  ) : (
-
-                                    <button
-                                      type="button"
-                                      class="detail-button"
-                                      data-title={item.judul}
-                                      data-id={item.id}
-                                    >
-
-                                      <span>
-                                        Detail
-                                      </span>
-
-                                      <i class="fa-solid fa-arrow-right"></i>
-
-                                    </button>
-
-                                  )
-                                }
-
-
-                                {
-                                  !item.file_url && (
-
-                                    <template
-                                      id={`ppid-content-${item.id}`}
-                                    >
-
-                                      <Fragment
-                                        set:html={
-                                          item.isi || ""
-                                        }
-                                      />
-
-                                    </template>
-
-                                  )
-                                }
-
-                              </article>
-
-                            ))
                           }
 
                         </div>
 
                       ) : (
 
-                        <div class="empty-data">
+                        <div class="empty-state">
 
-                          <i class="fa-regular fa-folder-open"></i>
+                          <i class="fa-solid fa-folder-open"></i>
 
-                          <p>
-                            Belum ada informasi pada kategori ini.
-                          </p>
+                          <strong>
+                            Belum ada informasi
+                          </strong>
+
+                          <span>
+                            Informasi pada kategori ini
+                            belum tersedia.
+                          </span>
 
                         </div>
 
                       )
+
                     }
 
                   </section>
@@ -963,39 +915,39 @@ const getExcerpt = (
                 );
 
               })
+
             }
 
           </div>
 
 
-          <!-- =================================================
-               SIDEBAR
-          ================================================== -->
+
+          <!-- SIDEBAR -->
 
           <aside
             id="kontak"
-            class="ppid-sidebar"
+            class="information-sidebar"
           >
 
             <div class="contact-card">
 
               <div class="contact-card-header">
 
-                <div class="contact-icon">
+                <span class="contact-icon">
 
-                  <i class="fa-solid fa-address-card"></i>
+                  <i class="fa-solid fa-headset"></i>
 
-                </div>
+                </span>
 
 
                 <div>
 
-                  <span>
-                    INFORMASI PPID
-                  </span>
+                  <small>
+                    LAYANAN PPID
+                  </small>
 
                   <h3>
-                    Kontak & Alamat
+                    Hubungi PPID
                   </h3>
 
                 </div>
@@ -1005,90 +957,90 @@ const getExcerpt = (
 
               <div class="contact-list">
 
+
                 <div class="contact-item">
 
-                  <div>
+                  <span>
+
                     <i class="fa-solid fa-location-dot"></i>
-                  </div>
 
+                  </span>
 
-                  <section>
+                  <div>
 
-                    <small>
+                    <strong>
                       Alamat
-                    </small>
-
+                    </strong>
 
                     <p>
-                      Jl. Tunjungan No. 1–3,
-                      Genteng, Surabaya,
-                      Jawa Timur 60275
+                      Jl. Tunjungan No. 1-3
+                      Kota Surabaya
                     </p>
 
-                  </section>
+                  </div>
 
                 </div>
 
 
                 <div class="contact-item">
 
-                  <div>
+                  <span>
+
                     <i class="fa-solid fa-phone"></i>
-                  </div>
 
+                  </span>
 
-                  <section>
+                  <div>
 
-                    <small>
+                    <strong>
                       Telepon
-                    </small>
+                    </strong>
 
-
-                    <a href="tel:+623199243924">
-                      +62 31 99243924
+                    <a href="tel:03199000000">
+                      (031) 99000000
                     </a>
 
-                  </section>
+                  </div>
 
                 </div>
 
 
                 <div class="contact-item">
 
-                  <div>
+                  <span>
+
                     <i class="fa-solid fa-envelope"></i>
-                  </div>
 
+                  </span>
 
-                  <section>
+                  <div>
 
-                    <small>
+                    <strong>
                       Email
-                    </small>
+                    </strong>
 
-
-                    <a href="mailto:dpm-ptsp@surabaya.go.id">
-                      dpm-ptsp@surabaya.go.id
+                    <a href="mailto:ppid@dpmptsp.surabaya.go.id">
+                      ppid@dpmptsp.surabaya.go.id
                     </a>
 
-                  </section>
+                  </div>
 
                 </div>
 
 
                 <div class="contact-item">
 
-                  <div>
+                  <span>
+
                     <i class="fa-solid fa-globe"></i>
-                  </div>
 
+                  </span>
 
-                  <section>
+                  <div>
 
-                    <small>
+                    <strong>
                       Website
-                    </small>
-
+                    </strong>
 
                     <a
                       href="https://dpm-ptsp.surabaya.go.id"
@@ -1098,100 +1050,59 @@ const getExcerpt = (
                       dpm-ptsp.surabaya.go.id
                     </a>
 
-                  </section>
+                  </div>
 
                 </div>
 
               </div>
 
 
-              <div class="social-section">
-
-                <span>
-                  Sosial Media
-                </span>
+              <div class="social-title">
+                Ikuti kami
+              </div>
 
 
-                <div class="social-list">
+              <div class="social-links">
 
-                  <a
-                    href="https://www.instagram.com/dpmptspsby"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label="Instagram"
-                  >
+                <a
+                  href="#"
+                  aria-label="YouTube"
+                >
+                  <i class="fa-brands fa-youtube"></i>
+                </a>
 
-                    <i class="fa-brands fa-instagram"></i>
+                <a
+                  href="#"
+                  aria-label="WhatsApp"
+                >
+                  <i class="fa-brands fa-whatsapp"></i>
+                </a>
 
-                  </a>
+                <a
+                  href="#"
+                  aria-label="Facebook"
+                >
+                  <i class="fa-brands fa-facebook-f"></i>
+                </a>
 
-
-                  <a
-                    href="https://web.facebook.com/profile.php?id=100077441294587"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label="Facebook"
-                  >
-
-                    <i class="fa-brands fa-facebook-f"></i>
-
-                  </a>
-
-
-                  <a
-                    href="https://www.youtube.com/@dpm-ptspsurabaya1991"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label="Youtube"
-                  >
-
-                    <i class="fa-brands fa-youtube"></i>
-
-                  </a>
-
-                </div>
-
-
-                <div class="social-names">
-
-                  <p>
-                    <strong>
-                      Instagram
-                    </strong>
-
-                    @dpmptspsby
-                  </p>
-
-
-                  <p>
-                    <strong>
-                      Facebook
-                    </strong>
-
-                    DPMPTSP Surabaya
-                  </p>
-
-
-                  <p>
-                    <strong>
-                      Youtube
-                    </strong>
-
-                    @dpm-ptspsurabaya1991
-                  </p>
-
-                </div>
+                <a
+                  href="#"
+                  aria-label="Instagram"
+                >
+                  <i class="fa-brands fa-instagram"></i>
+                </a>
 
               </div>
 
             </div>
 
 
+
             <div class="request-card">
 
               <div class="request-icon">
 
-                <i class="fa-solid fa-file-circle-question"></i>
+                <i class="fa-solid fa-file-circle-plus"></i>
 
               </div>
 
@@ -1202,12 +1113,17 @@ const getExcerpt = (
 
 
               <p>
-                Ajukan permohonan informasi publik
-                melalui PPID DPMPTSP Kota Surabaya.
+
+                Sampaikan permohonan informasi
+                kepada PPID DPMPTSP Kota Surabaya.
+
               </p>
 
 
-              <a href="#">
+              <a
+                href="#"
+                class="request-button"
+              >
 
                 Ajukan Permohonan
 
@@ -1226,17 +1142,18 @@ const getExcerpt = (
     </section>
 
 
+
     <!-- =====================================================
-         BOTTOM
+         COMMITMENT
     ====================================================== -->
 
-    <section class="bottom-section">
+    <section class="commitment-section">
 
       <div class="container">
 
-        <div class="bottom-card">
+        <div class="commitment-box">
 
-          <div class="bottom-icon">
+          <div class="commitment-icon">
 
             <i class="fa-solid fa-shield-halved"></i>
 
@@ -1246,20 +1163,21 @@ const getExcerpt = (
           <div>
 
             <span>
-              KOMITMEN KETERBUKAAN INFORMASI
+              KOMITMEN KETERBUKAAN
             </span>
 
-
             <h2>
-              Transparansi untuk pelayanan
-              publik yang lebih baik.
+              Informasi publik untuk masyarakat
             </h2>
 
-
             <p>
-              DPMPTSP Kota Surabaya berkomitmen menyediakan
-              informasi publik secara mudah, cepat, dan
-              transparan sesuai dengan ketentuan yang berlaku.
+
+              DPMPTSP Kota Surabaya berkomitmen
+              memberikan layanan informasi publik
+              yang transparan, mudah diakses,
+              dan sesuai dengan ketentuan
+              peraturan perundang-undangan.
+
             </p>
 
           </div>
@@ -1273,9 +1191,10 @@ const getExcerpt = (
   </main>
 
 
-  <!-- =====================================================
-       MODAL DETAIL
-  ====================================================== -->
+
+  <!-- =======================================================
+       DETAIL MODAL
+  ======================================================== -->
 
   <div
     id="ppidModal"
@@ -1283,51 +1202,48 @@ const getExcerpt = (
     aria-hidden="true"
   >
 
-    <div
-      class="modal-backdrop"
-      data-close-modal
-    ></div>
+    <div class="ppid-modal-backdrop"></div>
 
 
     <div
-      class="modal-box"
+      class="ppid-modal-dialog"
       role="dialog"
       aria-modal="true"
-      aria-labelledby="modalTitle"
+      aria-labelledby="ppidModalTitle"
     >
 
-      <button
-        type="button"
-        class="modal-close"
-        data-close-modal
-        aria-label="Tutup"
-      >
+      <div class="ppid-modal-header">
 
-        <i class="fa-solid fa-xmark"></i>
+        <div>
 
-      </button>
+          <span>
+            INFORMASI PUBLIK
+          </span>
+
+          <h2 id="ppidModalTitle">
+            Detail Informasi
+          </h2>
+
+        </div>
 
 
-      <div class="modal-icon">
+        <button
+          type="button"
+          id="ppidModalClose"
+          class="ppid-modal-close"
+          aria-label="Tutup"
+        >
 
-        <i class="fa-solid fa-file-lines"></i>
+          <i class="fa-solid fa-xmark"></i>
+
+        </button>
 
       </div>
 
 
-      <span class="modal-label">
-        INFORMASI PUBLIK
-      </span>
-
-
-      <h3 id="modalTitle">
-        Detail Informasi
-      </h3>
-
-
       <div
         id="modalContent"
-        class="modal-content"
+        class="ppid-modal-content"
       ></div>
 
     </div>
@@ -1335,129 +1251,473 @@ const getExcerpt = (
   </div>
 
 
-  <!-- =====================================================
+
+  <!-- =======================================================
+       ACCESSIBILITY WIDGET
+  ======================================================== -->
+
+  <div class="accessibility-widget">
+
+
+    <!-- FLOATING BUTTON -->
+
+    <button
+      type="button"
+      id="accessibilityToggle"
+      class="accessibility-toggle"
+      aria-label="Pilih mode tampilan"
+      aria-expanded="false"
+    >
+
+      <span class="accessibility-toggle-icon">
+
+        <i class="fa-solid fa-universal-access"></i>
+
+      </span>
+
+      <span>
+        Pilih Mode
+      </span>
+
+    </button>
+
+
+
+    <!-- PANEL -->
+
+    <div
+      id="accessibilityPanel"
+      class="accessibility-panel"
+      aria-hidden="true"
+    >
+
+      <div class="accessibility-header">
+
+        <div class="accessibility-brand">
+
+          <strong>
+            DPMPTSP
+          </strong>
+
+          <small>
+            KOTA SURABAYA
+          </small>
+
+        </div>
+
+
+        <button
+          type="button"
+          id="accessibilityClose"
+          class="accessibility-close"
+        >
+          Tutup
+        </button>
+
+      </div>
+
+
+      <div class="accessibility-intro">
+
+        <div class="accessibility-info-icon">
+
+          <i class="fa-solid fa-info"></i>
+
+        </div>
+
+
+        <p>
+
+          Untuk memudahkan Anda menggunakan
+          situs ini, atur situs dengan mode
+          sesuai persona diri Anda!
+
+        </p>
+
+      </div>
+
+
+      <div class="accessibility-options">
+
+
+        <button
+          type="button"
+          class="accessibility-option active"
+          data-mode="normal"
+        >
+
+          <span class="option-check">
+
+            <i class="fa-solid fa-check"></i>
+
+          </span>
+
+          <span class="option-emoji">
+            👨🏻
+          </span>
+
+          <span class="option-title">
+            Normal
+          </span>
+
+        </button>
+
+
+        <button
+          type="button"
+          class="accessibility-option"
+          data-mode="colorblind"
+        >
+
+          <span class="option-check">
+
+            <i class="fa-solid fa-check"></i>
+
+          </span>
+
+          <span class="option-emoji">
+            👀
+          </span>
+
+          <span class="option-title">
+            Buta Warna
+          </span>
+
+        </button>
+
+
+        <button
+          type="button"
+          class="accessibility-option"
+          data-mode="elderly"
+        >
+
+          <span class="option-check">
+
+            <i class="fa-solid fa-check"></i>
+
+          </span>
+
+          <span class="option-emoji">
+            👴🏻
+          </span>
+
+          <span class="option-title">
+            Lansia
+          </span>
+
+        </button>
+
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+
+  <!-- =======================================================
        SCRIPT
-  ====================================================== -->
+  ======================================================== -->
 
   <script>
 
-    const modal =
+    /* =======================================================
+       PPID DETAIL MODAL
+    ======================================================== */
+
+    const ppidModal =
       document.getElementById(
         "ppidModal"
       );
 
-
-    const modalTitle =
+    const ppidModalClose =
       document.getElementById(
-        "modalTitle"
+        "ppidModalClose"
       );
-
 
     const modalContent =
       document.getElementById(
         "modalContent"
       );
 
-
-    const detailButtons =
-      document.querySelectorAll(
-        ".detail-button"
+    const modalTitle =
+      document.getElementById(
+        "ppidModalTitle"
       );
 
 
-    /* =====================================================
-       CLOSE
-    ====================================================== */
+    const closePPIDModal = () => {
 
-    const closeModal = () => {
-
-      modal?.classList.remove(
+      ppidModal?.classList.remove(
         "show"
       );
 
-
-      modal?.setAttribute(
+      ppidModal?.setAttribute(
         "aria-hidden",
         "true"
       );
 
-
       document.body.classList.remove(
+        "modal-open"
+      );
+
+      if (modalContent) {
+        modalContent.innerHTML = "";
+      }
+
+    };
+
+
+    const openPPIDModal = (
+      title,
+      id
+    ) => {
+
+      const template =
+        document.getElementById(
+          `ppid-content-${id}`
+        );
+
+      if (!template) {
+        return;
+      }
+
+
+      if (modalTitle) {
+        modalTitle.textContent =
+          title ||
+          "Detail Informasi";
+      }
+
+
+      if (modalContent) {
+
+        modalContent.innerHTML =
+          template.innerHTML;
+
+      }
+
+
+      ppidModal?.classList.add(
+        "show"
+      );
+
+      ppidModal?.setAttribute(
+        "aria-hidden",
+        "false"
+      );
+
+      document.body.classList.add(
         "modal-open"
       );
 
     };
 
 
-    /* =====================================================
-       DETAIL BUTTON
-    ====================================================== */
-
-    detailButtons.forEach(
-      (button) => {
+    document
+      .querySelectorAll(
+        ".detail-button"
+      )
+      .forEach((button) => {
 
         button.addEventListener(
           "click",
           () => {
 
-            const title =
-              button.dataset.title ||
-              "Detail Informasi";
-
-
-            const id =
-              button.dataset.id ||
-              "";
-
-
-            const template =
-              document.getElementById(
-                `ppid-content-${id}`
-              );
-
-
-            if (modalTitle) {
-
-              modalTitle.textContent =
-                title;
-
-            }
-
-
-            if (modalContent) {
-
-              if (template) {
-
-                modalContent.innerHTML =
-                  template.innerHTML;
-
-              } else {
-
-                modalContent.innerHTML =
-                  `
-                    <p>
-                      Informasi belum tersedia.
-                    </p>
-                  `;
-
-              }
-
-            }
-
-
-            modal?.classList.add(
-              "show"
+            openPPIDModal(
+              button.dataset.title,
+              button.dataset.id
             );
 
+          }
+        );
 
-            modal?.setAttribute(
-              "aria-hidden",
-              "false"
+      });
+
+
+    ppidModalClose?.addEventListener(
+      "click",
+      closePPIDModal
+    );
+
+
+    document
+      .querySelector(
+        ".ppid-modal-backdrop"
+      )
+      ?.addEventListener(
+        "click",
+        closePPIDModal
+      );
+
+
+
+    /* =======================================================
+       ACCESSIBILITY
+    ======================================================== */
+
+    const accessibilityToggle =
+      document.getElementById(
+        "accessibilityToggle"
+      );
+
+    const accessibilityPanel =
+      document.getElementById(
+        "accessibilityPanel"
+      );
+
+    const accessibilityClose =
+      document.getElementById(
+        "accessibilityClose"
+      );
+
+    const accessibilityOptions =
+      document.querySelectorAll(
+        ".accessibility-option"
+      );
+
+
+    const openAccessibility = () => {
+
+      accessibilityPanel?.classList.add(
+        "show"
+      );
+
+      accessibilityPanel?.setAttribute(
+        "aria-hidden",
+        "false"
+      );
+
+      accessibilityToggle?.setAttribute(
+        "aria-expanded",
+        "true"
+      );
+
+    };
+
+
+    const closeAccessibility = () => {
+
+      accessibilityPanel?.classList.remove(
+        "show"
+      );
+
+      accessibilityPanel?.setAttribute(
+        "aria-hidden",
+        "true"
+      );
+
+      accessibilityToggle?.setAttribute(
+        "aria-expanded",
+        "false"
+      );
+
+    };
+
+
+    accessibilityToggle?.addEventListener(
+      "click",
+      () => {
+
+        if (
+          accessibilityPanel?.classList.contains(
+            "show"
+          )
+        ) {
+
+          closeAccessibility();
+
+        } else {
+
+          openAccessibility();
+
+        }
+
+      }
+    );
+
+
+    accessibilityClose?.addEventListener(
+      "click",
+      closeAccessibility
+    );
+
+
+    /* =======================================================
+       APPLY MODE
+    ======================================================== */
+
+    const applyAccessibilityMode =
+      (mode) => {
+
+        document.documentElement.classList.remove(
+          "access-normal",
+          "access-colorblind",
+          "access-elderly"
+        );
+
+
+        if (
+          mode === "colorblind"
+        ) {
+
+          document.documentElement.classList.add(
+            "access-colorblind"
+          );
+
+        }
+
+
+        if (
+          mode === "elderly"
+        ) {
+
+          document.documentElement.classList.add(
+            "access-elderly"
+          );
+
+        }
+
+
+        accessibilityOptions.forEach(
+          (option) => {
+
+            option.classList.toggle(
+              "active",
+              option.dataset.mode === mode
             );
 
+          }
+        );
 
-            document.body.classList.add(
-              "modal-open"
+
+        try {
+
+          localStorage.setItem(
+            "dpmptsp-accessibility-mode",
+            mode
+          );
+
+        } catch {}
+
+      };
+
+
+    accessibilityOptions.forEach(
+      (option) => {
+
+        option.addEventListener(
+          "click",
+          () => {
+
+            const mode =
+              option.dataset.mode ||
+              "normal";
+
+            applyAccessibilityMode(
+              mode
             );
 
           }
@@ -1467,42 +1727,43 @@ const getExcerpt = (
     );
 
 
-    /* =====================================================
-       CLOSE BUTTON
-    ====================================================== */
+    /* =======================================================
+       LOAD SAVED MODE
+    ======================================================== */
 
-    document
-      .querySelectorAll(
-        "[data-close-modal]"
-      )
-      .forEach(
-        (element) => {
+    let savedMode = "normal";
 
-          element.addEventListener(
-            "click",
-            closeModal
-          );
+    try {
 
-        }
-      );
+      savedMode =
+        localStorage.getItem(
+          "dpmptsp-accessibility-mode"
+        ) ||
+        "normal";
+
+    } catch {}
 
 
-    /* =====================================================
+    applyAccessibilityMode(
+      savedMode
+    );
+
+
+    /* =======================================================
        ESC
-    ====================================================== */
+    ======================================================== */
 
     document.addEventListener(
       "keydown",
       (event) => {
 
         if (
-          event.key === "Escape" &&
-          modal?.classList.contains(
-            "show"
-          )
+          event.key === "Escape"
         ) {
 
-          closeModal();
+          closeAccessibility();
+
+          closePPIDModal();
 
         }
 
@@ -1511,2238 +1772,1758 @@ const getExcerpt = (
 
   </script>
 
-
-  <!-- =====================================================
-       STYLE
-  ====================================================== -->
-
-  <style>
-
-    :global(*) {
-      box-sizing: border-box;
-    }
-
-
-    :global(html) {
-      scroll-behavior: smooth;
-    }
-
-
-    :global(body) {
-
-      margin: 0;
-
-      font-family:
-        Inter,
-        system-ui,
-        -apple-system,
-        BlinkMacSystemFont,
-        "Segoe UI",
-        sans-serif;
-
-      color: #334155;
-
-      background: #fff;
-
-    }
-
-
-    :global(body.modal-open) {
-      overflow: hidden;
-    }
-
-
-    :global(a) {
-      text-decoration: none;
-    }
-
-
-    /* =====================================================
-       CONTAINER
-    ====================================================== */
-
-    .container {
-
-      width:
-        min(
-          1180px,
-          calc(100% - 40px)
-        );
-
-      margin-inline: auto;
-
-    }
-
-
-    /* =====================================================
-       API ERROR
-    ====================================================== */
-
-    .api-error-section {
-
-      padding:
-        15px 0;
-
-      background:
-        #fff7ed;
-
-    }
-
-
-    .api-error {
-
-      display: flex;
-
-      align-items: flex-start;
-
-      gap: 12px;
-
-      padding:
-        14px 16px;
-
-      border:
-        1px solid #fed7aa;
-
-      border-radius: 12px;
-
-      background: #fff;
-
-      color: #9a3412;
-
-    }
-
-
-    .api-error > i {
-
-      margin-top: 2px;
-
-      font-size: 16px;
-
-    }
-
-
-    .api-error strong {
-
-      display: block;
-
-      margin-bottom: 3px;
-
-      font-size: 13px;
-
-    }
-
-
-    .api-error p {
-
-      margin: 0;
-
-      font-size: 11px;
-
-      line-height: 1.5;
-
-    }
-
-
-    /* =====================================================
-       HERO
-    ====================================================== */
-
-    .ppid-hero {
-
-      position: relative;
-
-      overflow: hidden;
-
-      padding:
-        78px 0 82px;
-
-      background:
-        linear-gradient(
-          135deg,
-          #eff6ff 0%,
-          #ffffff 62%,
-          #f8fafc 100%
-        );
-
-    }
-
-
-    .ppid-hero::before {
-
-      content: "";
-
-      position: absolute;
-
-      width: 520px;
-
-      height: 520px;
-
-      top: -310px;
-
-      right: -110px;
-
-      border-radius: 50%;
-
-      background:
-        rgba(
-          37,
-          99,
-          235,
-          .065
-        );
-
-    }
-
-
-    .hero-grid {
-
-      position: relative;
-
-      z-index: 2;
-
-      display: grid;
-
-      grid-template-columns:
-        minmax(0, 1fr)
-        350px;
-
-      align-items: center;
-
-      gap: 70px;
-
-    }
-
-
-    .hero-badge {
-
-      display: inline-flex;
-
-      align-items: center;
-
-      gap: 9px;
-
-      margin-bottom: 18px;
-
-      color: #2563eb;
-
-      font-size: 12px;
-
-      font-weight: 900;
-
-      letter-spacing: .12em;
-
-    }
-
-
-    .hero-badge-icon {
-
-      width: 29px;
-
-      height: 29px;
-
-      display: grid;
-
-      place-items: center;
-
-      border-radius: 8px;
-
-      background: #dbeafe;
-
-      font-size: 13px;
-
-    }
-
-
-    .hero-content h1 {
-
-      max-width: 700px;
-
-      margin: 0;
-
-      color: #172554;
-
-      font-size:
-        clamp(
-          40px,
-          6vw,
-          64px
-        );
-
-      line-height: 1.02;
-
-      letter-spacing: -.045em;
-
-      font-weight: 900;
-
-    }
-
-
-    .hero-content h1 span {
-
-      display: block;
-
-      color: #2563eb;
-
-    }
-
-
-    .hero-content > p {
-
-      max-width: 680px;
-
-      margin:
-        23px 0 0;
-
-      color: #64748b;
-
-      font-size: 16px;
-
-      line-height: 1.8;
-
-    }
-
-
-    .hero-actions {
-
-      display: flex;
-
-      flex-wrap: wrap;
-
-      gap: 10px;
-
-      margin-top: 27px;
-
-    }
-
-
-    .hero-button {
-
-      min-height: 45px;
-
-      display: inline-flex;
-
-      align-items: center;
-
-      justify-content: center;
-
-      gap: 8px;
-
-      padding:
-        0 17px;
-
-      border-radius: 10px;
-
-      font-size: 12px;
-
-      font-weight: 800;
-
-      transition: .2s ease;
-
-    }
-
-
-    .hero-button.primary {
-
-      background: #2563eb;
-
-      color: #fff;
-
-    }
-
-
-    .hero-button.primary:hover {
-
-      background: #1d4ed8;
-
-      transform:
-        translateY(-2px);
-
-    }
-
-
-    .hero-button.secondary {
-
-      background: #fff;
-
-      color: #2563eb;
-
-      border:
-        1px solid #dbeafe;
-
-    }
-
-
-    .hero-button.secondary:hover {
-
-      background: #eff6ff;
-
-    }
-
-
-    .hero-information {
-
-      display: flex;
-
-      align-items: flex-start;
-
-      gap: 16px;
-
-      padding: 24px;
-
-      border:
-        1px solid #dbeafe;
-
-      border-radius: 18px;
-
-      background:
-        rgba(
-          255,
-          255,
-          255,
-          .82
-        );
-
-      box-shadow:
-        0 18px 50px
-        rgba(
-          15,
-          23,
-          42,
-          .06
-        );
-
-    }
-
-
-    .hero-information-icon {
-
-      width: 48px;
-
-      height: 48px;
-
-      flex-shrink: 0;
-
-      display: grid;
-
-      place-items: center;
-
-      border-radius: 13px;
-
-      background: #dbeafe;
-
-      color: #2563eb;
-
-      font-size: 20px;
-
-    }
-
-
-    .hero-information span {
-
-      display: block;
-
-      margin-bottom: 4px;
-
-      color: #64748b;
-
-      font-size: 11px;
-
-      line-height: 1.5;
-
-    }
-
-
-    .hero-information strong {
-
-      display: block;
-
-      color: #172554;
-
-      font-size: 19px;
-
-      font-weight: 900;
-
-    }
-
-
-    .hero-information p {
-
-      margin:
-        6px 0 0;
-
-      color: #64748b;
-
-      font-size: 12px;
-
-      line-height: 1.6;
-
-    }
-
-
-    /* =====================================================
-       SECTION
-    ====================================================== */
-
-    .category-section {
-
-      padding:
-        75px 0 80px;
-
-      background: #fff;
-
-    }
-
-
-    .section-heading {
-
-      display: flex;
-
-      align-items: flex-end;
-
-      justify-content: space-between;
-
-      gap: 40px;
-
-      margin-bottom: 35px;
-
-    }
-
-
-    .section-heading.left {
-
-      display: block;
-
-      margin-bottom: 28px;
-
-    }
-
-
-    .section-eyebrow {
-
-      display: block;
-
-      margin-bottom: 9px;
-
-      color: #2563eb;
-
-      font-size: 12px;
-
-      font-weight: 900;
-
-      letter-spacing: .13em;
-
-    }
-
-
-    .section-heading h2 {
-
-      margin: 0;
-
-      color: #172554;
-
-      font-size:
-        clamp(
-          29px,
-          4vw,
-          40px
-        );
-
-      line-height: 1.15;
-
-      letter-spacing: -.035em;
-
-      font-weight: 900;
-
-    }
-
-
-    .section-heading h2 span {
-
-      color: #2563eb;
-
-    }
-
-
-    .section-heading > p {
-
-      max-width: 360px;
-
-      margin: 0;
-
-      color: #64748b;
-
-      font-size: 13px;
-
-      line-height: 1.7;
-
-    }
-
-
-    /* =====================================================
-       CATEGORY
-    ====================================================== */
-
-    .category-grid {
-
-      display: grid;
-
-      grid-template-columns:
-        repeat(
-          4,
-          minmax(0, 1fr)
-        );
-
-      gap: 16px;
-
-    }
-
-
-    .category-card {
-
-      position: relative;
-
-      display: block;
-
-      padding: 22px;
-
-      overflow: hidden;
-
-      border:
-        1px solid #e5e7eb;
-
-      border-radius: 15px;
-
-      background: #fff;
-
-      transition: .25s ease;
-
-    }
-
-
-    .category-card:hover {
-
-      border-color: #bfdbfe;
-
-      transform:
-        translateY(-4px);
-
-      box-shadow:
-        0 15px 35px
-        rgba(
-          15,
-          23,
-          42,
-          .07
-        );
-
-    }
-
-
-    .category-icon {
-
-      width: 46px;
-
-      height: 46px;
-
-      display: grid;
-
-      place-items: center;
-
-      margin-bottom: 18px;
-
-      border-radius: 11px;
-
-      background: #eff6ff;
-
-      color: #2563eb;
-
-      font-size: 18px;
-
-    }
-
-
-    .category-content h3 {
-
-      margin: 0;
-
-      color: #172554;
-
-      font-size: 17px;
-
-      line-height: 1.35;
-
-      font-weight: 900;
-
-    }
-
-
-    .category-content p {
-
-      min-height: 64px;
-
-      margin:
-        9px 0 20px;
-
-      color: #64748b;
-
-      font-size: 13px;
-
-      line-height: 1.7;
-
-    }
-
-
-    .category-bottom {
-
-      display: flex;
-
-      align-items: center;
-
-      justify-content: space-between;
-
-      padding-top: 13px;
-
-      border-top:
-        1px solid #f1f5f9;
-
-      color: #2563eb;
-
-      font-size: 12px;
-
-      font-weight: 800;
-
-    }
-
-
-    .category-bottom i {
-
-      font-size: 12px;
-
-    }
-
-
-    /* =====================================================
-       INFORMATION
-    ====================================================== */
-
-    .information-section {
-
-      padding:
-        75px 0 85px;
-
-      background: #f8fafc;
-
-    }
-
-
-    .information-layout {
-
-      display: grid;
-
-      grid-template-columns:
-        minmax(0, 1fr)
-        330px;
-
-      align-items: start;
-
-      gap: 45px;
-
-    }
-
-
-    /* =====================================================
-       DATABASE CATEGORY
-    ====================================================== */
-
-    .db-category {
-
-      margin-bottom: 22px;
-
-      padding: 20px;
-
-      border:
-        1px solid #e2e8f0;
-
-      border-radius: 16px;
-
-      background: #fff;
-
-    }
-
-
-    .db-category-header {
-
-      display: flex;
-
-      align-items: center;
-
-      gap: 13px;
-
-      margin-bottom: 16px;
-
-      padding-bottom: 15px;
-
-      border-bottom:
-        1px solid #f1f5f9;
-
-    }
-
-
-    .db-category-icon {
-
-      width: 44px;
-
-      height: 44px;
-
-      display: grid;
-
-      place-items: center;
-
-      flex-shrink: 0;
-
-      border-radius: 11px;
-
-      background: #eff6ff;
-
-      color: #2563eb;
-
-      font-size: 16px;
-
-    }
-
-
-    .db-category-header span {
-
-      display: block;
-
-      margin-bottom: 3px;
-
-      color: #2563eb;
-
-      font-size: 10px;
-
-      font-weight: 900;
-
-      letter-spacing: .1em;
-
-    }
-
-
-    .db-category-header h3 {
-
-      margin: 0;
-
-      color: #172554;
-
-      font-size: 19px;
-
-      line-height: 1.35;
-
-      font-weight: 900;
-
-    }
-
-
-    /* =====================================================
-       ITEM
-    ====================================================== */
-
-    .db-item-list {
-
-      display: flex;
-
-      flex-direction: column;
-
-      gap: 8px;
-
-    }
-
-
-    .db-item {
-
-      position: relative;
-
-      display: flex;
-
-      align-items: center;
-
-      gap: 12px;
-
-      padding: 12px;
-
-      border:
-        1px solid #f1f5f9;
-
-      border-radius: 11px;
-
-      background: #fff;
-
-      transition: .2s ease;
-
-    }
-
-
-    .db-item:hover {
-
-      border-color: #dbeafe;
-
-      background: #f8fbff;
-
-    }
-
-
-    .db-item-icon {
-
-      width: 40px;
-
-      height: 40px;
-
-      display: grid;
-
-      place-items: center;
-
-      flex-shrink: 0;
-
-      border-radius: 9px;
-
-      background: #eff6ff;
-
-      color: #2563eb;
-
-      font-size: 14px;
-
-    }
-
-
-    .db-item-content {
-
-      min-width: 0;
-
-      flex: 1;
-
-    }
-
-
-    .db-item-content h4 {
-
-      margin: 0;
-
-      color: #172554;
-
-      font-size: 14px;
-
-      line-height: 1.45;
-
-      font-weight: 900;
-
-    }
-
-
-    /* =====================================================
-       PREVIEW TEXT
-    ====================================================== */
-
-    .db-item-description {
-
-      margin-top: 5px;
-
-      color: #64748b;
-
-      font-size: 12px;
-
-      line-height: 1.6;
-
-      display: -webkit-box;
-
-      -webkit-line-clamp: 2;
-
-      -webkit-box-orient: vertical;
-
-      overflow: hidden;
-
-    }
-
-
-    .db-item-content small {
-
-      display: block;
-
-      margin-top: 4px;
-
-      color: #94a3b8;
-
-      font-size: 10px;
-
-    }
-
-
-    /* =====================================================
-       BUTTON
-    ====================================================== */
-
-    .download-button,
-    .detail-button {
-
-      min-width: 78px;
-
-      height: 36px;
-
-      display: inline-flex;
-
-      align-items: center;
-
-      justify-content: center;
-
-      gap: 6px;
-
-      flex-shrink: 0;
-
-      border: 0;
-
-      border-radius: 8px;
-
-      background: #eff6ff;
-
-      color: #2563eb;
-
-      font-family: inherit;
-
-      font-size: 10px;
-
-      font-weight: 900;
-
-      cursor: pointer;
-
-      transition: .2s ease;
-
-    }
-
-
-    .download-button:hover,
-    .detail-button:hover {
-
-      background: #2563eb;
-
-      color: #fff;
-
-    }
-
-
-    /* =====================================================
-       EMPTY
-    ====================================================== */
-
-    .empty-data {
-
-      padding: 28px;
-
-      text-align: center;
-
-      color: #94a3b8;
-
-    }
-
-
-    .empty-data i {
-
-      display: block;
-
-      margin-bottom: 8px;
-
-      font-size: 27px;
-
-    }
-
-
-    .empty-data p {
-
-      margin: 0;
-
-      font-size: 12px;
-
-    }
-
-
-    /* =====================================================
-       SIDEBAR
-    ====================================================== */
-
-    .ppid-sidebar {
-
-      position: sticky;
-
-      top: 25px;
-
-      display: flex;
-
-      flex-direction: column;
-
-      gap: 15px;
-
-    }
-
-
-    .contact-card {
-
-      overflow: hidden;
-
-      border:
-        1px solid #e2e8f0;
-
-      border-radius: 16px;
-
-      background: #fff;
-
-      box-shadow:
-        0 10px 30px
-        rgba(
-          15,
-          23,
-          42,
-          .045
-        );
-
-    }
-
-
-    .contact-card-header {
-
-      display: flex;
-
-      align-items: center;
-
-      gap: 13px;
-
-      padding: 20px;
-
-      background:
-        linear-gradient(
-          135deg,
-          #eff6ff,
-          #fff
-        );
-
-      border-bottom:
-        1px solid #e5e7eb;
-
-    }
-
-
-    .contact-icon {
-
-      width: 44px;
-
-      height: 44px;
-
-      display: grid;
-
-      place-items: center;
-
-      border-radius: 11px;
-
-      background: #dbeafe;
-
-      color: #2563eb;
-
-      font-size: 16px;
-
-    }
-
-
-    .contact-card-header span {
-
-      display: block;
-
-      margin-bottom: 3px;
-
-      color: #2563eb;
-
-      font-size: 10px;
-
-      font-weight: 900;
-
-    }
-
-
-    .contact-card-header h3 {
-
-      margin: 0;
-
-      color: #172554;
-
-      font-size: 19px;
-
-      font-weight: 900;
-
-    }
-
-
-    .contact-list {
-
-      padding:
-        7px 20px 12px;
-
-    }
-
-
-    .contact-item {
-
-      display: flex;
-
-      align-items: flex-start;
-
-      gap: 11px;
-
-      padding:
-        13px 0;
-
-      border-bottom:
-        1px solid #f1f5f9;
-
-    }
-
-
-    .contact-item:last-child {
-
-      border-bottom: 0;
-
-    }
-
-
-    .contact-item > div {
-
-      width: 29px;
-
-      height: 29px;
-
-      flex-shrink: 0;
-
-      display: grid;
-
-      place-items: center;
-
-      border-radius: 7px;
-
-      background: #f8fafc;
-
-      color: #2563eb;
-
-      font-size: 11px;
-
-    }
-
-
-    .contact-item section {
-
-      min-width: 0;
-
-    }
-
-
-    .contact-item small {
-
-      display: block;
-
-      margin-bottom: 3px;
-
-      color: #94a3b8;
-
-      font-size: 9px;
-
-      font-weight: 800;
-
-      text-transform: uppercase;
-
-    }
-
-
-    .contact-item p,
-    .contact-item a {
-
-      display: block;
-
-      margin: 0;
-
-      color: #475569;
-
-      font-size: 11px;
-
-      line-height: 1.6;
-
-      word-break: break-word;
-
-    }
-
-
-    .contact-item a:hover {
-
-      color: #2563eb;
-
-    }
-
-
-    /* =====================================================
-       SOCIAL
-    ====================================================== */
-
-    .social-section {
-
-      padding:
-        17px 20px 20px;
-
-      border-top:
-        1px solid #e5e7eb;
-
-    }
-
-
-    .social-section > span {
-
-      display: block;
-
-      margin-bottom: 10px;
-
-      color: #64748b;
-
-      font-size: 10px;
-
-      font-weight: 900;
-
-      text-transform: uppercase;
-
-    }
-
-
-    .social-list {
-
-      display: flex;
-
-      gap: 7px;
-
-    }
-
-
-    .social-list a {
-
-      width: 34px;
-
-      height: 34px;
-
-      display: grid;
-
-      place-items: center;
-
-      border-radius: 8px;
-
-      background: #f1f5f9;
-
-      color: #475569;
-
-      font-size: 13px;
-
-      transition: .2s ease;
-
-    }
-
-
-    .social-list a:hover {
-
-      background: #2563eb;
-
-      color: #fff;
-
-      transform:
-        translateY(-2px);
-
-    }
-
-
-    .social-names {
-
-      margin-top: 12px;
-
-    }
-
-
-    .social-names p {
-
-      margin: 5px 0;
-
-      color: #64748b;
-
-      font-size: 10px;
-
-    }
-
-
-    .social-names strong {
-
-      margin-right: 5px;
-
-      color: #334155;
-
-    }
-
-
-    /* =====================================================
-       REQUEST
-    ====================================================== */
-
-    .request-card {
-
-      padding: 22px;
-
-      border-radius: 16px;
-
-      background:
-        linear-gradient(
-          135deg,
-          #172554,
-          #1e40af
-        );
-
-      color: #fff;
-
-    }
-
-
-    .request-icon {
-
-      width: 44px;
-
-      height: 44px;
-
-      display: grid;
-
-      place-items: center;
-
-      margin-bottom: 16px;
-
-      border-radius: 11px;
-
-      background:
-        rgba(
-          255,
-          255,
-          255,
-          .12
-        );
-
-      font-size: 16px;
-
-    }
-
-
-    .request-card h3 {
-
-      margin: 0;
-
-      font-size: 19px;
-
-      font-weight: 900;
-
-    }
-
-
-    .request-card p {
-
-      margin:
-        8px 0 18px;
-
-      color:
-        rgba(
-          255,
-          255,
-          255,
-          .72
-        );
-
-      font-size: 12px;
-
-      line-height: 1.7;
-
-    }
-
-
-    .request-card a {
-
-      display: flex;
-
-      align-items: center;
-
-      justify-content: space-between;
-
-      min-height: 40px;
-
-      padding:
-        0 12px;
-
-      border-radius: 8px;
-
-      background: #fff;
-
-      color: #1e40af;
-
-      font-size: 11px;
-
-      font-weight: 900;
-
-    }
-
-
-    .request-card a:hover {
-
-      background: #eff6ff;
-
-    }
-
-
-    /* =====================================================
-       BOTTOM
-    ====================================================== */
-
-    .bottom-section {
-
-      padding:
-        60px 0;
-
-      background: #fff;
-
-    }
-
-
-    .bottom-card {
-
-      display: flex;
-
-      align-items: flex-start;
-
-      gap: 20px;
-
-      padding: 30px;
-
-      border:
-        1px solid #dbeafe;
-
-      border-radius: 18px;
-
-      background:
-        linear-gradient(
-          135deg,
-          #eff6ff,
-          #fff
-        );
-
-    }
-
-
-    .bottom-icon {
-
-      width: 50px;
-
-      height: 50px;
-
-      flex-shrink: 0;
-
-      display: grid;
-
-      place-items: center;
-
-      border-radius: 12px;
-
-      background: #dbeafe;
-
-      color: #2563eb;
-
-      font-size: 18px;
-
-    }
-
-
-    .bottom-card span {
-
-      color: #2563eb;
-
-      font-size: 10px;
-
-      font-weight: 900;
-
-      letter-spacing: .12em;
-
-    }
-
-
-    .bottom-card h2 {
-
-      margin:
-        6px 0 7px;
-
-      color: #172554;
-
-      font-size: 26px;
-
-      line-height: 1.25;
-
-      font-weight: 900;
-
-    }
-
-
-    .bottom-card p {
-
-      max-width: 760px;
-
-      margin: 0;
-
-      color: #64748b;
-
-      font-size: 12px;
-
-      line-height: 1.7;
-
-    }
-
-
-    /* =====================================================
-       MODAL
-    ====================================================== */
-
-    .ppid-modal {
-
-      position: fixed;
-
-      inset: 0;
-
-      z-index: 99999;
-
-      display: flex;
-
-      align-items: center;
-
-      justify-content: center;
-
-      padding: 20px;
-
-      visibility: hidden;
-
-      opacity: 0;
-
-      transition:
-        opacity .2s ease,
-        visibility .2s ease;
-
-    }
-
-
-    .ppid-modal.show {
-
-      visibility: visible;
-
-      opacity: 1;
-
-    }
-
-
-    .modal-backdrop {
-
-      position: absolute;
-
-      inset: 0;
-
-      background:
-        rgba(
-          15,
-          23,
-          42,
-          .65
-        );
-
-      backdrop-filter:
-        blur(4px);
-
-    }
-
-
-    .modal-box {
-
-      position: relative;
-
-      z-index: 2;
-
-      width:
-        min(
-          700px,
-          100%
-        );
-
-      max-height:
-        min(
-          750px,
-          calc(
-            100vh - 40px
-          )
-        );
-
-      overflow-y: auto;
-
-      padding: 30px;
-
-      border-radius: 20px;
-
-      background: #fff;
-
-      box-shadow:
-        0 30px 80px
-        rgba(
-          0,
-          0,
-          0,
-          .25
-        );
-
-      transform:
-        translateY(12px)
-        scale(.98);
-
-      transition:
-        transform .2s ease;
-
-    }
-
-
-    .ppid-modal.show
-    .modal-box {
-
-      transform:
-        translateY(0)
-        scale(1);
-
-    }
-
-
-    .modal-close {
-
-      position: absolute;
-
-      top: 15px;
-
-      right: 15px;
-
-      width: 38px;
-
-      height: 38px;
-
-      display: grid;
-
-      place-items: center;
-
-      border: 0;
-
-      border-radius: 9px;
-
-      background: #f1f5f9;
-
-      color: #64748b;
-
-      cursor: pointer;
-
-      transition: .2s ease;
-
-    }
-
-
-    .modal-close:hover {
-
-      background: #fee2e2;
-
-      color: #dc2626;
-
-    }
-
-
-    .modal-icon {
-
-      width: 50px;
-
-      height: 50px;
-
-      display: grid;
-
-      place-items: center;
-
-      margin-bottom: 13px;
-
-      border-radius: 12px;
-
-      background: #eff6ff;
-
-      color: #2563eb;
-
-      font-size: 19px;
-
-    }
-
-
-    .modal-label {
-
-      color: #2563eb;
-
-      font-size: 10px;
-
-      font-weight: 900;
-
-      letter-spacing: .12em;
-
-    }
-
-
-    .modal-box h3 {
-
-      max-width: 90%;
-
-      margin:
-        6px 0 18px;
-
-      color: #172554;
-
-      font-size: 26px;
-
-      line-height: 1.3;
-
-      font-weight: 900;
-
-    }
-
-
-    .modal-content {
-
-      padding: 20px;
-
-      border:
-        1px solid #e2e8f0;
-
-      border-radius: 12px;
-
-      background: #f8fafc;
-
-      color: #475569;
-
-      font-size: 14px;
-
-      line-height: 1.8;
-
-    }
-
-
-    /* =====================================================
-       HTML API CONTENT
-    ====================================================== */
-
-    .modal-content :global(.inner) {
-
-      width: 100%;
-
-    }
-
-
-    .modal-content :global(ol) {
-
-      margin:
-        0 0 10px;
-
-      padding-left: 24px;
-
-    }
-
-
-    .modal-content :global(ul) {
-
-      margin:
-        8px 0;
-
-      padding-left: 24px;
-
-    }
-
-
-    .modal-content :global(li) {
-
-      margin-bottom: 8px;
-
-    }
-
-
-    .modal-content :global(li:last-child) {
-
-      margin-bottom: 0;
-
-    }
-
-
-    .modal-content :global(a) {
-
-      color: #2563eb;
-
-      font-weight: 700;
-
-      text-decoration: underline;
-
-      overflow-wrap: anywhere;
-
-    }
-
-
-    .modal-content :global(a:hover) {
-
-      color: #1d4ed8;
-
-    }
-
-
-    .modal-content :global(strong) {
-
-      color: #172554;
-
-    }
-
-
-    .modal-content :global(h1),
-    .modal-content :global(h2),
-    .modal-content :global(h3),
-    .modal-content :global(h4) {
-
-      margin:
-        15px 0 8px;
-
-      color: #172554;
-
-    }
-
-
-    .modal-content :global(p) {
-
-      margin:
-        7px 0;
-
-    }
-
-
-    .modal-content :global(table) {
-
-      width: 100%;
-
-      border-collapse: collapse;
-
-      margin:
-        15px 0;
-
-      font-size: 13px;
-
-    }
-
-
-    .modal-content :global(th),
-    .modal-content :global(td) {
-
-      padding: 8px;
-
-      border:
-        1px solid #dbeafe;
-
-      text-align: left;
-
-    }
-
-
-    .modal-content :global(th) {
-
-      background: #eff6ff;
-
-      color: #172554;
-
-    }
-
-
-    /* =====================================================
-       RESPONSIVE 1000
-    ====================================================== */
-
-    @media (max-width: 1000px) {
-
-      .hero-grid {
-
-        grid-template-columns: 1fr;
-
-        gap: 30px;
-
-      }
-
-
-      .hero-information {
-
-        max-width: 500px;
-
-      }
-
-
-      .category-grid {
-
-        grid-template-columns:
-          repeat(
-            2,
-            minmax(0, 1fr)
-          );
-
-      }
-
-
-      .information-layout {
-
-        grid-template-columns: 1fr;
-
-      }
-
-
-      .ppid-sidebar {
-
-        position: static;
-
-        display: grid;
-
-        grid-template-columns:
-          repeat(
-            2,
-            minmax(0, 1fr)
-          );
-
-      }
-
-
-      .contact-card {
-
-        grid-column:
-          span 2;
-
-      }
-
-    }
-
-
-    /* =====================================================
-       RESPONSIVE 650
-    ====================================================== */
-
-    @media (max-width: 650px) {
-
-      .container {
-
-        width:
-          calc(
-            100% - 30px
-          );
-
-      }
-
-
-      .ppid-hero {
-
-        padding:
-          55px 0 60px;
-
-      }
-
-
-      .hero-content h1 {
-
-        font-size: 40px;
-
-      }
-
-
-      .hero-content > p {
-
-        font-size: 14px;
-
-      }
-
-
-      .hero-actions {
-
-        flex-direction: column;
-
-      }
-
-
-      .hero-button {
-
-        width: 100%;
-
-      }
-
-
-      .category-section,
-      .information-section {
-
-        padding:
-          55px 0;
-
-      }
-
-
-      .section-heading {
-
-        display: block;
-
-      }
-
-
-      .section-heading > p {
-
-        margin-top: 12px;
-
-      }
-
-
-      .section-heading h2 {
-
-        font-size: 30px;
-
-      }
-
-
-      .category-grid {
-
-        grid-template-columns: 1fr;
-
-      }
-
-
-      .category-content h3 {
-
-        font-size: 17px;
-
-      }
-
-
-      .category-content p {
-
-        font-size: 13px;
-
-      }
-
-
-      .category-bottom {
-
-        font-size: 12px;
-
-      }
-
-
-      .db-item {
-
-        align-items: flex-start;
-
-        flex-wrap: wrap;
-
-      }
-
-
-      .db-item-content {
-
-        width:
-          calc(
-            100% - 55px
-          );
-
-      }
-
-
-      .db-item-content h4 {
-
-        font-size: 14px;
-
-      }
-
-
-      .db-item-description {
-
-        font-size: 12px;
-
-      }
-
-
-      .download-button,
-      .detail-button {
-
-        width: 100%;
-
-        margin-left: 50px;
-
-      }
-
-
-      .ppid-sidebar {
-
-        display: flex;
-
-      }
-
-
-      .contact-card {
-
-        grid-column: auto;
-
-      }
-
-
-      .bottom-card {
-
-        flex-direction: column;
-
-        padding: 23px;
-
-      }
-
-
-      .bottom-card h2 {
-
-        font-size: 21px;
-
-      }
-
-
-      .bottom-card p {
-
-        font-size: 12px;
-
-      }
-
-
-      .modal-box {
-
-        padding:
-          24px 18px;
-
-      }
-
-
-      .modal-box h3 {
-
-        font-size: 21px;
-
-      }
-
-
-      .modal-content {
-
-        padding: 15px;
-
-        font-size: 13px;
-
-      }
-
-    }
-
-  </style>
-
 </MainLayout>
+
+
+<style>
+
+/* =========================================================
+   ROOT
+========================================================= */
+
+:global(html) {
+  scroll-behavior: smooth;
+}
+
+:global(body) {
+  margin: 0;
+  color: #334155;
+  background: #f8fafc;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+:global(body.modal-open) {
+  overflow: hidden;
+}
+
+:global(a) {
+  text-decoration: none;
+}
+
+:global(button),
+:global(a) {
+  -webkit-tap-highlight-color: transparent;
+}
+
+
+/* =========================================================
+   CONTAINER
+========================================================= */
+
+.container {
+  width:
+    min(
+      1180px,
+      calc(100% - 40px)
+    );
+
+  margin-inline: auto;
+}
+
+
+/* =========================================================
+   HERO
+========================================================= */
+
+.ppid-hero {
+  position: relative;
+  overflow: hidden;
+  padding: 90px 0 100px;
+  background:
+    linear-gradient(
+      135deg,
+      #063b86 0%,
+      #0b63c7 52%,
+      #1676d2 100%
+    );
+
+  color: #fff;
+}
+
+
+.hero-orb {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+
+.hero-orb-one {
+  width: 420px;
+  height: 420px;
+  right: -180px;
+  top: -190px;
+  background: rgba(255,255,255,.07);
+}
+
+
+.hero-orb-two {
+  width: 280px;
+  height: 280px;
+  left: -140px;
+  bottom: -160px;
+  background: rgba(255,255,255,.06);
+}
+
+
+.hero-grid {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1.45fr)
+    minmax(280px, .75fr);
+  gap: 70px;
+  align-items: center;
+}
+
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 13px;
+  border: 1px solid rgba(255,255,255,.3);
+  border-radius: 999px;
+  background: rgba(255,255,255,.1);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .08em;
+}
+
+
+.hero-badge span {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #fff;
+  color: #0b63c7;
+}
+
+
+.hero-content h1 {
+  max-width: 760px;
+  margin: 22px 0 18px;
+  font-size: clamp(38px, 5vw, 64px);
+  line-height: 1.08;
+  letter-spacing: -.045em;
+}
+
+
+.hero-content h1 span {
+  display: block;
+  color: #ffd41d;
+}
+
+
+.hero-description {
+  max-width: 680px;
+  margin: 0;
+  color: rgba(255,255,255,.9);
+  font-size: 17px;
+  line-height: 1.8;
+}
+
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 30px;
+}
+
+
+.hero-button {
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 0 20px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 800;
+  transition: .2s ease;
+}
+
+
+.hero-button.primary {
+  background: #ffd41d;
+  color: #172554;
+}
+
+
+.hero-button.secondary {
+  border: 1px solid rgba(255,255,255,.45);
+  background: rgba(255,255,255,.1);
+  color: #fff;
+}
+
+
+.hero-button:hover {
+  transform: translateY(-2px);
+}
+
+
+.hero-card {
+  padding: 34px;
+  border: 1px solid rgba(255,255,255,.22);
+  border-radius: 22px;
+  background: rgba(255,255,255,.1);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 25px 60px rgba(0,0,0,.15);
+}
+
+
+.hero-card-icon {
+  width: 64px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 22px;
+  border-radius: 18px;
+  background: #fff;
+  color: #0b63c7;
+  font-size: 26px;
+}
+
+
+.hero-card strong {
+  display: block;
+  font-size: 22px;
+}
+
+
+.hero-card > span {
+  display: block;
+  margin-top: 4px;
+  color: rgba(255,255,255,.75);
+  font-size: 12px;
+}
+
+
+.hero-card-line {
+  width: 50px;
+  height: 3px;
+  margin: 22px 0;
+  border-radius: 10px;
+  background: #ffd41d;
+}
+
+
+.hero-card small {
+  color: rgba(255,255,255,.82);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+
+/* =========================================================
+   ERROR
+========================================================= */
+
+.api-error {
+  padding: 20px 0 0;
+}
+
+
+.error-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  background: #fff1f2;
+  color: #991b1b;
+}
+
+
+.error-box > i {
+  margin-top: 4px;
+}
+
+
+.error-box strong {
+  display: block;
+  font-size: 14px;
+}
+
+
+.error-box p {
+  margin: 3px 0 0;
+  font-size: 12px;
+}
+
+
+/* =========================================================
+   CATEGORY
+========================================================= */
+
+.category-section {
+  padding: 90px 0 80px;
+  background:
+    linear-gradient(
+      180deg,
+      #fff 0%,
+      #f7fbff 100%
+    );
+  scroll-margin-top: 100px;
+}
+
+
+.section-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 40px;
+}
+
+
+.section-eyebrow {
+  display: inline-block;
+  margin-bottom: 9px;
+  color: #0b63c7;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .12em;
+}
+
+
+.section-heading h2 {
+  margin: 0;
+  color: #172554;
+  font-size: clamp(30px, 4vw, 42px);
+  line-height: 1.15;
+  letter-spacing: -.035em;
+}
+
+
+.section-heading h2 span {
+  color: #0b63c7;
+}
+
+
+.section-heading > p {
+  max-width: 390px;
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+
+.information-guide {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 28px 0 20px;
+  padding: 11px 15px;
+  border: 1px solid #dbeafe;
+  border-radius: 10px;
+  background: #eff6ff;
+  color: #1e40af;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+
+.guide-icon {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #0b63c7;
+  color: #fff;
+}
+
+
+/*
+ * TETAP 4 KATEGORI
+ */
+
+.category-scroll {
+  width: 100%;
+}
+
+
+.category-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr));
+  gap: 18px;
+}
+
+
+.category-card {
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 25px 20px 20px;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow:
+    0 8px 30px rgba(15,23,42,.05);
+  color: inherit;
+  transition:
+    transform .2s ease,
+    box-shadow .2s ease,
+    border-color .2s ease;
+}
+
+
+.category-card:hover {
+  transform: translateY(-5px);
+  border-color: #93c5fd;
+  box-shadow:
+    0 18px 40px rgba(15,23,42,.1);
+}
+
+
+.category-top-line {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 4px;
+  background: #0b63c7;
+}
+
+
+.category-icon {
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 18px;
+  border-radius: 14px;
+  background: #eff6ff;
+  color: #0b63c7;
+  font-size: 21px;
+}
+
+
+.category-content {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+
+.category-content h3 {
+  margin: 0;
+  color: #172554;
+  font-size: 17px;
+  line-height: 1.4;
+}
+
+
+.category-content p {
+  margin: 9px 0 20px;
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+
+.category-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 1px solid #e2e8f0;
+  color: #64748b;
+  font-size: 11px;
+}
+
+
+.category-bottom strong {
+  color: #0b63c7;
+  font-size: 16px;
+}
+
+
+.category-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #0b63c7;
+  font-weight: 800;
+}
+
+
+/* =========================================================
+   INFORMATION
+========================================================= */
+
+.information-section {
+  padding: 80px 0;
+  background: #f8fafc;
+}
+
+
+.information-layout {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr)
+    320px;
+  gap: 30px;
+  align-items: start;
+}
+
+
+.information-main {
+  min-width: 0;
+}
+
+
+.db-category {
+  margin-bottom: 34px;
+  scroll-margin-top: 100px;
+}
+
+
+.db-category-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+  margin-bottom: 16px;
+  padding: 22px;
+  border: 1px solid #dbeafe;
+  border-radius: 14px;
+  background: #fff;
+}
+
+
+.db-category-icon {
+  width: 46px;
+  height: 46px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: #eff6ff;
+  color: #0b63c7;
+  font-size: 18px;
+}
+
+
+.db-category-heading span {
+  display: block;
+  margin-bottom: 2px;
+  color: #0b63c7;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .1em;
+}
+
+
+.db-category-heading h2 {
+  margin: 0;
+  color: #172554;
+  font-size: 22px;
+  line-height: 1.35;
+}
+
+
+.db-category-heading p {
+  margin: 5px 0 0;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+
+.db-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+
+.db-item {
+  display: grid;
+  grid-template-columns:
+    44px minmax(0,1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 17px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #fff;
+  transition: .2s ease;
+}
+
+
+.db-item:hover {
+  border-color: #bfdbfe;
+  box-shadow:
+    0 8px 25px rgba(15,23,42,.06);
+}
+
+
+.db-item-icon {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  background: #f1f5f9;
+  color: #0b63c7;
+}
+
+
+.db-item-content {
+  min-width: 0;
+}
+
+
+.db-item-content small {
+  display: block;
+  margin-bottom: 3px;
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+
+.db-item-content h3 {
+  margin: 0;
+  color: #1e293b;
+  font-size: 15px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+
+.db-item-description {
+  margin: 4px 0 0;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+
+.db-item-action {
+  flex-shrink: 0;
+}
+
+
+.download-button,
+.detail-button {
+  min-width: 82px;
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 13px;
+  border: 0;
+  border-radius: 8px;
+  background: #0b63c7;
+  color: #fff;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: .2s ease;
+}
+
+
+.download-button:hover,
+.detail-button:hover {
+  background: #084f9f;
+  transform: translateY(-1px);
+}
+
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 170px;
+  padding: 25px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 12px;
+  background: #fff;
+  color: #64748b;
+  text-align: center;
+}
+
+
+.empty-state i {
+  margin-bottom: 10px;
+  color: #94a3b8;
+  font-size: 30px;
+}
+
+
+.empty-state strong {
+  color: #334155;
+  font-size: 14px;
+}
+
+
+.empty-state span {
+  margin-top: 3px;
+  font-size: 12px;
+}
+
+
+/* =========================================================
+   SIDEBAR
+========================================================= */
+
+.information-sidebar {
+  position: sticky;
+  top: 110px;
+}
+
+
+.contact-card {
+  overflow: hidden;
+  padding: 22px;
+  border-radius: 16px;
+  background:
+    linear-gradient(
+      145deg,
+      #063b86,
+      #0b63c7
+    );
+  color: #fff;
+  box-shadow:
+    0 15px 35px rgba(11,99,199,.18);
+}
+
+
+.contact-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid rgba(255,255,255,.18);
+}
+
+
+.contact-icon {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  border-radius: 12px;
+  background: rgba(255,255,255,.14);
+  font-size: 18px;
+}
+
+
+.contact-card-header small {
+  display: block;
+  color: #bfdbfe;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .1em;
+}
+
+
+.contact-card-header h3 {
+  margin: 2px 0 0;
+  font-size: 20px;
+}
+
+
+.contact-list {
+  padding-top: 5px;
+}
+
+
+.contact-item {
+  display: flex;
+  gap: 11px;
+  padding: 13px 0;
+}
+
+
+.contact-item > span {
+  width: 27px;
+  height: 27px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: rgba(255,255,255,.1);
+  color: #ffd41d;
+  font-size: 11px;
+}
+
+
+.contact-item strong {
+  display: block;
+  font-size: 12px;
+}
+
+
+.contact-item p,
+.contact-item a {
+  display: block;
+  margin: 2px 0 0;
+  color: rgba(255,255,255,.8);
+  font-size: 11px;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
+
+.contact-item a:hover {
+  color: #ffd41d;
+}
+
+
+.social-title {
+  margin-top: 9px;
+  padding-top: 17px;
+  border-top: 1px solid rgba(255,255,255,.18);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+
+.social-links {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+
+.social-links a {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #fff;
+  color: #0b63c7;
+  font-size: 14px;
+  transition: .2s ease;
+}
+
+
+.social-links a:hover {
+  transform: translateY(-3px);
+  background: #ffd41d;
+  color: #172554;
+}
+
+
+.request-card {
+  margin-top: 15px;
+  padding: 22px;
+  border: 1px solid #dbeafe;
+  border-radius: 16px;
+  background: #fff;
+}
+
+
+.request-icon {
+  width: 45px;
+  height: 45px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 13px;
+  border-radius: 12px;
+  background: #eff6ff;
+  color: #0b63c7;
+  font-size: 18px;
+}
+
+
+.request-card h3 {
+  margin: 0;
+  color: #172554;
+  font-size: 17px;
+}
+
+
+.request-card p {
+  margin: 6px 0 17px;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+
+.request-button {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0 14px;
+  border-radius: 8px;
+  background: #0b63c7;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+
+.request-button:hover {
+  background: #084f9f;
+}
+
+
+/* =========================================================
+   COMMITMENT
+========================================================= */
+
+.commitment-section {
+  padding: 60px 0;
+  background: #fff;
+}
+
+
+.commitment-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  padding: 30px;
+  border: 1px solid #dbeafe;
+  border-radius: 18px;
+  background: #eff6ff;
+}
+
+
+.commitment-icon {
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  border-radius: 15px;
+  background: #0b63c7;
+  color: #fff;
+  font-size: 22px;
+}
+
+
+.commitment-box span {
+  color: #0b63c7;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .1em;
+}
+
+
+.commitment-box h2 {
+  margin: 3px 0 5px;
+  color: #172554;
+  font-size: 24px;
+}
+
+
+.commitment-box p {
+  max-width: 760px;
+  margin: 0;
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.75;
+}
+
+
+/* =========================================================
+   MODAL
+========================================================= */
+
+.ppid-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 99995;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  opacity: 0;
+  visibility: hidden;
+  transition: .2s ease;
+}
+
+
+.ppid-modal.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+
+.ppid-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15,23,42,.7);
+}
+
+
+.ppid-modal-dialog {
+  position: relative;
+  z-index: 2;
+  width: min(850px, 100%);
+  max-height: 88vh;
+  overflow: hidden;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow:
+    0 30px 90px rgba(0,0,0,.25);
+  transform: translateY(15px) scale(.98);
+  transition: .2s ease;
+}
+
+
+.ppid-modal.show
+.ppid-modal-dialog {
+  transform: translateY(0) scale(1);
+}
+
+
+.ppid-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 22px 24px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+
+.ppid-modal-header span {
+  display: block;
+  color: #0b63c7;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .1em;
+}
+
+
+.ppid-modal-header h2 {
+  margin: 2px 0 0;
+  color: #172554;
+  font-size: 22px;
+  line-height: 1.4;
+}
+
+
+.ppid-modal-close {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  border: 0;
+  border-radius: 9px;
+  background: #f1f5f9;
+  color: #475569;
+  cursor: pointer;
+}
+
+
+.ppid-modal-content {
+  max-height: calc(88vh - 100px);
+  overflow-y: auto;
+  padding: 25px;
+  color: #334155;
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+
+.ppid-modal-content :global(img) {
+  max-width: 100%;
+  height: auto;
+}
+
+
+.ppid-modal-content :global(table) {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+
+.ppid-modal-content :global(th),
+.ppid-modal-content :global(td) {
+  padding: 9px;
+  border: 1px solid #e2e8f0;
+}
+
+
+/* =========================================================
+   ACCESSIBILITY BUTTON
+========================================================= */
+
+.accessibility-widget {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 99990;
+}
+
+
+.accessibility-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 15px;
+  border: 0;
+  border-radius: 999px;
+  background: #0b63c7;
+  color: #fff;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow:
+    0 8px 25px rgba(15,23,42,.2);
+  transition: .2s ease;
+}
+
+
+.accessibility-toggle:hover {
+  background: #084f9f;
+  transform: translateY(-2px);
+}
+
+
+.accessibility-toggle-icon {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #fff;
+  color: #0b63c7;
+  font-size: 14px;
+}
+
+
+/* =========================================================
+   ACCESSIBILITY PANEL
+========================================================= */
+
+.accessibility-panel {
+  position: fixed;
+  right: 22px;
+  bottom: 78px;
+  width: min(390px, calc(100vw - 30px));
+  padding: 18px;
+  border-radius: 16px;
+  border: 1px solid #dbeafe;
+  background: #fff;
+  box-shadow:
+    0 25px 70px rgba(15,23,42,.25);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(15px) scale(.97);
+  transition: .2s ease;
+}
+
+
+.accessibility-panel.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+}
+
+
+.accessibility-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 18px;
+}
+
+
+.accessibility-brand {
+  display: flex;
+  flex-direction: column;
+  color: #174ea6;
+}
+
+
+.accessibility-brand strong {
+  font-size: 21px;
+  line-height: 1;
+  font-weight: 900;
+  letter-spacing: -.04em;
+}
+
+
+.accessibility-brand small {
+  margin-top: 3px;
+  font-size: 7px;
+  font-weight: 900;
+  letter-spacing: .35em;
+}
+
+
+.accessibility-close {
+  min-height: 34px;
+  padding: 0 15px;
+  border: 0;
+  border-radius: 6px;
+  background: #f1f5f9;
+  color: #334155;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+
+.accessibility-intro {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  margin-bottom: 18px;
+}
+
+
+.accessibility-info-icon {
+  width: 43px;
+  height: 43px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border: 3px solid #2563eb;
+  border-radius: 50%;
+  color: #2563eb;
+  font-size: 17px;
+  font-weight: 900;
+}
+
+
+.accessibility-intro p {
+  margin: 0;
+  color: #334155;
+  font-size: 12px;
+  line-height: 1.55;
+  font-weight: 600;
+}
+
+
+.accessibility-options {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+
+.accessibility-option {
+  position: relative;
+  width: 100%;
+  min-height: 57px;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 0 15px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+  color: #334155;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: .2s ease;
+}
+
+
+.accessibility-option:hover {
+  border-color: #93c5fd;
+  background: #f8fbff;
+}
+
+
+.accessibility-option.active {
+  border: 2px solid #22c55e;
+  background: #dcfce7;
+}
+
+
+.option-check {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid #cbd5e1;
+  border-radius: 50%;
+  background: #fff;
+  color: #fff;
+  font-size: 11px;
+}
+
+
+.accessibility-option.active
+.option-check {
+  border-color: #16a34a;
+  background: #16a34a;
+}
+
+
+.option-emoji {
+  width: 30px;
+  font-size: 21px;
+  text-align: center;
+}
+
+
+.option-title {
+  color: #1e293b;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+
+/* =========================================================
+   COLOR BLIND
+========================================================= */
+
+:global(html.access-colorblind) .ppid-page {
+  filter: contrast(1.08);
+}
+
+
+:global(html.access-colorblind) a {
+  text-decoration-thickness: 2px;
+}
+
+
+:global(html.access-colorblind)
+.download-button,
+:global(html.access-colorblind)
+.detail-button {
+  border: 2px solid currentColor;
+}
+
+
+/* =========================================================
+   ELDERLY
+========================================================= */
+
+:global(html.access-elderly) {
+  font-size: 118%;
+}
+
+
+:global(html.access-elderly)
+.ppid-page {
+  letter-spacing: .01em;
+}
+
+
+:global(html.access-elderly)
+.hero-description {
+  font-size: 19px;
+}
+
+
+:global(html.access-elderly)
+.category-content h3 {
+  font-size: 19px;
+}
+
+
+:global(html.access-elderly)
+.category-content p {
+  font-size: 15px;
+  line-height: 1.8;
+}
+
+
+:global(html.access-elderly)
+.db-item-content h3 {
+  font-size: 17px;
+  line-height: 1.65;
+}
+
+
+:global(html.access-elderly)
+.db-item-description {
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+
+:global(html.access-elderly)
+.contact-item p,
+:global(html.access-elderly)
+.contact-item a {
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+
+:global(html.access-elderly)
+.download-button,
+:global(html.access-elderly)
+.detail-button {
+  min-width: 105px;
+  min-height: 48px;
+  font-size: 13px;
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 1000px) {
+
+  .hero-grid {
+    grid-template-columns: 1fr;
+    gap: 35px;
+  }
+
+
+  .hero-card {
+    max-width: 600px;
+  }
+
+
+  .information-layout {
+    grid-template-columns: 1fr;
+  }
+
+
+  .information-sidebar {
+    position: static;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+  }
+
+
+  .request-card {
+    margin-top: 0;
+  }
+
+
+  /*
+   * TETAP 4 KATEGORI
+   * tetapi dapat discroll jika layar sempit
+   */
+
+  .category-scroll {
+    overflow-x: auto;
+    padding-bottom: 12px;
+    scrollbar-width: thin;
+  }
+
+
+  .category-grid {
+    grid-template-columns:
+      repeat(4, minmax(210px, 1fr));
+    width: max-content;
+  }
+
+
+  .category-card {
+    width: 210px;
+  }
+
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 650px) {
+
+  .container {
+    width:
+      min(
+        100% - 28px,
+        1180px
+      );
+  }
+
+
+  .ppid-hero {
+    padding: 60px 0 65px;
+  }
+
+
+  .hero-content h1 {
+    font-size: 39px;
+  }
+
+
+  .hero-description {
+    font-size: 15px;
+  }
+
+
+  .hero-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+
+  .hero-button {
+    width: 100%;
+    min-height: 50px;
+  }
+
+
+  .hero-card {
+    padding: 25px;
+  }
+
+
+  .category-section {
+    padding: 60px 0;
+  }
+
+
+  .section-heading {
+    display: block;
+  }
+
+
+  .section-heading > p {
+    margin-top: 12px;
+  }
+
+
+  .information-guide {
+    align-items: flex-start;
+  }
+
+
+  /*
+   * EMPAT KATEGORI TETAP EMPAT
+   */
+
+  .category-grid {
+    grid-template-columns:
+      repeat(4, 205px);
+    gap: 12px;
+  }
+
+
+  .category-card {
+    width: 205px;
+    padding: 22px 17px 18px;
+  }
+
+
+  .category-content h3 {
+    font-size: 16px;
+  }
+
+
+  .category-content p {
+    font-size: 12px;
+  }
+
+
+  .information-section {
+    padding: 55px 0;
+  }
+
+
+  .db-category-heading {
+    padding: 18px;
+  }
+
+
+  .db-category-heading h2 {
+    font-size: 19px;
+  }
+
+
+  /*
+   * ITEM MOBILE
+   */
+
+  .db-item {
+    grid-template-columns:
+      42px minmax(0,1fr);
+
+    align-items: start;
+
+    gap: 11px;
+
+    padding: 15px;
+  }
+
+
+  .db-item-icon {
+    width: 42px;
+    height: 42px;
+  }
+
+
+  .db-item-action {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+
+  .download-button,
+  .detail-button {
+    width: 100%;
+    min-height: 47px;
+  }
+
+
+  .information-sidebar {
+    display: block;
+  }
+
+
+  .request-card {
+    margin-top: 15px;
+  }
+
+
+  .commitment-box {
+    flex-direction: column;
+    padding: 24px;
+  }
+
+
+  .commitment-box h2 {
+    font-size: 21px;
+  }
+
+
+  .commitment-box p {
+    font-size: 12px;
+  }
+
+
+  /*
+   * ACCESSIBILITY
+   */
+
+  .accessibility-widget {
+    right: 14px;
+    bottom: 14px;
+  }
+
+
+  .accessibility-toggle {
+    min-height: 46px;
+    padding: 0 14px;
+  }
+
+
+  .accessibility-panel {
+    right: 15px;
+    left: 15px;
+    bottom: 70px;
+    width: auto;
+    padding: 16px;
+    border-radius: 14px;
+  }
+
+
+  .accessibility-option {
+    min-height: 58px;
+  }
+
+
+  .ppid-modal {
+    padding: 10px;
+  }
+
+
+  .ppid-modal-dialog {
+    max-height: 94vh;
+    border-radius: 14px;
+  }
+
+
+  .ppid-modal-content {
+    max-height: calc(94vh - 95px);
+    padding: 18px;
+    font-size: 14px;
+  }
+
+}
+
+
+/* =========================================================
+   SMALL PHONE
+========================================================= */
+
+@media (max-width: 380px) {
+
+  .hero-content h1 {
+    font-size: 34px;
+  }
+
+
+  .accessibility-toggle {
+    width: 46px;
+    height: 46px;
+    min-height: 46px;
+    padding: 0;
+    justify-content: center;
+  }
+
+
+  .accessibility-toggle span:last-child {
+    display: none;
+  }
+
+
+  .accessibility-panel {
+    left: 10px;
+    right: 10px;
+  }
+
+}
+
+
+/* =========================================================
+   FOCUS ACCESSIBILITY
+========================================================= */
+
+:global(a:focus-visible),
+:global(button:focus-visible) {
+  outline:
+    3px solid #ffd41d;
+
+  outline-offset:
+    3px;
+}
+
+
+/* =========================================================
+   REDUCED MOTION
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition: none !important;
+    animation: none !important;
+  }
+
+}
+
+</style>
