@@ -177,7 +177,7 @@ if (!post) {
           </p>
 
           <p>
-            <code>/media/${slug}</code>
+            <code>/artikel/${slug}</code>
           </p>
 
           <a href="/artikel">
@@ -296,7 +296,7 @@ const formatDate = (date) => {
 
 const getArtikelLink = (item) => {
 
-  return `/media/${slugify(
+  return `/artikel/${slugify(
     String(item.title || "")
   )}`;
 
