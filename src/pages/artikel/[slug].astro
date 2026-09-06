@@ -2,1285 +2,1105 @@
 export const prerender = false;
 
 import MainLayout from "../../layouts/MainLayout.astro";
-import { slugify } from "../../utils/slugify";
 import { db } from "../../lib/db";
-
-const rawSlug = Astro.params.slug || "";
-
-const slug = decodeURIComponent(rawSlug)
-  .trim()
-  .toLowerCase();
-
-console.log("=================================");
-console.log("[MEDIA DETAIL]");
-console.log("rawSlug :", rawSlug);
-console.log("slug    :", slug);
-console.log("=================================");
+import { slugify } from "../../utils/slugify";
 
 
-/* =========================================================
-   AMBIL ARTIKEL PERIZINAN + PENANAMAN MODAL
-   2 = ARTIKEL PERIZINAN
-   3 = PENANAMAN MODAL
-========================================================= */
+// =========================================================
+// PARAMETER SLUG
+// =========================================================
+
+const { slug } = Astro.params;
+
+if (!slug) {
+    return new Response("Slug artikel tidak ditemukan", {
+        status: 404
+    });
+}
+
+
+// =========================================================
+// NORMALISASI SLUG
+// =========================================================
+
+const normalizeSlug = (value = "") => {
+    return String(value)
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/&/g, " dan ")
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+};
+
+const requestedSlug = normalizeSlug(slug);
+
+
+// =========================================================
+// AMBIL DATA ARTIKEL
+// =========================================================
 
 let rows = [];
+let post = null;
 
 try {
-  const [result] = await db.query(`
-    SELECT
-      id_post,
-      id_category,
-      title,
-      content,
-      ref_content,
-      seotitle,
-      tag,
-      date,
-      time,
-      editor,
-      active,
-      headline,
-      picture,
-      hits
-    FROM post
-    WHERE active = 'Y'
-      AND id_category IN (2, 3)
-    ORDER BY date DESC, time DESC, id_post DESC
-  `);
 
-  rows = result || [];
+    const [result] = await db.query(`
+        SELECT
+            *
+        FROM post
+        WHERE id_category IN (2, 3)
+        ORDER BY id_post DESC
+    `);
+
+    rows = result || [];
 
 } catch (error) {
 
-  console.error(
-    "[DATABASE MEDIA ERROR]",
-    error
-  );
+    console.error("DATABASE ARTIKEL ERROR:", error);
 
-  rows = [];
+    return new Response("Gagal mengambil data artikel", {
+        status: 500
+    });
 }
 
 
-/* =========================================================
-   CARI BERDASARKAN SLUG TITLE
-========================================================= */
+// =========================================================
+// CARI ARTIKEL BERDASARKAN SLUG
+// =========================================================
 
-let post = rows.find((item) => {
+for (const item of rows) {
 
-  const titleSlug = slugify(
-    String(item.title || "")
-  )
-    .trim()
-    .toLowerCase();
+    const slugDariSlugify = normalizeSlug(
+        slugify(item.title || "")
+    );
 
-  console.log(
-    "[CHECK SLUG]",
-    item.title,
-    "=>",
-    titleSlug
-  );
+    const slugDariTitle = normalizeSlug(
+        item.title || ""
+    );
 
-  return titleSlug === slug;
+    if (
+        slugDariSlugify === requestedSlug ||
+        slugDariTitle === requestedSlug
+    ) {
+        post = item;
+        break;
+    }
+}
 
-});
 
-
-/* =========================================================
-   JIKA TIDAK KETEMU
-========================================================= */
+// =========================================================
+// ARTIKEL TIDAK DITEMUKAN
+// =========================================================
 
 if (!post) {
 
-  console.error("=================================");
-  console.error("[ARTIKEL TIDAK DITEMUKAN]");
-  console.error("URL SLUG :", slug);
-  console.error("TOTAL DATA :", rows.length);
+    console.error("========================================");
+    console.error("ARTIKEL TIDAK DITEMUKAN");
+    console.error("SLUG URL:", slug);
+    console.error("SLUG NORMAL:", requestedSlug);
+    console.error("TOTAL DATA:", rows.length);
+    console.error("========================================");
 
-  rows.forEach((item) => {
+    return new Response(
+        `Artikel tidak ditemukan
 
-    console.error(
-      item.id_post,
-      "|",
-      item.id_category,
-      "|",
-      item.title,
-      "|",
-      slugify(String(item.title || ""))
+Slug yang dibuka:
+${slug}
+
+Slug yang dicari:
+${requestedSlug}`,
+        {
+            status: 404,
+            headers: {
+                "Content-Type": "text/plain; charset=utf-8"
+            }
+        }
     );
-
-  });
-
-  console.error("=================================");
-
-  return new Response(
-    `
-      <!DOCTYPE html>
-      <html lang="id">
-      <head>
-        <meta charset="UTF-8">
-        <title>Artikel Tidak Ditemukan</title>
-        <style>
-          body {
-            font-family: Arial, sans-serif;
-            padding: 40px;
-            background: #f5f5f5;
-          }
-
-          .box {
-            max-width: 800px;
-            margin: auto;
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,.08);
-          }
-
-          h1 {
-            color: #dc2626;
-          }
-
-          code {
-            background: #f1f5f9;
-            padding: 4px 8px;
-            border-radius: 5px;
-          }
-
-          a {
-            display: inline-block;
-            margin-top: 20px;
-            padding: 10px 18px;
-            background: #1d4ed8;
-            color: white;
-            text-decoration: none;
-            border-radius: 8px;
-          }
-        </style>
-      </head>
-
-      <body>
-
-        <div class="box">
-
-          <h1>Artikel tidak ditemukan</h1>
-
-          <p>
-            Slug yang dibuka:
-          </p>
-
-          <p>
-            <code>${slug}</code>
-          </p>
-
-          <p>
-            Pastikan link artikel menggunakan:
-          </p>
-
-          <p>
-            <code>/artikel/${slug}</code>
-          </p>
-
-          <a href="/artikel">
-            Kembali ke Artikel
-          </a>
-
-        </div>
-
-      </body>
-      </html>
-    `,
-    {
-      status: 404,
-      headers: {
-        "Content-Type": "text/html; charset=utf-8"
-      }
-    }
-  );
-
 }
 
 
-/* =========================================================
-   KATEGORI
-========================================================= */
+// =========================================================
+// DATA ARTIKEL
+// =========================================================
+
+const title = post.title || "Artikel";
+
+const content = post.content || "";
+
+const editor =
+    post.editor ||
+    "DPMPTSP Kota Surabaya";
+
+const hits =
+    Number(post.hits || 0);
 
 const categoryId =
-  Number(post.id_category);
+    Number(post.id_category);
 
-const namaKategori =
-  categoryId === 2
-    ? "Artikel Perizinan"
-    : categoryId === 3
-      ? "Penanaman Modal"
-      : "Artikel";
-
-
-/* =========================================================
-   ICON
-========================================================= */
-
-const categoryIcon =
-  categoryId === 2
-    ? "fa-file-circle-check"
-    : "fa-chart-line";
+const categoryName =
+    categoryId === 2
+        ? "Artikel Perizinan"
+        : categoryId === 3
+            ? "Penanaman Modal"
+            : "Artikel";
 
 
-/* =========================================================
-   WARNA KATEGORI
-========================================================= */
+// =========================================================
+// TANGGAL
+// =========================================================
 
-const categoryClass =
-  categoryId === 2
-    ? "bg-blue-700"
-    : "bg-emerald-600";
+let tanggal = "";
 
+if (post.date) {
 
-/* =========================================================
-   ARTIKEL TERKAIT
-========================================================= */
+    const dateObj = new Date(post.date);
 
-const artikelPerizinan =
-  rows
-    .filter(
-      (item) =>
-        Number(item.id_category) === 2 &&
-        Number(item.id_post) !== Number(post.id_post)
-    )
-    .slice(0, 10);
+    if (!Number.isNaN(dateObj.getTime())) {
 
+        tanggal = dateObj.toLocaleDateString(
+            "id-ID",
+            {
+                day: "numeric",
+                month: "long",
+                year: "numeric"
+            }
+        );
 
-const artikelPenanamanModal =
-  rows
-    .filter(
-      (item) =>
-        Number(item.id_category) === 3 &&
-        Number(item.id_post) !== Number(post.id_post)
-    )
-    .slice(0, 10);
+    } else {
 
+        tanggal = String(post.date);
 
-/* =========================================================
-   FORMAT TANGGAL
-========================================================= */
-
-const formatDate = (date) => {
-
-  if (!date) return "";
-
-  const parsed =
-    new Date(date);
-
-  if (
-    Number.isNaN(
-      parsed.getTime()
-    )
-  ) {
-    return String(date);
-  }
-
-  return parsed.toLocaleDateString(
-    "id-ID",
-    {
-      day: "numeric",
-      month: "long",
-      year: "numeric"
     }
-  );
+}
 
+
+// =========================================================
+// GAMBAR
+// =========================================================
+
+const getPictureUrl = (picture) => {
+
+    if (!picture) return "";
+
+    const value = String(picture).trim();
+
+    if (!value) return "";
+
+    if (
+        value.startsWith("http://") ||
+        value.startsWith("https://") ||
+        value.startsWith("//")
+    ) {
+        return value;
+    }
+
+    return `https://dpm-ptsp.surabaya.go.id/fileberita/${value}`;
 };
 
-
-/* =========================================================
-   LINK ARTIKEL
-========================================================= */
-
-const getArtikelLink = (item) => {
-
-  return `/artikel/${slugify(
-    String(item.title || "")
-  )}`;
-
-};
+const pictureUrl = getPictureUrl(post.picture);
 
 
-/* =========================================================
-   ISI ARTIKEL
-   PENTING:
-   ISI ADA DI content
-========================================================= */
+// =========================================================
+// ARTIKEL TERKAIT
+// =========================================================
 
-const articleContent =
-  post.content || "";
-
-
-/* =========================================================
-   ESTIMASI WAKTU BACA
-========================================================= */
-
-const plainContent =
-  String(articleContent)
-    .replace(/<[^>]*>/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-
-const wordCount =
-  plainContent
-    ? plainContent.split(/\s+/).length
-    : 0;
-
-const readingTime =
-  Math.max(
-    1,
-    Math.ceil(wordCount / 200)
-  );
+const relatedArticles = rows
+    .filter(
+        (item) =>
+            Number(item.id_post) !== Number(post.id_post)
+    )
+    .filter(
+        (item) =>
+            Number(item.id_category) === categoryId
+    )
+    .slice(0, 6);
 
 
-/* =========================================================
-   URL
-========================================================= */
+// =========================================================
+// URL ARTIKEL
+// =========================================================
 
-const currentUrl =
-  Astro.url.href;
+const canonicalUrl =
+    `/artikel/${normalizeSlug(slug)}`;
+
+const fullUrl =
+    new URL(canonicalUrl, Astro.site || Astro.url.origin).href;
 
 ---
 
+
+<MainLayout title={title}>
+
+    <div class="min-h-screen bg-[#f7f8fc]">
+
+        <!-- =====================================================
+             HERO
+        ====================================================== -->
+
+        <section class="relative overflow-hidden bg-[#0900C3]">
+
+            <div class="absolute inset-0 opacity-10">
+                <div class="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-[#FFD41D]"></div>
+                <div class="absolute -bottom-32 -left-24 w-96 h-96 rounded-full bg-white"></div>
+            </div>
+
+            <div class="relative max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-12 md:py-16">
+
+                <!-- Breadcrumb -->
+
+                <div class="flex flex-wrap items-center gap-2 text-sm text-white/70 mb-7">
+
+                    <a
+                        href="/"
+                        class="hover:text-[#FFD41D] transition"
+                    >
+                        Beranda
+                    </a>
+
+                    <i class="fas fa-chevron-right text-[10px]"></i>
+
+                    <a
+                        href="/artikel"
+                        class="hover:text-[#FFD41D] transition"
+                    >
+                        Artikel
+                    </a>
+
+                    <i class="fas fa-chevron-right text-[10px]"></i>
+
+                    <span class="text-white/90">
+                        {categoryName}
+                    </span>
+
+                </div>
+
+
+                <!-- Category -->
+
+                <div class="mb-5">
+
+                    <span
+                        class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#FFD41D] text-[#0900C3] font-bold text-sm shadow-sm"
+                    >
+
+                        {categoryId === 2 ? (
+                            <i class="fas fa-file-circle-check"></i>
+                        ) : (
+                            <i class="fas fa-chart-line"></i>
+                        )}
+
+                        {categoryName}
+
+                    </span>
+
+                </div>
+
+
+                <!-- Title -->
+
+                <h1
+                    class="max-w-5xl text-3xl sm:text-4xl lg:text-5xl font-extrabold leading-tight text-white"
+                >
+                    {title}
+                </h1>
+
+
+                <!-- Meta -->
+
+                <div class="flex flex-wrap items-center gap-x-6 gap-y-3 mt-7 text-sm text-white/80">
+
+                    {tanggal && (
+                        <div class="flex items-center gap-2">
+
+                            <i class="far fa-calendar"></i>
+
+                            <span>
+                                {tanggal}
+                            </span>
+
+                        </div>
+                    )}
+
+
+                    <div class="flex items-center gap-2">
+
+                        <i class="far fa-user"></i>
+
+                        <span>
+                            {editor}
+                        </span>
+
+                    </div>
+
+
+                    <div class="flex items-center gap-2">
+
+                        <i class="far fa-eye"></i>
+
+                        <span>
+                            {hits.toLocaleString("id-ID")} views
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =====================================================
+             CONTENT AREA
+        ====================================================== -->
+
+        <section class="py-10 md:py-14">
+
+            <div class="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
+
+                <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-8 lg:gap-10">
+
+
+                    <!-- =================================================
+                         ARTIKEL UTAMA
+                    ================================================== -->
+
+                    <article class="min-w-0">
+
+                        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+
+
+                            <!-- GAMBAR UTAMA -->
+
+                            {pictureUrl && (
+                                <div class="w-full bg-gray-100">
+
+                                    <img
+                                        src={pictureUrl}
+                                        alt={title}
+                                        class="block w-full max-h-[600px] object-cover"
+                                        loading="eager"
+                                    />
+
+                                </div>
+                            )}
+
+
+                            <!-- ISI -->
+
+                            <div class="p-6 sm:p-8 md:p-10">
+
+                                <div
+                                    class="article-content"
+                                    set:html={content}
+                                ></div>
+
+
+                                <!-- =================================================
+                                     SHARE
+                                ================================================== -->
+
+                                <div class="mt-10 pt-7 border-t border-gray-200">
+
+                                    <div class="flex flex-wrap items-center gap-3">
+
+                                        <span class="font-bold text-gray-700 mr-2">
+                                            Bagikan:
+                                        </span>
+
+
+                                        <!-- Facebook -->
+
+                                        <a
+                                            id="shareFacebook"
+                                            href="#"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            aria-label="Bagikan ke Facebook"
+                                            class="share-button bg-[#1877F2] text-white"
+                                        >
+                                            <i class="fab fa-facebook-f"></i>
+                                        </a>
+
+
+                                        <!-- WhatsApp -->
+
+                                        <a
+                                            id="shareWhatsApp"
+                                            href="#"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            aria-label="Bagikan ke WhatsApp"
+                                            class="share-button bg-[#25D366] text-white"
+                                        >
+                                            <i class="fab fa-whatsapp"></i>
+                                        </a>
+
+
+                                        <!-- Copy -->
+
+                                        <button
+                                            id="copyLink"
+                                            type="button"
+                                            aria-label="Salin link"
+                                            class="share-button bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                        >
+                                            <i class="fas fa-link"></i>
+                                        </button>
+
+
+                                        <span
+                                            id="copyMessage"
+                                            class="hidden text-sm font-semibold text-green-600"
+                                        >
+                                            Link berhasil disalin
+                                        </span>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- =================================================
+                             BACK BUTTON
+                        ================================================== -->
+
+                        <div class="mt-7">
+
+                            <a
+                                href="/artikel"
+                                class="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-[#0900C3] text-white font-semibold hover:bg-blue-800 transition shadow-sm"
+                            >
+
+                                <i class="fas fa-arrow-left"></i>
+
+                                Kembali ke Artikel
+
+                            </a>
+
+                        </div>
+
+                    </article>
+
+
+
+                    <!-- =================================================
+                         SIDEBAR
+                    ================================================== -->
+
+                    <aside class="lg:sticky lg:top-24 h-fit space-y-5">
+
+
+                        <!-- MENU ARTIKEL -->
+
+                        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+
+                            <div class="px-5 py-4 border-b border-gray-100">
+
+                                <h2 class="font-bold text-lg text-gray-900">
+                                    Artikel
+                                </h2>
+
+                            </div>
+
+
+                            <div class="p-3">
+
+                                <a
+                                    href="/artikel"
+                                    class="sidebar-link"
+                                >
+
+                                    <span class="sidebar-icon">
+                                        <i class="fas fa-layer-group"></i>
+                                    </span>
+
+                                    <span>
+                                        Semua Artikel
+                                    </span>
+
+                                </a>
+
+
+                                <a
+                                    href="/artikel?type=perizinan"
+                                    class:list={[
+                                        "sidebar-link",
+                                        categoryId === 2 && "sidebar-active"
+                                    ]}
+                                >
+
+                                    <span class="sidebar-icon">
+                                        <i class="fas fa-file-circle-check"></i>
+                                    </span>
+
+                                    <span>
+                                        Artikel Perizinan
+                                    </span>
+
+                                </a>
+
+
+                                <a
+                                    href="/artikel?type=penanaman-modal"
+                                    class:list={[
+                                        "sidebar-link",
+                                        categoryId === 3 && "sidebar-active"
+                                    ]}
+                                >
+
+                                    <span class="sidebar-icon">
+                                        <i class="fas fa-chart-line"></i>
+                                    </span>
+
+                                    <span>
+                                        Penanaman Modal
+                                    </span>
+
+                                </a>
+
+                            </div>
+
+                        </div>
+
+
+
+                        <!-- =================================================
+                             RELATED
+                        ================================================== -->
+
+                        {relatedArticles.length > 0 && (
+
+                            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+
+                                <div class="px-5 py-4 border-b border-gray-100">
+
+                                    <h2 class="font-bold text-lg text-gray-900">
+                                        Artikel Terkait
+                                    </h2>
+
+                                </div>
+
+
+                                <div class="divide-y divide-gray-100">
+
+                                    {relatedArticles.map((item) => (
+
+                                        <a
+                                            href={`/artikel/${normalizeSlug(slugify(item.title || ""))}`}
+                                            class="block p-4 hover:bg-gray-50 transition"
+                                        >
+
+                                            <div class="flex gap-3">
+
+
+                                                <!-- Thumbnail -->
+
+                                                {item.picture ? (
+
+                                                    <img
+                                                        src={getPictureUrl(item.picture)}
+                                                        alt={item.title}
+                                                        class="w-16 h-16 rounded-lg object-cover shrink-0 bg-gray-100"
+                                                        loading="lazy"
+                                                    />
+
+                                                ) : (
+
+                                                    <div class="w-16 h-16 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
+
+                                                        <i class="fas fa-newspaper text-[#0900C3]"></i>
+
+                                                    </div>
+
+                                                )}
+
+
+                                                <!-- Text -->
+
+                                                <div class="min-w-0">
+
+                                                    <h3 class="text-sm font-semibold text-gray-800 line-clamp-3 leading-snug">
+
+                                                        {item.title}
+
+                                                    </h3>
+
+                                                    {item.date && (
+
+                                                        <p class="text-xs text-gray-400 mt-2">
+
+                                                            {new Date(item.date).toLocaleDateString(
+                                                                "id-ID",
+                                                                {
+                                                                    day: "numeric",
+                                                                    month: "short",
+                                                                    year: "numeric"
+                                                                }
+                                                            )}
+
+                                                        </p>
+
+                                                    )}
+
+                                                </div>
+
+                                            </div>
+
+                                        </a>
+
+                                    ))}
+
+                                </div>
+
+                            </div>
+
+                        )}
+
+                    </aside>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </div>
+
+</MainLayout>
+
+
+
 <style>
 
-  @import url(
-    'https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap'
-  );
+    /* =========================================================
+       SHARE BUTTON
+    ========================================================= */
 
-  body {
-    font-family: 'Poppins', sans-serif;
-  }
+    .share-button {
+        width: 42px;
+        height: 42px;
+        border-radius: 9999px;
 
-  @keyframes fadeInUp {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
 
-    from {
-      opacity: 0;
-      transform: translateY(20px);
+        transition:
+            transform 0.2s ease,
+            opacity 0.2s ease;
     }
 
-    to {
-      opacity: 1;
-      transform: translateY(0);
+    .share-button:hover {
+        transform: translateY(-2px);
+        opacity: 0.9;
     }
 
-  }
 
-  .animate-fadeInUp {
-    animation:
-      fadeInUp .5s ease-out;
-  }
+    /* =========================================================
+       SIDEBAR
+    ========================================================= */
 
-  .card-hover {
-    transition:
-      all .3s ease;
-  }
+    .sidebar-link {
+        display: flex;
+        align-items: center;
+        gap: 12px;
 
-  .card-hover:hover {
-    transform:
-      translateY(-5px);
+        width: 100%;
 
-    box-shadow:
-      0 20px 25px -5px
-      rgba(0,0,0,.1),
-      0 10px 10px -5px
-      rgba(0,0,0,.04);
-  }
+        padding: 12px;
 
-  .shadow-custom {
-    box-shadow:
-      0 10px 30px
-      rgba(0,0,0,.08);
-  }
+        border-radius: 10px;
 
-  .first-letter::first-letter {
-    font-size: 3.5rem;
-    font-weight: 800;
-    float: left;
-    line-height: 1;
-    margin-right: .5rem;
-    color: #1d4ed8;
-    padding-top: .5rem;
-  }
+        color: #374151;
 
-  .line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
+        font-size: 14px;
+        font-weight: 600;
 
-  .article-content :global(img) {
-    max-width: 100%;
-    height: auto;
-    border-radius: 12px;
-  }
+        transition:
+            background 0.2s ease,
+            color 0.2s ease;
+    }
 
-  .article-content :global(table) {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 20px 0;
-  }
+    .sidebar-link:hover {
+        background: #f3f4ff;
+        color: #0900C3;
+    }
 
-  .article-content :global(td),
-  .article-content :global(th) {
-    border: 1px solid #ddd;
-    padding: 8px;
-  }
+    .sidebar-active {
+        background: #eef0ff;
+        color: #0900C3;
+    }
 
-  .article-content :global(h1),
-  .article-content :global(h2),
-  .article-content :global(h3),
-  .article-content :global(h4) {
-    font-weight: 700;
-    color: #111827;
-    margin-top: 1.5rem;
-    margin-bottom: .75rem;
-  }
+    .sidebar-icon {
+        width: 34px;
+        height: 34px;
 
-  .article-content :global(p) {
-    margin-bottom: 1rem;
-  }
+        flex-shrink: 0;
 
-  .article-content :global(ul) {
-    list-style: disc;
-    padding-left: 1.5rem;
-  }
+        display: flex;
+        align-items: center;
+        justify-content: center;
 
-  .article-content :global(ol) {
-    list-style: decimal;
-    padding-left: 1.5rem;
-  }
+        border-radius: 8px;
 
-  .article-content :global(a) {
-    color: #1d4ed8;
-    text-decoration: underline;
-  }
+        background: #eef2ff;
+
+        color: #0900C3;
+    }
+
+
+    /* =========================================================
+       ARTICLE CONTENT
+    ========================================================= */
+
+    .article-content {
+        color: #374151;
+
+        font-size: 17px;
+
+        line-height: 1.9;
+
+        overflow-wrap: anywhere;
+    }
+
+
+    .article-content :global(p) {
+        margin: 0 0 1.25rem;
+    }
+
+
+    .article-content :global(h1) {
+        font-size: 2rem;
+
+        line-height: 1.3;
+
+        font-weight: 800;
+
+        color: #111827;
+
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+    }
+
+
+    .article-content :global(h2) {
+        font-size: 1.7rem;
+
+        line-height: 1.35;
+
+        font-weight: 800;
+
+        color: #111827;
+
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+    }
+
+
+    .article-content :global(h3) {
+        font-size: 1.4rem;
+
+        line-height: 1.4;
+
+        font-weight: 700;
+
+        color: #111827;
+
+        margin-top: 1.75rem;
+        margin-bottom: 0.9rem;
+    }
+
+
+    .article-content :global(h4) {
+        font-size: 1.2rem;
+
+        font-weight: 700;
+
+        color: #111827;
+
+        margin-top: 1.5rem;
+        margin-bottom: 0.75rem;
+    }
+
+
+    .article-content :global(strong) {
+        font-weight: 700;
+
+        color: #111827;
+    }
+
+
+    .article-content :global(a) {
+        color: #0900C3;
+
+        text-decoration: underline;
+
+        text-underline-offset: 2px;
+    }
+
+
+    .article-content :global(a:hover) {
+        color: #050078;
+    }
+
+
+    .article-content :global(ul) {
+        list-style: disc;
+
+        padding-left: 1.75rem;
+
+        margin: 1rem 0 1.5rem;
+    }
+
+
+    .article-content :global(ol) {
+        list-style: decimal;
+
+        padding-left: 1.75rem;
+
+        margin: 1rem 0 1.5rem;
+    }
+
+
+    .article-content :global(li) {
+        margin-bottom: 0.45rem;
+    }
+
+
+    .article-content :global(blockquote) {
+        margin: 1.5rem 0;
+
+        padding: 1rem 1.25rem;
+
+        border-left: 4px solid #0900C3;
+
+        background: #f5f6ff;
+
+        color: #4b5563;
+
+        border-radius: 0 10px 10px 0;
+    }
+
+
+    .article-content :global(img) {
+        max-width: 100%;
+
+        height: auto;
+
+        display: block;
+
+        margin: 1.5rem auto;
+
+        border-radius: 12px;
+    }
+
+
+    .article-content :global(figure) {
+        margin: 1.5rem 0;
+    }
+
+
+    .article-content :global(figcaption) {
+        text-align: center;
+
+        font-size: 14px;
+
+        color: #6b7280;
+
+        margin-top: 0.5rem;
+    }
+
+
+    .article-content :global(table) {
+        width: 100%;
+
+        border-collapse: collapse;
+
+        margin: 1.5rem 0;
+
+        display: block;
+
+        overflow-x: auto;
+    }
+
+
+    .article-content :global(th),
+    .article-content :global(td) {
+        border: 1px solid #d1d5db;
+
+        padding: 10px 12px;
+
+        text-align: left;
+
+        vertical-align: top;
+    }
+
+
+    .article-content :global(th) {
+        background: #f3f4f6;
+
+        color: #111827;
+
+        font-weight: 700;
+    }
+
+
+    .article-content :global(hr) {
+        border: 0;
+
+        border-top: 1px solid #e5e7eb;
+
+        margin: 2rem 0;
+    }
+
+
+    .article-content :global(pre) {
+        overflow-x: auto;
+
+        padding: 1rem;
+
+        border-radius: 10px;
+
+        background: #111827;
+
+        color: white;
+
+        margin: 1.5rem 0;
+    }
+
+
+    .article-content :global(code) {
+        font-family: monospace;
+    }
+
+
+    /* =========================================================
+       MOBILE
+    ========================================================= */
+
+    @media (max-width: 640px) {
+
+        .article-content {
+            font-size: 16px;
+
+            line-height: 1.8;
+        }
+
+        .article-content :global(h1) {
+            font-size: 1.6rem;
+        }
+
+        .article-content :global(h2) {
+            font-size: 1.4rem;
+        }
+
+        .article-content :global(h3) {
+            font-size: 1.2rem;
+        }
+
+    }
 
 </style>
 
 
-<MainLayout title={post.title}>
 
-  <!-- HERO -->
+<script>
 
-  <section
-    class="relative overflow-hidden bg-gradient-to-r from-blue-800 to-blue-900 py-14"
-  >
+    // =========================================================
+    // SHARE
+    // =========================================================
 
-    <div
-      class="container mx-auto px-4 text-center text-white"
-    >
+    const currentUrl = window.location.href;
 
-      <h1
-        class="text-3xl md:text-4xl font-bold mb-4"
-      >
-        Detail Artikel
-      </h1>
+    const facebook =
+        document.getElementById("shareFacebook");
 
-      <p
-        class="text-lg opacity-90 max-w-3xl mx-auto"
-      >
-        Informasi seputar perizinan dan
-        penanaman modal DPMPTSP Surabaya
-      </p>
-
-      <div class="mt-6">
-
-        <a
-          href="/artikel"
-          class="inline-flex items-center bg-yellow-400 text-blue-800 font-bold px-6 py-3 rounded-lg hover:bg-yellow-300 transition"
-        >
-
-          <i class="fas fa-arrow-left mr-2"></i>
-
-          Kembali ke Artikel
-
-        </a>
-
-      </div>
-
-    </div>
-
-  </section>
-
-
-  <!-- CONTENT -->
-
-  <section
-    class="container mx-auto px-4 py-10"
-  >
-
-    <div
-      class="grid grid-cols-1 lg:grid-cols-3 gap-8"
-    >
-
-
-      <!-- ARTIKEL -->
-
-      <article
-        class="lg:col-span-2 bg-white rounded-2xl shadow-custom overflow-hidden animate-fadeInUp"
-      >
-
-        <!-- HEADER -->
-
-        <div
-          class="p-6 md:p-8 border-b"
-        >
-
-          <div
-            class="flex flex-wrap justify-between items-center gap-3 mb-4"
-          >
-
-            <span
-              class={`${categoryClass} text-white px-4 py-2 rounded-full text-sm font-semibold`}
-            >
-
-              <i
-                class={`fas ${categoryIcon} mr-1`}
-              ></i>
-
-              {namaKategori}
-
-            </span>
-
-
-            <span
-              class="text-sm text-gray-500"
-            >
-
-              <i
-                class="far fa-calendar-alt mr-1"
-              ></i>
-
-              {formatDate(post.date)}
-
-            </span>
-
-          </div>
-
-
-          <h1
-            class="text-2xl md:text-3xl font-bold text-gray-900 leading-tight mb-5"
-          >
-            {post.title}
-          </h1>
-
-
-          <div
-            class="flex flex-wrap items-center gap-4 text-gray-600"
-          >
-
-            <div class="flex items-center gap-2">
-
-              <i
-                class="fas fa-user text-blue-700"
-              ></i>
-
-              <span>
-                {post.editor || "Admin DPMPTSP"}
-              </span>
-
-            </div>
-
-
-            <div class="flex items-center gap-2">
-
-              <i
-                class="fas fa-eye text-blue-700"
-              ></i>
-
-              <span>
-                {post.hits || 0} views
-              </span>
-
-            </div>
-
-
-            <div class="flex items-center gap-2">
-
-              <i
-                class="fas fa-clock text-blue-700"
-              ></i>
-
-              <span>
-                {readingTime} min read
-              </span>
-
-            </div>
-
-          </div>
-
-        </div>
-
-
-        <!-- GAMBAR -->
-
-        {post.picture && (
-
-          <div class="px-6 md:px-8 pt-6">
-
-            <img
-              src={`https://dpm-ptsp.surabaya.go.id/fileberita/${post.picture}`}
-              alt={post.title}
-              class="w-full max-h-[600px] object-cover rounded-xl"
-            />
-
-          </div>
-
-        )}
-
-
-        <!-- ISI ARTIKEL -->
-
-        <div
-          class="p-6 md:p-8 prose prose-lg max-w-none text-justify text-gray-700 article-content first-letter"
-        >
-
-          <div
-            set:html={post.content || ""}
-          />
-
-
-          <!-- TAG -->
-
-          <div
-            class="mt-8 pt-6 border-t border-gray-100 not-prose"
-          >
-
-            <div
-              class="flex items-center gap-2 flex-wrap"
-            >
-
-              <span
-                class="font-semibold text-gray-700"
-              >
-                Kategori:
-              </span>
-
-
-              <span
-                class="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm"
-              >
-                #{namaKategori}
-              </span>
-
-
-              {post.tag && (
-
-                <span
-                  class="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm"
-                >
-                  #{post.tag}
-                </span>
-
-              )}
-
-            </div>
-
-          </div>
-
-        </div>
-
-      </article>
-
-
-      <!-- SIDEBAR -->
-
-      <aside class="space-y-6">
-
-
-        <!-- ARTIKEL TERKAIT -->
-
-        <div
-          class="bg-white rounded-2xl shadow-custom p-6"
-        >
-
-          <h2
-            class="text-xl font-bold mb-4 border-b pb-2"
-          >
-            Artikel Terkait
-          </h2>
-
-
-          <input
-            type="text"
-            id="search-related"
-            placeholder="Cari judul..."
-            class="w-full mb-4 px-4 py-2 text-sm border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600"
-          />
-
-
-          <!-- TAB -->
-
-          <div
-            class="flex gap-1 mb-5 bg-slate-100 p-1 rounded-xl"
-          >
-
-            <button
-              type="button"
-              class="tab-btn flex-1 px-3 py-2 text-xs font-medium rounded-lg bg-blue-600 text-white shadow"
-              data-category="perizinan"
-            >
-              Perizinan
-            </button>
-
-
-            <button
-              type="button"
-              class="tab-btn flex-1 px-3 py-2 text-xs font-medium rounded-lg text-slate-600"
-              data-category="penanaman"
-            >
-              Penanaman Modal
-            </button>
-
-          </div>
-
-
-          <div id="related-list">
-
-
-            <!-- PERIZINAN -->
-
-            {artikelPerizinan.map((item) => (
-
-              <a
-                href={getArtikelLink(item)}
-                class="related-item flex gap-4 mb-4 group"
-                data-type="perizinan"
-              >
-
-                {item.picture ? (
-
-                  <img
-                    src={`https://dpm-ptsp.surabaya.go.id/fileberita/${item.picture}`}
-                    alt={item.title}
-                    class="w-20 h-20 rounded-xl object-cover flex-shrink-0"
-                  />
-
-                ) : (
-
-                  <div
-                    class="w-20 h-20 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0"
-                  >
-
-                    <i
-                      class="fas fa-file-circle-check text-blue-700 text-xl"
-                    ></i>
-
-                  </div>
-
-                )}
-
-
-                <div class="min-w-0">
-
-                  <span
-                    class="text-[10px] bg-blue-50 text-blue-700 px-2 py-1 rounded"
-                  >
-                    Artikel Perizinan
-                  </span>
-
-                  <h3
-                    class="font-semibold text-sm line-clamp-2 mt-1 group-hover:text-blue-700"
-                  >
-                    {item.title}
-                  </h3>
-
-                  <p
-                    class="text-xs text-slate-500 mt-1"
-                  >
-                    {formatDate(item.date)}
-                  </p>
-
-                </div>
-
-              </a>
-
-            ))}
-
-
-            <!-- PENANAMAN -->
-
-            {artikelPenanamanModal.map((item) => (
-
-              <a
-                href={getArtikelLink(item)}
-                class="related-item hidden flex gap-4 mb-4 group"
-                data-type="penanaman"
-              >
-
-                {item.picture ? (
-
-                  <img
-                    src={`https://dpm-ptsp.surabaya.go.id/fileberita/${item.picture}`}
-                    alt={item.title}
-                    class="w-20 h-20 rounded-xl object-cover flex-shrink-0"
-                  />
-
-                ) : (
-
-                  <div
-                    class="w-20 h-20 rounded-xl bg-emerald-100 flex items-center justify-center flex-shrink-0"
-                  >
-
-                    <i
-                      class="fas fa-chart-line text-emerald-700 text-xl"
-                    ></i>
-
-                  </div>
-
-                )}
-
-
-                <div class="min-w-0">
-
-                  <span
-                    class="text-[10px] bg-emerald-50 text-emerald-700 px-2 py-1 rounded"
-                  >
-                    Penanaman Modal
-                  </span>
-
-                  <h3
-                    class="font-semibold text-sm line-clamp-2 mt-1 group-hover:text-emerald-700"
-                  >
-                    {item.title}
-                  </h3>
-
-                  <p
-                    class="text-xs text-slate-500 mt-1"
-                  >
-                    {formatDate(item.date)}
-                  </p>
-
-                </div>
-
-              </a>
-
-            ))}
-
-          </div>
-
-
-          <a
-            href="/artikel"
-            class="block text-center bg-blue-700 text-white py-3 rounded-lg hover:bg-blue-800 transition mt-4"
-          >
-            Lihat Semua Artikel
-          </a>
-
-        </div>
-
-
-        <!-- QUICK LINKS -->
-
-        <div
-          class="bg-gradient-to-r from-blue-700 to-blue-900 rounded-2xl shadow-custom p-6 text-white card-hover"
-        >
-
-          <h2
-            class="text-xl font-bold mb-6"
-          >
-            Layanan Cepat
-          </h2>
-
-          <div class="space-y-4">
-
-            <a
-              href="/Aplikasi#ijinusaha-sec"
-              class="flex items-center justify-between p-3 bg-white/10 rounded-lg hover:bg-white/20"
-            >
-
-              <span>
-                Call Center Surabaya
-              </span>
-
-              <i
-                class="fas fa-arrow-right text-yellow-300"
-              ></i>
-
-            </a>
-
-
-            <a
-              href="/Aplikasi#ijinusaha-sec"
-              class="flex items-center justify-between p-3 bg-white/10 rounded-lg hover:bg-white/20"
-            >
-
-              <span>
-                TAKON SOBAT
-              </span>
-
-              <i
-                class="fas fa-arrow-right text-yellow-300"
-              ></i>
-
-            </a>
-
-
-            <a
-              href="/Aplikasi#ijinusaha-sec"
-              class="flex items-center justify-between p-3 bg-white/10 rounded-lg hover:bg-white/20"
-            >
-
-              <span>
-                LAPIS LUPIS
-              </span>
-
-              <i
-                class="fas fa-arrow-right text-yellow-300"
-              ></i>
-
-            </a>
-
-
-            <a
-              href="/Aplikasi#ijinusaha-sec"
-              class="flex items-center justify-between p-3 bg-white/10 rounded-lg hover:bg-white/20"
-            >
-
-              <span>
-                Perizinan Online
-              </span>
-
-              <i
-                class="fas fa-arrow-right text-yellow-300"
-              ></i>
-
-            </a>
-
-
-            <a
-              href="/Aplikasi#pengaduan-sec"
-              class="flex items-center justify-between p-3 bg-white/10 rounded-lg hover:bg-white/20"
-            >
-
-              <span>
-                Pengaduan Layanan
-              </span>
-
-              <i
-                class="fas fa-arrow-right text-yellow-300"
-              ></i>
-
-            </a>
-
-          </div>
-
-        </div>
-
-
-        <!-- SHARE -->
-
-        <div
-          class="bg-white rounded-2xl shadow-custom p-6"
-        >
-
-          <h2
-            class="text-xl font-bold mb-4 border-b pb-2"
-          >
-            Bagikan Artikel
-          </h2>
-
-
-          <div
-            class="grid grid-cols-2 gap-3"
-          >
-
-            <a
-              href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(currentUrl)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              class="bg-blue-600 text-white p-3 rounded-lg flex flex-col items-center justify-center"
-            >
-
-              <i
-                class="fab fa-facebook-f text-lg mb-2"
-              ></i>
-
-              <span class="text-xs">
-                Facebook
-              </span>
-
-            </a>
-
-
-            <a
-              href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(currentUrl)}&text=${encodeURIComponent(post.title)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              class="bg-blue-400 text-white p-3 rounded-lg flex flex-col items-center justify-center"
-            >
-
-              <i
-                class="fab fa-twitter text-lg mb-2"
-              ></i>
-
-              <span class="text-xs">
-                Twitter
-              </span>
-
-            </a>
-
-
-            <a
-              href={`https://api.whatsapp.com/send?text=${encodeURIComponent(post.title + " " + currentUrl)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              class="bg-green-500 text-white p-3 rounded-lg flex flex-col items-center justify-center"
-            >
-
-              <i
-                class="fab fa-whatsapp text-lg mb-2"
-              ></i>
-
-              <span class="text-xs">
-                WhatsApp
-              </span>
-
-            </a>
-
-
-            <a
-              href={`mailto:?subject=${encodeURIComponent(post.title)}&body=${encodeURIComponent(currentUrl)}`}
-              class="bg-red-500 text-white p-3 rounded-lg flex flex-col items-center justify-center"
-            >
-
-              <i
-                class="fas fa-envelope text-lg mb-2"
-              ></i>
-
-              <span class="text-xs">
-                Email
-              </span>
-
-            </a>
-
-          </div>
-
-
-          <!-- COPY -->
-
-          <div
-            class="mt-6 pt-4 border-t"
-          >
-
-            <div class="flex">
-
-              <input
-                type="text"
-                id="article-link"
-                value={currentUrl}
-                readonly
-                class="flex-grow min-w-0 px-3 py-2 text-sm border rounded-l-lg"
-              />
-
-              <button
-                type="button"
-                id="copy-link"
-                class="bg-blue-700 text-white px-4 py-2 rounded-r-lg"
-              >
-
-                <i class="fas fa-copy"></i>
-
-              </button>
-
-            </div>
-
-
-            <p
-              id="copy-message"
-              class="text-xs text-green-600 mt-2 hidden"
-            >
-              Link berhasil disalin!
-            </p>
-
-          </div>
-
-        </div>
-
-      </aside>
-
-    </div>
-
-  </section>
-
-
-  <!-- JAVASCRIPT -->
-
-  <script>
-
-    const tabs =
-      document.querySelectorAll(
-        ".tab-btn"
-      );
-
-    const items =
-      document.querySelectorAll(
-        ".related-item"
-      );
-
-    const searchInput =
-      document.getElementById(
-        "search-related"
-      );
-
-    let activeType =
-      "perizinan";
-
-
-    function renderList() {
-
-      const keyword =
-        searchInput?.value
-          .toLowerCase()
-          .trim() || "";
-
-
-      items.forEach((item) => {
-
-        const title =
-          item
-            .querySelector("h3")
-            ?.innerText
-            .toLowerCase() || "";
-
-
-        const matchType =
-          item.dataset.type ===
-          activeType;
-
-
-        const matchSearch =
-          title.includes(
-            keyword
-          );
-
-
-        item.classList.toggle(
-          "hidden",
-          !(
-            matchType &&
-            matchSearch
-          )
-        );
-
-      });
-
-    }
-
-
-    function setActive(type) {
-
-      activeType = type;
-
-
-      tabs.forEach((tab) => {
-
-        const active =
-          tab.dataset.category ===
-          type;
-
-
-        tab.className =
-          "tab-btn flex-1 px-3 py-2 text-xs font-medium rounded-lg transition " +
-          (
-            active
-              ? "bg-blue-600 text-white shadow"
-              : "text-slate-600 hover:text-slate-900"
-          );
-
-      });
-
-
-      renderList();
-
-    }
-
-
-    setActive("perizinan");
-
-
-    tabs.forEach((tab) => {
-
-      tab.addEventListener(
-        "click",
-        () => {
-
-          setActive(
-            tab.dataset.category
-          );
-
-        }
-      );
-
-    });
-
-
-    searchInput?.addEventListener(
-      "input",
-      renderList
-    );
-
-
-    /* COPY LINK */
+    const whatsapp =
+        document.getElementById("shareWhatsApp");
 
     const copyButton =
-      document.getElementById(
-        "copy-link"
-      );
-
-    const articleLink =
-      document.getElementById(
-        "article-link"
-      );
+        document.getElementById("copyLink");
 
     const copyMessage =
-      document.getElementById(
-        "copy-message"
-      );
+        document.getElementById("copyMessage");
 
 
-    copyButton?.addEventListener(
-      "click",
-      async () => {
+    // Facebook
 
-        try {
+    if (facebook) {
 
-          await navigator.clipboard.writeText(
-            articleLink?.value ||
-            window.location.href
-          );
+        facebook.setAttribute(
+            "href",
+            `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(currentUrl)}`
+        );
 
-
-          copyMessage?.classList.remove(
-            "hidden"
-          );
+    }
 
 
-          setTimeout(() => {
+    // WhatsApp
 
-            copyMessage?.classList.add(
-              "hidden"
-            );
+    if (whatsapp) {
 
-          }, 2000);
+        whatsapp.setAttribute(
+            "href",
+            `https://wa.me/?text=${encodeURIComponent(currentUrl)}`
+        );
+
+    }
 
 
-        } catch (error) {
+    // Copy link
 
-          console.error(
-            "COPY ERROR:",
-            error
-          );
+    if (copyButton) {
 
-        }
+        copyButton.addEventListener(
+            "click",
+            async () => {
 
-      }
-    );
+                try {
 
-  </script>
+                    await navigator.clipboard.writeText(
+                        currentUrl
+                    );
 
-</MainLayout>
+                    copyButton.innerHTML =
+                        '<i class="fas fa-check"></i>';
+
+                    if (copyMessage) {
+                        copyMessage.classList.remove("hidden");
+                    }
+
+                    setTimeout(() => {
+
+                        copyButton.innerHTML =
+                            '<i class="fas fa-link"></i>';
+
+                        if (copyMessage) {
+                            copyMessage.classList.add("hidden");
+                        }
+
+                    }, 1800);
+
+                } catch (error) {
+
+                    console.error(
+                        "Gagal menyalin URL:",
+                        error
+                    );
+
+                }
+
+            }
+        );
+
+    }
+
+</script>
