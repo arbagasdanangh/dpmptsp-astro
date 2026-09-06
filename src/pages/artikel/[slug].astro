@@ -1,4 +1,3 @@
-```astro
 ---
 export const prerender = false;
 
@@ -1266,7 +1265,7 @@ console.log(
                 (b) => (
 
                   <a
-                    href={`/media/${slugify(b.title)}`}
+                    href={`/artikel/${slugify(b.title)}`}
                     class="related-item
                            flex
                            gap-4
@@ -1378,7 +1377,7 @@ console.log(
                 (b) => (
 
                   <a
-                    href={`/media/${slugify(b.title)}`}
+                    href={`/artikel/${slugify(b.title)}`}
                     class="related-item
                            hidden
                            flex
@@ -1866,7 +1865,7 @@ console.log(
               <input
                 type="text"
                 id="article-link"
-                value={`/media/${slug}`}
+                value={`/artikel/${slug}`}
                 readonly
                 class="flex-grow
                        px-3 py-2
@@ -2166,4 +2165,3 @@ console.log(
 
 
 </MainLayout>
-```
