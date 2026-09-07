@@ -3139,61 +3139,30 @@ try {
 </script>
 
 
+<!-- =========================================================
+     KEUNGGULAN INVESTASI
+========================================================= -->
+
 <section
+  id="keunggulan-investasi"
   class="relative py-16 md:py-20 overflow-hidden bg-cover bg-center bg-no-repeat"
-  style={`background-image: linear-gradient(rgba(255,255,255,.72), rgba(255,255,255,.82)), url("${bgInvestasi}")`}
+  style={`background-image: linear-gradient(rgba(255,255,255,.72), rgba(255,255,255,.84)), url("${bgInvestasi}")`}
 >
-
-  <!-- Overlay tambahan agar teks tetap jelas -->
   <div class="absolute inset-0 bg-white/10 pointer-events-none"></div>
-
-  <!-- Dekorasi -->
-  <div
-    class="absolute -top-24 -left-24
-           w-72 h-72
-           rounded-full
-           border-[1px]
-           border-blue-300/30
-           pointer-events-none"
-  ></div>
-
-  <div
-    class="absolute -bottom-32 -right-24
-           w-80 h-80
-           rounded-full
-           border-[1px]
-           border-yellow-400/30
-           pointer-events-none"
-  ></div>
-
 
   <div class="relative z-10 max-w-7xl mx-auto px-4">
 
-    <!-- =====================================================
-         HEADER
-    ====================================================== -->
-
+    <!-- HEADER -->
     <div class="text-center mb-12 md:mb-14">
 
       <span
-        class="inline-flex items-center gap-2
-               mb-4 px-4 py-1.5
-               rounded-full
-               bg-blue-50/90
-               border border-blue-100
-               text-blue-700
-               text-xs font-semibold
-               shadow-sm"
+        class="inline-flex items-center gap-2 mb-4 px-4 py-1.5 rounded-full
+               bg-blue-50/90 border border-blue-100 text-blue-700 text-xs
+               font-semibold shadow-sm"
       >
-        <span
-          class="w-1.5 h-1.5
-                 rounded-full
-                 bg-[#FFD21F]"
-        ></span>
-
+        <span class="w-1.5 h-1.5 rounded-full bg-[#FFD21F]"></span>
         POTENSI INVESTASI SURABAYA
       </span>
-
 
       <h2 class="text-3xl md:text-4xl font-bold text-blue-800 mb-4">
         Mengapa Berinvestasi di Surabaya?
@@ -3207,124 +3176,84 @@ try {
     </div>
 
 
-    <!-- =====================================================
-         ERROR API
-    ====================================================== -->
-
+    <!-- ERROR -->
     {apiError && (
       <div
-        class="mb-8 p-4 rounded-xl
-               bg-red-50/95
-               border border-red-200
-               text-red-700
-               shadow-sm"
+        class="mb-8 p-4 rounded-xl bg-red-50 border border-red-200 text-red-700"
       >
-        Gagal mengambil data dari API:
-        {apiError}
+        Gagal mengambil data dari API: {apiError}
       </div>
     )}
 
 
     <!-- =====================================================
-         KEUNGGULAN
+         GRID 6 KEUNGGULAN
     ====================================================== -->
 
     {unggul.length > 0 ? (
 
       <div
-        class="grid grid-cols-2 sm:grid-cols-3
-               lg:grid-cols-6
-               gap-x-5 gap-y-12
-               lg:gap-x-6 lg:gap-y-0"
+        id="keunggulanGrid"
+        class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6
+               gap-x-5 gap-y-12 lg:gap-x-6"
       >
 
         {unggul.map((item, index) => (
 
           <div
             class="keunggulan-item group text-center"
-            style={`--delay: ${index * 0.08}s`}
+            style={`--delay:${index * 0.08}s`}
           >
 
             <!-- ICON -->
-
             <div
-              class="relative mx-auto
-                     w-[118px] h-[118px]
+              class="relative mx-auto w-[118px] h-[118px]
                      md:w-[124px] md:h-[124px]
-                     flex items-center justify-center
-                     mb-6"
+                     flex items-center justify-center mb-6"
             >
 
               <div
-                class="absolute inset-0
-                       rounded-full
-                       bg-white/90
-                       shadow-[0_8px_30px_rgba(15,23,42,0.10)]
-                       border border-gray-100
-                       backdrop-blur-sm"
+                class="absolute inset-0 rounded-full bg-white/90
+                       shadow-[0_8px_30px_rgba(15,23,42,.10)]
+                       border border-gray-100 backdrop-blur-sm"
               ></div>
 
-
               <div
-                class="absolute inset-[6px]
-                       rounded-full
-                       border border-blue-100
-                       keunggulan-ring"
+                class="absolute inset-[6px] rounded-full
+                       border border-blue-100 keunggulan-ring"
               ></div>
 
-
               <div
-                class="absolute inset-[10px]
-                       rounded-full
-                       border border-dashed
-                       border-gray-200
+                class="absolute inset-[10px] rounded-full
+                       border border-dashed border-gray-200
                        keunggulan-dashed"
               ></div>
 
-
               <div
-                class={`relative z-10
-                        w-[62px] h-[62px]
+                class={`relative z-10 w-[62px] h-[62px]
                         md:w-[64px] md:h-[64px]
-                        rounded-full
-                        bg-${item.warna_bg}
+                        rounded-full bg-${item.warna_bg}
                         flex items-center justify-center
                         transition-all duration-500
                         group-hover:scale-110
                         group-hover:shadow-lg`}
               >
-
                 <i
                   class={`${item.icon}
                           text-${item.warna_icon}
                           text-2xl md:text-[25px]`}
                 ></i>
-
               </div>
 
-
-              <!-- NOMOR -->
-
               <span
-                class="absolute z-20
-                       top-[-2px] right-[-2px]
-                       w-7 h-7
-                       rounded-full
-                       bg-[#FFD21F]
-                       text-[#173EA5]
-                       text-[11px]
-                       font-bold
+                class="absolute z-20 top-[-2px] right-[-2px]
+                       w-7 h-7 rounded-full bg-[#FFD21F]
+                       text-[#173EA5] text-[11px] font-bold
                        flex items-center justify-center
-                       shadow-[0_3px_10px_rgba(255,210,31,0.35)]
-                       transition-all duration-300
-                       group-hover:scale-110
-                       group-hover:rotate-6"
+                       shadow-[0_3px_10px_rgba(255,210,31,.35)]"
               >
                 {String(index + 1).padStart(2, "0")}
               </span>
-
-
-              <!-- ORBIT DOT -->
 
               <span class="keunggulan-dot"></span>
 
@@ -3332,13 +3261,9 @@ try {
 
 
             <!-- JUDUL -->
-
             <h3
-              class="text-[14px] md:text-[15px]
-                     font-bold
-                     text-gray-800
-                     leading-snug
-                     mb-2
+              class="text-[14px] md:text-[15px] font-bold
+                     text-gray-800 leading-snug mb-2
                      transition-colors duration-300
                      group-hover:text-blue-700"
             >
@@ -3347,64 +3272,41 @@ try {
 
 
             <!-- DESKRIPSI -->
-
             <p
               class="text-[11px] md:text-[12px]
-                     text-gray-500
-                     leading-relaxed
-                     max-w-[175px]
-                     mx-auto
-                     min-h-[50px]
-                     line-clamp-3"
+                     text-gray-500 leading-relaxed
+                     max-w-[175px] mx-auto
+                     min-h-[50px] line-clamp-3"
             >
               {item.deskripsi}
             </p>
 
 
-            <!-- LINK -->
-
+            <!-- BUTTON -->
             {item.link && item.link !== "#" ? (
 
               <button
                 type="button"
-                class="keunggulan-btn
-                       mt-3
-                       inline-flex
-                       items-center
-                       justify-center
-                       gap-1.5
-                       text-[14px]
-                       text-blue-500
-                       font-medium
-                       hover:text-blue-700
-                       transition-all duration-300"
-                data-index={index}
+                class="keunggulan-btn mt-3
+                       inline-flex items-center justify-center gap-1.5
+                       text-[14px] text-blue-500 font-medium
+                       hover:text-blue-700 transition-all duration-300"
                 data-title={item.judul}
                 data-link={item.link}
               >
-
-                <span>
-                  Selengkapnya
-                </span>
+                <span>Selengkapnya</span>
 
                 <i
-                  class="fas fa-arrow-right
-                         text-[11px]
-                         transition-transform
-                         duration-300
-                         group-hover:translate-x-1"
+                  class="fas fa-arrow-right text-[11px]
+                         transition-transform duration-300"
                 ></i>
-
               </button>
 
             ) : (
 
               <span
-                class="mt-3
-                       inline-flex
-                       items-center
-                       text-[11px]
-                       text-gray-300"
+                class="mt-3 inline-flex items-center
+                       text-[11px] text-gray-300"
               >
                 Informasi belum tersedia
               </span>
@@ -3427,49 +3329,50 @@ try {
 
 
     <!-- =====================================================
-         PDF DROPDOWN
+         AREA PDF
+         
+         JANGAN DIHAPUS DARI LAYOUT.
+         Tinggi tetap sehingga posisi halaman tidak meloncat.
     ====================================================== -->
 
     <div
-      id="keunggulanDropdown"
-      class="hidden mt-12"
+      id="keunggulanPdfArea"
+      class="keunggulan-pdf-area"
     >
 
       <div
-        class="bg-white/95
-               rounded-2xl
-               shadow-[0_10px_40px_rgba(0,0,0,0.10)]
-               border border-gray-100
-               overflow-hidden
-               backdrop-blur-sm"
+        id="keunggulanDropdown"
+        class="keunggulan-pdf-panel"
       >
+
+        <!-- HEADER PDF -->
 
         <div
           class="flex items-center justify-between
-                 px-5 py-4
-                 border-b border-gray-100"
+                 gap-4 px-5 py-4
+                 bg-white border-b border-gray-100"
         >
 
-          <div class="flex items-center gap-3">
+          <div class="flex items-center gap-3 min-w-0">
 
             <div
-              class="w-10 h-10
-                     rounded-xl
-                     bg-blue-50
-                     flex items-center justify-center"
+              class="w-10 h-10 shrink-0 rounded-xl
+                     bg-red-50 flex items-center justify-center"
             >
               <i class="fas fa-file-pdf text-red-500"></i>
             </div>
 
-            <div>
+            <div class="min-w-0">
 
-              <span class="text-xs text-gray-400">
+              <span
+                class="block text-[11px] text-gray-400"
+              >
                 Informasi Keunggulan
               </span>
 
               <h3
                 id="keunggulanTitle"
-                class="font-bold text-blue-800"
+                class="font-bold text-blue-800 truncate"
               >
                 Informasi Keunggulan
               </h3>
@@ -3479,37 +3382,36 @@ try {
           </div>
 
 
-          <div class="flex items-center gap-2">
+          <!-- ACTION -->
+
+          <div class="flex items-center gap-2 shrink-0">
 
             <a
               id="keunggulanDownload"
               href="#"
               target="_blank"
               rel="noopener noreferrer"
-              download
               class="inline-flex items-center gap-2
-                     bg-[#FFD21F]
-                     text-[#173EA5]
-                     px-4 py-2
-                     rounded-lg
-                     text-sm
-                     font-semibold
-                     hover:bg-[#FFC400]
-                     transition"
+                     bg-[#FFD21F] text-[#173EA5]
+                     px-4 py-2 rounded-lg
+                     text-sm font-semibold
+                     hover:bg-[#FFC400] transition"
             >
               <i class="fas fa-download"></i>
-              Download
+
+              <span class="hidden sm:inline">
+                Download
+              </span>
             </a>
 
 
             <button
               id="keunggulanClose"
               type="button"
-              class="w-9 h-9
-                     rounded-lg
-                     bg-red-50
-                     text-red-500
+              class="w-9 h-9 rounded-lg
+                     bg-red-50 text-red-500
                      hover:bg-red-100
+                     flex items-center justify-center
                      transition"
               aria-label="Tutup"
             >
@@ -3521,14 +3423,16 @@ try {
         </div>
 
 
-        <div class="p-4">
+        <!-- PDF -->
+
+        <div class="p-3 bg-gray-100">
 
           <iframe
             id="keunggulanPdf"
-            src=""
+            src="about:blank"
             class="w-full h-[700px]
-                   rounded-xl
-                   border border-gray-100"
+                   rounded-xl border border-gray-200
+                   bg-white"
             title="Preview PDF"
           ></iframe>
 
@@ -3541,6 +3445,479 @@ try {
   </div>
 
 </section>
+
+
+
+<!-- =========================================================
+     CSS
+========================================================= -->
+
+<style>
+
+.keunggulan-item {
+  opacity: 0;
+  animation: keunggulanAppear .7s ease forwards;
+  animation-delay: var(--delay);
+}
+
+@keyframes keunggulanAppear {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
+.keunggulan-ring {
+  animation: ringPulse 3s ease-in-out infinite;
+}
+
+@keyframes ringPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: .8;
+  }
+
+  50% {
+    transform: scale(1.04);
+    opacity: .35;
+  }
+}
+
+
+.keunggulan-dashed {
+  animation: dashedRotate 12s linear infinite;
+}
+
+@keyframes dashedRotate {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+
+.keunggulan-dot {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: #2563eb;
+  top: 7px;
+  left: 50%;
+  transform-origin: 0 52px;
+  animation: dotOrbit 4s linear infinite;
+  opacity: .75;
+}
+
+@keyframes dotOrbit {
+  from {
+    transform: rotate(0deg) translateX(52px);
+  }
+
+  to {
+    transform: rotate(360deg) translateX(52px);
+  }
+}
+
+
+.keunggulan-btn:hover i {
+  transform: translateX(4px);
+}
+
+
+/* =========================================================
+   PDF AREA
+========================================================= */
+
+.keunggulan-pdf-area {
+
+  /*
+   * INI KUNCI UTAMANYA.
+   *
+   * Saat PDF ditutup, area ini tetap punya tinggi.
+   * Jadi halaman tidak kehilangan 700px.
+   */
+
+  height: 0;
+
+  overflow: hidden;
+
+  margin-top: 0;
+
+  transition:
+    height .35s ease,
+    margin-top .35s ease;
+
+}
+
+
+.keunggulan-pdf-area.is-open {
+
+  height: 780px;
+
+  margin-top: 48px;
+
+}
+
+
+.keunggulan-pdf-panel {
+
+  width: 100%;
+
+  background: white;
+
+  border-radius: 18px;
+
+  overflow: hidden;
+
+  border: 1px solid #e5e7eb;
+
+  box-shadow:
+    0 15px 45px rgba(15,23,42,.12);
+
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 700px) {
+
+  .keunggulan-pdf-area.is-open {
+
+    height: 580px;
+
+    margin-top: 32px;
+
+  }
+
+  .keunggulan-pdf-panel iframe {
+
+    height: 500px;
+
+  }
+
+  .keunggulan-dot {
+
+    display: none;
+
+  }
+
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+
+  .keunggulan-item,
+  .keunggulan-ring,
+  .keunggulan-dashed,
+  .keunggulan-dot {
+
+    animation: none !important;
+
+    opacity: 1;
+
+  }
+
+}
+
+</style>
+
+
+
+<!-- =========================================================
+     JAVASCRIPT
+========================================================= -->
+
+<script>
+
+(() => {
+
+  /*
+   * =======================================================
+   * CEGAH ASTRO MENJALANKAN SCRIPT INI 2x
+   * =======================================================
+   */
+
+  if (window.__KEUNGGULAN_PDF_FINAL__) {
+    return;
+  }
+
+  window.__KEUNGGULAN_PDF_FINAL__ = true;
+
+
+  /*
+   * =======================================================
+   * INIT
+   * =======================================================
+   */
+
+  function initKeunggulanPDF() {
+
+    const area =
+      document.getElementById(
+        "keunggulanPdfArea"
+      );
+
+    const panel =
+      document.getElementById(
+        "keunggulanDropdown"
+      );
+
+    const frame =
+      document.getElementById(
+        "keunggulanPdf"
+      );
+
+    const title =
+      document.getElementById(
+        "keunggulanTitle"
+      );
+
+    const download =
+      document.getElementById(
+        "keunggulanDownload"
+      );
+
+    const close =
+      document.getElementById(
+        "keunggulanClose"
+      );
+
+    const buttons =
+      document.querySelectorAll(
+        ".keunggulan-btn"
+      );
+
+
+    /*
+     * Kalau elemen tidak ada,
+     * jangan lanjut.
+     */
+
+    if (
+      !area ||
+      !panel ||
+      !frame ||
+      !close
+    ) {
+
+      return;
+
+    }
+
+
+    /*
+     * =====================================================
+     * BUKA PDF
+     * =====================================================
+     */
+
+    buttons.forEach((button) => {
+
+      button.addEventListener(
+        "click",
+        (event) => {
+
+          event.preventDefault();
+          event.stopPropagation();
+
+
+          const link =
+            button.dataset.link;
+
+
+          const nama =
+            button.dataset.title ||
+            "Informasi Keunggulan";
+
+
+          if (
+            !link ||
+            link === "#"
+          ) {
+
+            return;
+
+          }
+
+
+          /*
+           * JUDUL
+           */
+
+          if (title) {
+
+            title.textContent =
+              nama;
+
+          }
+
+
+          /*
+           * LINK PDF
+           */
+
+          frame.src =
+            link;
+
+
+          /*
+           * DOWNLOAD
+           */
+
+          if (download) {
+
+            download.href =
+              link;
+
+          }
+
+
+          /*
+           * BUKA AREA
+           */
+
+          area.classList.add(
+            "is-open"
+          );
+
+
+          /*
+           * TUNGGU ANIMASI AREA
+           */
+
+          setTimeout(() => {
+
+            /*
+             * Scroll ke bagian PDF.
+             *
+             * Karena tinggi area sekarang sudah
+             * disiapkan, tidak akan membuat
+             * posisi kacau ketika ditutup.
+             */
+
+            area.scrollIntoView({
+              behavior: "smooth",
+              block: "start"
+            });
+
+          }, 80);
+
+        }
+      );
+
+    });
+
+
+    /*
+     * =====================================================
+     * TUTUP
+     * =====================================================
+     */
+
+    close.addEventListener(
+      "click",
+      (event) => {
+
+        event.preventDefault();
+        event.stopPropagation();
+
+
+        /*
+         * =================================================
+         * JANGAN scrollTo.
+         * JANGAN scrollBy.
+         * JANGAN scrollIntoView.
+         *
+         * Area akan tetap ada selama transisi,
+         * kemudian baru tinggi menjadi 0.
+         * =================================================
+         */
+
+
+        /*
+         * Stop PDF
+         */
+
+        frame.src =
+          "about:blank";
+
+
+        /*
+         * Reset download
+         */
+
+        if (download) {
+
+          download.removeAttribute(
+            "href"
+          );
+
+        }
+
+
+        /*
+         * Tutup area
+         */
+
+        area.classList.remove(
+          "is-open"
+        );
+
+
+        /*
+         * Setelah ditutup,
+         * TIDAK ADA perintah scroll sama sekali.
+         *
+         * Browser tetap berada pada posisi
+         * scroll yang sama.
+         */
+
+      }
+    );
+
+  }
+
+
+  /*
+   * =======================================================
+   * ASTRO LOAD
+   * =======================================================
+   */
+
+  if (
+    document.readyState ===
+    "loading"
+  ) {
+
+    document.addEventListener(
+      "DOMContentLoaded",
+      initKeunggulanPDF,
+      {
+        once: true
+      }
+    );
+
+  } else {
+
+    initKeunggulanPDF();
+
+  }
+
+})();
+
+</script>
 
 
 <style>
