@@ -4,6 +4,7 @@ import MainLayout from "../layouts/MainLayout.astro";
 import Pdf from "../components/Pdf.astro";
 import { slugify } from "../utils/slugify";
 
+const bgInvestasi = `/bgkeunggulan.jpeg`;
 /* =========================================================
    HERO SLIDER
 ========================================================= */
@@ -3138,14 +3139,61 @@ try {
 </script>
 
 
-<section class="py-20 bg-white">
-  <div class="max-w-7xl mx-auto px-4">
+<section
+  class="relative py-16 md:py-20 overflow-hidden bg-cover bg-center bg-no-repeat"
+  style={`background-image: linear-gradient(rgba(255,255,255,.72), rgba(255,255,255,.82)), url("${bgInvestasi}")`}
+>
+
+  <!-- Overlay tambahan agar teks tetap jelas -->
+  <div class="absolute inset-0 bg-white/10 pointer-events-none"></div>
+
+  <!-- Dekorasi -->
+  <div
+    class="absolute -top-24 -left-24
+           w-72 h-72
+           rounded-full
+           border-[1px]
+           border-blue-300/30
+           pointer-events-none"
+  ></div>
+
+  <div
+    class="absolute -bottom-32 -right-24
+           w-80 h-80
+           rounded-full
+           border-[1px]
+           border-yellow-400/30
+           pointer-events-none"
+  ></div>
+
+
+  <div class="relative z-10 max-w-7xl mx-auto px-4">
 
     <!-- =====================================================
          HEADER
     ====================================================== -->
 
-    <div class="text-center mb-14">
+    <div class="text-center mb-12 md:mb-14">
+
+      <span
+        class="inline-flex items-center gap-2
+               mb-4 px-4 py-1.5
+               rounded-full
+               bg-blue-50/90
+               border border-blue-100
+               text-blue-700
+               text-xs font-semibold
+               shadow-sm"
+      >
+        <span
+          class="w-1.5 h-1.5
+                 rounded-full
+                 bg-[#FFD21F]"
+        ></span>
+
+        POTENSI INVESTASI SURABAYA
+      </span>
+
 
       <h2 class="text-3xl md:text-4xl font-bold text-blue-800 mb-4">
         Mengapa Berinvestasi di Surabaya?
@@ -3164,7 +3212,13 @@ try {
     ====================================================== -->
 
     {apiError && (
-      <div class="mb-8 p-4 rounded-xl bg-red-50 border border-red-200 text-red-700">
+      <div
+        class="mb-8 p-4 rounded-xl
+               bg-red-50/95
+               border border-red-200
+               text-red-700
+               shadow-sm"
+      >
         Gagal mengambil data dari API:
         {apiError}
       </div>
@@ -3172,85 +3226,186 @@ try {
 
 
     <!-- =====================================================
-         CARD KEUNGGULAN
+         KEUNGGULAN
     ====================================================== -->
 
     {unggul.length > 0 ? (
 
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7">
+      <div
+        class="grid grid-cols-2 sm:grid-cols-3
+               lg:grid-cols-6
+               gap-x-5 gap-y-12
+               lg:gap-x-6 lg:gap-y-0"
+      >
 
         {unggul.map((item, index) => (
 
           <div
-            class="group bg-white rounded-2xl p-7
-                   border border-gray-100
-                   shadow-[0_5px_20px_rgba(0,0,0,0.08)]
-                   hover:-translate-y-1
-                   hover:shadow-[0_10px_30px_rgba(0,0,0,0.12)]
-                   transition-all duration-300"
+            class="keunggulan-item group text-center"
+            style={`--delay: ${index * 0.08}s`}
           >
 
             <!-- ICON -->
 
             <div
-              class={`w-14 h-14 rounded-full
-                      bg-${item.warna_bg}
-                      flex items-center justify-center
-                      mb-6`}
+              class="relative mx-auto
+                     w-[118px] h-[118px]
+                     md:w-[124px] md:h-[124px]
+                     flex items-center justify-center
+                     mb-6"
             >
 
-              <i
-                class={`${item.icon}
-                        text-${item.warna_icon}
-                        text-xl`}
-              ></i>
+              <div
+                class="absolute inset-0
+                       rounded-full
+                       bg-white/90
+                       shadow-[0_8px_30px_rgba(15,23,42,0.10)]
+                       border border-gray-100
+                       backdrop-blur-sm"
+              ></div>
+
+
+              <div
+                class="absolute inset-[6px]
+                       rounded-full
+                       border border-blue-100
+                       keunggulan-ring"
+              ></div>
+
+
+              <div
+                class="absolute inset-[10px]
+                       rounded-full
+                       border border-dashed
+                       border-gray-200
+                       keunggulan-dashed"
+              ></div>
+
+
+              <div
+                class={`relative z-10
+                        w-[62px] h-[62px]
+                        md:w-[64px] md:h-[64px]
+                        rounded-full
+                        bg-${item.warna_bg}
+                        flex items-center justify-center
+                        transition-all duration-500
+                        group-hover:scale-110
+                        group-hover:shadow-lg`}
+              >
+
+                <i
+                  class={`${item.icon}
+                          text-${item.warna_icon}
+                          text-2xl md:text-[25px]`}
+                ></i>
+
+              </div>
+
+
+              <!-- NOMOR -->
+
+              <span
+                class="absolute z-20
+                       top-[-2px] right-[-2px]
+                       w-7 h-7
+                       rounded-full
+                       bg-[#FFD21F]
+                       text-[#173EA5]
+                       text-[11px]
+                       font-bold
+                       flex items-center justify-center
+                       shadow-[0_3px_10px_rgba(255,210,31,0.35)]
+                       transition-all duration-300
+                       group-hover:scale-110
+                       group-hover:rotate-6"
+              >
+                {String(index + 1).padStart(2, "0")}
+              </span>
+
+
+              <!-- ORBIT DOT -->
+
+              <span class="keunggulan-dot"></span>
 
             </div>
 
 
             <!-- JUDUL -->
 
-            <h3 class="text-lg font-bold text-blue-800 mb-3">
+            <h3
+              class="text-[14px] md:text-[15px]
+                     font-bold
+                     text-gray-800
+                     leading-snug
+                     mb-2
+                     transition-colors duration-300
+                     group-hover:text-blue-700"
+            >
               {item.judul}
             </h3>
 
 
             <!-- DESKRIPSI -->
 
-            <p class="text-gray-600 text-sm leading-relaxed mb-6 min-h-[48px]">
+            <p
+              class="text-[11px] md:text-[12px]
+                     text-gray-500
+                     leading-relaxed
+                     max-w-[175px]
+                     mx-auto
+                     min-h-[50px]
+                     line-clamp-3"
+            >
               {item.deskripsi}
             </p>
 
 
-            <!-- LINK PDF / DROPDOWN -->
+            <!-- LINK -->
 
             {item.link && item.link !== "#" ? (
 
               <button
                 type="button"
                 class="keunggulan-btn
-                       text-blue-600
-                       font-semibold
-                       text-sm
+                       mt-3
                        inline-flex
                        items-center
-                       gap-2
-                       hover:text-blue-800
-                       transition-colors"
+                       justify-center
+                       gap-1.5
+                       text-[14px]
+                       text-blue-500
+                       font-medium
+                       hover:text-blue-700
+                       transition-all duration-300"
                 data-index={index}
                 data-title={item.judul}
                 data-link={item.link}
               >
 
-                Pelajari Lebih Lanjut
+                <span>
+                  Selengkapnya
+                </span>
 
-                <i class="fas fa-arrow-right"></i>
+                <i
+                  class="fas fa-arrow-right
+                         text-[11px]
+                         transition-transform
+                         duration-300
+                         group-hover:translate-x-1"
+                ></i>
 
               </button>
 
             ) : (
 
-              <span class="text-gray-400 text-sm">
+              <span
+                class="mt-3
+                       inline-flex
+                       items-center
+                       text-[11px]
+                       text-gray-300"
+              >
                 Informasi belum tersedia
               </span>
 
@@ -3272,22 +3427,22 @@ try {
 
 
     <!-- =====================================================
-         DROPDOWN / PDF VIEWER
+         PDF DROPDOWN
     ====================================================== -->
 
     <div
       id="keunggulanDropdown"
-      class="hidden mt-8"
+      class="hidden mt-12"
     >
 
       <div
-        class="bg-white rounded-2xl
-               shadow-[0_8px_30px_rgba(0,0,0,0.10)]
+        class="bg-white/95
+               rounded-2xl
+               shadow-[0_10px_40px_rgba(0,0,0,0.10)]
                border border-gray-100
-               overflow-hidden"
+               overflow-hidden
+               backdrop-blur-sm"
       >
-
-        <!-- HEADER PDF -->
 
         <div
           class="flex items-center justify-between
@@ -3295,12 +3450,33 @@ try {
                  border-b border-gray-100"
         >
 
-          <h3
-            id="keunggulanTitle"
-            class="font-bold text-blue-800"
-          >
-            Informasi Keunggulan
-          </h3>
+          <div class="flex items-center gap-3">
+
+            <div
+              class="w-10 h-10
+                     rounded-xl
+                     bg-blue-50
+                     flex items-center justify-center"
+            >
+              <i class="fas fa-file-pdf text-red-500"></i>
+            </div>
+
+            <div>
+
+              <span class="text-xs text-gray-400">
+                Informasi Keunggulan
+              </span>
+
+              <h3
+                id="keunggulanTitle"
+                class="font-bold text-blue-800"
+              >
+                Informasi Keunggulan
+              </h3>
+
+            </div>
+
+          </div>
 
 
           <div class="flex items-center gap-2">
@@ -3312,8 +3488,8 @@ try {
               rel="noopener noreferrer"
               download
               class="inline-flex items-center gap-2
-                     bg-[#FFD41D]
-                     text-[#0014FF]
+                     bg-[#FFD21F]
+                     text-[#173EA5]
                      px-4 py-2
                      rounded-lg
                      text-sm
@@ -3321,11 +3497,8 @@ try {
                      hover:bg-[#FFC400]
                      transition"
             >
-
               <i class="fas fa-download"></i>
-
               Download
-
             </a>
 
 
@@ -3333,16 +3506,14 @@ try {
               id="keunggulanClose"
               type="button"
               class="w-9 h-9
-                     rounded-full
-                     bg-red-100
+                     rounded-lg
+                     bg-red-50
                      text-red-500
-                     hover:bg-red-200
+                     hover:bg-red-100
                      transition"
               aria-label="Tutup"
             >
-
               <i class="fas fa-times"></i>
-
             </button>
 
           </div>
@@ -3350,14 +3521,14 @@ try {
         </div>
 
 
-        <!-- PDF -->
-
         <div class="p-4">
 
           <iframe
             id="keunggulanPdf"
             src=""
-            class="w-full h-[700px] rounded-xl border border-gray-100"
+            class="w-full h-[700px]
+                   rounded-xl
+                   border border-gray-100"
             title="Preview PDF"
           ></iframe>
 
@@ -3368,7 +3539,225 @@ try {
     </div>
 
   </div>
+
 </section>
+
+
+<style>
+
+  .keunggulan-item {
+    opacity: 0;
+    animation: keunggulanAppear .7s ease forwards;
+    animation-delay: var(--delay);
+  }
+
+  @keyframes keunggulanAppear {
+
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+  }
+
+
+  .keunggulan-ring {
+    animation: ringPulse 3s ease-in-out infinite;
+  }
+
+  @keyframes ringPulse {
+
+    0%,
+    100% {
+      transform: scale(1);
+      opacity: .8;
+    }
+
+    50% {
+      transform: scale(1.04);
+      opacity: .35;
+    }
+
+  }
+
+
+  .keunggulan-dashed {
+    animation: dashedRotate 12s linear infinite;
+  }
+
+  @keyframes dashedRotate {
+
+    from {
+      transform: rotate(0deg);
+    }
+
+    to {
+      transform: rotate(360deg);
+    }
+
+  }
+
+
+  .keunggulan-dot {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: #2563eb;
+    top: 7px;
+    left: 50%;
+    transform-origin: 0 52px;
+    animation: dotOrbit 4s linear infinite;
+    opacity: .75;
+  }
+
+  @keyframes dotOrbit {
+
+    from {
+      transform:
+        rotate(0deg)
+        translateX(52px);
+    }
+
+    to {
+      transform:
+        rotate(360deg)
+        translateX(52px);
+    }
+
+  }
+
+
+  .keunggulan-item:hover .keunggulan-ring {
+    border-color: #bfdbfe;
+    animation-duration: 1.5s;
+  }
+
+  .keunggulan-item:hover .keunggulan-dashed {
+    animation-duration: 4s;
+  }
+
+  .keunggulan-item:hover .keunggulan-dot {
+    animation-duration: 1.5s;
+  }
+
+  .keunggulan-btn:hover i {
+    transform: translateX(4px);
+  }
+
+
+  @media (max-width: 640px) {
+
+    .keunggulan-item {
+      margin-bottom: 10px;
+    }
+
+    .keunggulan-dot {
+      display: none;
+    }
+
+  }
+
+
+  @media (prefers-reduced-motion: reduce) {
+
+    .keunggulan-item,
+    .keunggulan-ring,
+    .keunggulan-dashed,
+    .keunggulan-dot {
+      animation: none !important;
+      opacity: 1;
+    }
+
+  }
+
+</style>
+
+
+<script>
+
+  const buttons =
+    document.querySelectorAll(".keunggulan-btn");
+
+  const dropdown =
+    document.getElementById("keunggulanDropdown");
+
+  const pdf =
+    document.getElementById("keunggulanPdf");
+
+  const title =
+    document.getElementById("keunggulanTitle");
+
+  const download =
+    document.getElementById("keunggulanDownload");
+
+  const close =
+    document.getElementById("keunggulanClose");
+
+
+  buttons.forEach((button) => {
+
+    button.addEventListener("click", () => {
+
+      const link =
+        button.getAttribute("data-link");
+
+      const itemTitle =
+        button.getAttribute("data-title");
+
+      if (!link) return;
+
+      if (title) {
+        title.textContent =
+          itemTitle || "Informasi Keunggulan";
+      }
+
+      if (pdf) {
+        pdf.src = link;
+      }
+
+      if (download) {
+        download.href = link;
+      }
+
+      dropdown?.classList.remove("hidden");
+
+      setTimeout(() => {
+
+        dropdown?.scrollIntoView({
+          behavior: "smooth",
+          block: "start"
+        });
+
+      }, 100);
+
+    });
+
+  });
+
+
+  close?.addEventListener("click", () => {
+
+    dropdown?.classList.add("hidden");
+
+    if (pdf) {
+      pdf.src = "";
+    }
+
+    if (download) {
+      download.href = "#";
+    }
+
+  });
+
+</script>
+
+
 
 
 <!-- =========================================================
@@ -3464,142 +3853,210 @@ try {
 <!-- =========================================================
      3. NILAI PELAYANAN
 ========================================================== -->
+<section class="principles-section">
 
-<section class="values-section">
+  <!-- Decorative -->
+  <div class="principles-orb orb-one"></div>
+  <div class="principles-orb orb-two"></div>
+  <div class="principles-grid-bg"></div>
 
-  <div class="values-container">
+  <div class="principles-container">
 
-    <div class="values-heading">
+    <!-- HEADER -->
+    <div class="principles-header">
 
-      <div>
+      <div class="principles-title">
 
-        <span class="section-eyebrow">
-          NILAI PELAYANAN
-        </span>
+        <div class="mini-label">
+          <span></span>
+          NILAI PELAYANAN PUBLIK
+        </div>
 
         <h2>
-          5 prinsip pelayanan publik
-          <span>DPMPTSP Surabaya</span>
+          5 prinsip.
+          <br />
+          <em>Satu komitmen.</em>
         </h2>
 
+      </div>
+
+      <div class="principles-description">
+
         <p>
-          Komitmen yang kami pegang dalam setiap
-          proses perizinan — sesuai semangat
-          Reformasi Birokrasi & Zona Integritas
-          WBK/WBBM.
+          Pelayanan DPMPTSP Surabaya dibangun untuk
+          memberikan pengalaman yang cepat, mudah,
+          transparan, dan berintegritas bagi masyarakat.
         </p>
+
+        <div class="scroll-hint">
+          <span class="scroll-dot"></span>
+          <span>EXPLORE OUR PRINCIPLES</span>
+        </div>
 
       </div>
 
     </div>
 
 
-    <div class="values-grid">
+    <!-- TIMELINE -->
+    <div class="principles-timeline">
+
+      <div class="timeline-line">
+        <div class="timeline-progress"></div>
+      </div>
 
 
-      <article class="value-card">
+      <!-- 01 -->
+      <div class="principle">
 
-        <div class="value-icon">
-          ⚡
+        <div class="principle-top">
+          <span class="principle-index">01</span>
+          <span class="principle-icon">⚡</span>
         </div>
 
-        <div class="value-number">
-          01
+        <div class="principle-dot"></div>
+
+        <div class="principle-content">
+
+          <h3>Cepat</h3>
+
+          <p>
+            Sesuai SLA pelayanan
+          </p>
+
+          <span class="principle-tag">
+            SPEED
+          </span>
+
         </div>
 
-        <h3>
-          Cepat
-        </h3>
-
-        <p>
-          Sesuai SLA pelayanan
-        </p>
-
-      </article>
+      </div>
 
 
-      <article class="value-card">
+      <!-- 02 -->
+      <div class="principle">
 
-        <div class="value-icon">
-          ✓
+        <div class="principle-top">
+          <span class="principle-index">02</span>
+          <span class="principle-icon">✦</span>
         </div>
 
-        <div class="value-number">
-          02
+        <div class="principle-dot"></div>
+
+        <div class="principle-content">
+
+          <h3>Mudah</h3>
+
+          <p>
+            Online 24 jam, satu pintu
+          </p>
+
+          <span class="principle-tag">
+            SIMPLE
+          </span>
+
         </div>
 
-        <h3>
-          Mudah
-        </h3>
-
-        <p>
-          Online 24 jam, satu pintu
-        </p>
-
-      </article>
+      </div>
 
 
-      <article class="value-card">
+      <!-- 03 -->
+      <div class="principle">
 
-        <div class="value-icon">
-          ◈
+        <div class="principle-top">
+          <span class="principle-index">03</span>
+          <span class="principle-icon">◈</span>
         </div>
 
-        <div class="value-number">
-          03
+        <div class="principle-dot"></div>
+
+        <div class="principle-content">
+
+          <h3>Akuntabel</h3>
+
+          <p>
+            Seluruh proses tercatat
+          </p>
+
+          <span class="principle-tag">
+            ACCOUNTABLE
+          </span>
+
         </div>
 
-        <h3>
-          Akuntabel
-        </h3>
-
-        <p>
-          Audit trail seluruh proses
-        </p>
-
-      </article>
+      </div>
 
 
-      <article class="value-card">
+      <!-- 04 -->
+      <div class="principle">
 
-        <div class="value-icon">
-          ◎
+        <div class="principle-top">
+          <span class="principle-index">04</span>
+          <span class="principle-icon">◎</span>
         </div>
 
-        <div class="value-number">
-          04
+        <div class="principle-dot"></div>
+
+        <div class="principle-content">
+
+          <h3>Transparan</h3>
+
+          <p>
+            Status real-time & tracking online
+          </p>
+
+          <span class="principle-tag">
+            OPEN
+          </span>
+
         </div>
 
-        <h3>
-          Transparan
-        </h3>
-
-        <p>
-          Status real-time, tracking online
-        </p>
-
-      </article>
+      </div>
 
 
-      <article class="value-card">
+      <!-- 05 -->
+      <div class="principle">
 
-        <div class="value-icon">
-          🛡
+        <div class="principle-top">
+          <span class="principle-index">05</span>
+          <span class="principle-icon">⌁</span>
         </div>
 
-        <div class="value-number">
-          05
+        <div class="principle-dot"></div>
+
+        <div class="principle-content">
+
+          <h3>Bebas Pungli</h3>
+
+          <p>
+            Komitmen WBK & WBBM
+          </p>
+
+          <span class="principle-tag">
+            INTEGRITY
+          </span>
+
         </div>
 
-        <h3>
-          Bebas Pungli
-        </h3>
+      </div>
 
-        <p>
-          Komitmen WBK & WBBM
-        </p>
+    </div>
 
-      </article>
+
+    <!-- BOTTOM -->
+    <div class="principles-footer">
+
+      <div class="footer-big-text">
+        PELAYANAN <span>PRIMA</span>
+      </div>
+
+      <div class="footer-info">
+        <span>REFORMASI BIROKRASI</span>
+        <i></i>
+        <span>ZONA INTEGRITAS</span>
+        <i></i>
+        <span>WBK / WBBM</span>
+      </div>
 
     </div>
 
@@ -3608,187 +4065,1146 @@ try {
 </section>
 
 
+<style>
+
+/* =====================================================
+   SECTION
+===================================================== */
+
+.principles-section {
+  position: relative;
+  overflow: hidden;
+
+  padding: 120px 30px 100px;
+
+  background:
+    linear-gradient(
+      120deg,
+      #03134f 0%,
+      #092b91 48%,
+      #1558d6 100%
+    );
+
+  color: white;
+}
+
+
+/* =====================================================
+   BACKGROUND
+===================================================== */
+
+.principles-grid-bg {
+  position: absolute;
+  inset: 0;
+
+  opacity: .12;
+
+  background-image:
+    linear-gradient(
+      rgba(255,255,255,.2) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      rgba(255,255,255,.2) 1px,
+      transparent 1px
+    );
+
+  background-size: 70px 70px;
+
+  mask-image:
+    linear-gradient(
+      to bottom,
+      black,
+      transparent 90%
+    );
+}
+
+
+.principles-orb {
+  position: absolute;
+
+  border-radius: 50%;
+
+  pointer-events: none;
+
+  filter: blur(2px);
+}
+
+.orb-one {
+  width: 500px;
+  height: 500px;
+
+  top: -300px;
+  right: -150px;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(96,165,250,.25),
+      transparent 65%
+    );
+}
+
+.orb-two {
+  width: 450px;
+  height: 450px;
+
+  bottom: -300px;
+  left: -200px;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(250,204,21,.15),
+      transparent 65%
+    );
+}
+
+
+/* =====================================================
+   CONTAINER
+===================================================== */
+
+.principles-container {
+  position: relative;
+  z-index: 2;
+
+  max-width: 1320px;
+
+  margin: auto;
+}
+
+
+/* =====================================================
+   HEADER
+===================================================== */
+
+.principles-header {
+
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: flex-end;
+
+  gap: 80px;
+
+  margin-bottom: 100px;
+}
+
+
+.mini-label {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 12px;
+
+  color: #facc15;
+
+  font-size: 11px;
+
+  font-weight: 900;
+
+  letter-spacing: 3px;
+}
+
+
+.mini-label span {
+
+  width: 40px;
+  height: 2px;
+
+  background: #facc15;
+}
+
+
+.principles-title h2 {
+
+  margin-top: 22px;
+
+  font-size:
+    clamp(
+      48px,
+      7vw,
+      86px
+    );
+
+  line-height: .9;
+
+  font-weight: 900;
+
+  letter-spacing: -5px;
+}
+
+
+.principles-title h2 em {
+
+  color: #8fc3ff;
+
+  font-style: normal;
+}
+
+
+.principles-description {
+
+  max-width: 410px;
+
+  padding-bottom: 5px;
+}
+
+
+.principles-description p {
+
+  color:
+    rgba(255,255,255,.68);
+
+  font-size: 15px;
+
+  line-height: 1.8;
+
+  margin-bottom: 25px;
+}
+
+
+.scroll-hint {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 10px;
+
+  color:
+    rgba(255,255,255,.4);
+
+  font-size: 9px;
+
+  font-weight: 800;
+
+  letter-spacing: 2px;
+}
+
+
+.scroll-dot {
+
+  width: 7px;
+  height: 7px;
+
+  border-radius: 50%;
+
+  background: #facc15;
+
+  box-shadow:
+    0 0 15px
+    rgba(250,204,21,.9);
+
+}
+
+
+/* =====================================================
+   TIMELINE
+===================================================== */
+
+.principles-timeline {
+
+  position: relative;
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(5, 1fr);
+
+  gap: 25px;
+
+}
+
+
+/* LINE */
+
+.timeline-line {
+
+  position: absolute;
+
+  left: 0;
+  right: 0;
+
+  top: 105px;
+
+  height: 1px;
+
+  background:
+    rgba(255,255,255,.2);
+
+  z-index: 0;
+}
+
+
+.timeline-progress {
+
+  width: 100%;
+
+  height: 100%;
+
+  background:
+    linear-gradient(
+      90deg,
+      #facc15,
+      #60a5fa
+    );
+
+  transform-origin: left;
+
+}
+
+
+/* =====================================================
+   PRINCIPLE
+===================================================== */
+
+.principle {
+
+  position: relative;
+
+  min-height: 350px;
+
+  z-index: 2;
+
+  cursor: default;
+}
+
+
+.principle-top {
+
+  display: flex;
+
+  align-items: flex-start;
+
+  justify-content: space-between;
+
+  height: 95px;
+}
+
+
+.principle-index {
+
+  font-size: 78px;
+
+  line-height: .8;
+
+  font-weight: 900;
+
+  letter-spacing: -5px;
+
+  color:
+    rgba(255,255,255,.12);
+
+  transition: .4s ease;
+}
+
+
+.principle-icon {
+
+  display: grid;
+
+  place-items: center;
+
+  width: 48px;
+  height: 48px;
+
+  border-radius: 50%;
+
+  color: #8fc3ff;
+
+  border:
+    1px solid
+    rgba(255,255,255,.2);
+
+  background:
+    rgba(255,255,255,.06);
+
+  font-size: 19px;
+
+  transition: .4s ease;
+}
+
+
+/* DOT */
+
+.principle-dot {
+
+  position: relative;
+
+  width: 15px;
+  height: 15px;
+
+  margin-top: 3px;
+
+  border-radius: 50%;
+
+  background: #8fc3ff;
+
+  border: 4px solid #1558d6;
+
+  box-shadow:
+    0 0 0 1px
+    rgba(255,255,255,.3);
+
+  transition: .4s ease;
+}
+
+
+/* CONTENT */
+
+.principle-content {
+
+  margin-top: 35px;
+
+  padding-right: 25px;
+}
+
+
+.principle-content h3 {
+
+  margin-bottom: 10px;
+
+  font-size: 25px;
+
+  font-weight: 900;
+
+  letter-spacing: -.5px;
+
+  transition: .3s ease;
+}
+
+
+.principle-content p {
+
+  min-height: 48px;
+
+  color:
+    rgba(255,255,255,.48);
+
+  font-size: 12px;
+
+  line-height: 1.6;
+}
+
+
+/* TAG */
+
+.principle-tag {
+
+  display: inline-block;
+
+  margin-top: 18px;
+
+  padding: 6px 10px;
+
+  border-radius: 999px;
+
+  color:
+    rgba(255,255,255,.55);
+
+  border:
+    1px solid
+    rgba(255,255,255,.15);
+
+  font-size: 8px;
+
+  font-weight: 800;
+
+  letter-spacing: 1.5px;
+}
+
+
+/* =====================================================
+   HOVER
+===================================================== */
+
+.principle:hover
+.principle-index {
+
+  color:
+    rgba(255,255,255,.35);
+
+  transform:
+    translateY(-5px);
+}
+
+
+.principle:hover
+.principle-icon {
+
+  background: #facc15;
+
+  color: #172554;
+
+  border-color: #facc15;
+
+  transform:
+    rotate(-10deg)
+    scale(1.1);
+
+  box-shadow:
+    0 10px 30px
+    rgba(250,204,21,.25);
+}
+
+
+.principle:hover
+.principle-dot {
+
+  background: #facc15;
+
+  transform: scale(1.5);
+
+  box-shadow:
+    0 0 25px
+    rgba(250,204,21,.8);
+}
+
+
+.principle:hover
+.principle-content h3 {
+
+  color: #facc15;
+
+  transform:
+    translateX(5px);
+}
+
+
+/* =====================================================
+   FOOTER
+===================================================== */
+
+.principles-footer {
+
+  display: flex;
+
+  align-items: flex-end;
+
+  justify-content: space-between;
+
+  margin-top: 90px;
+
+  padding-top: 25px;
+
+  border-top:
+    1px solid
+    rgba(255,255,255,.12);
+}
+
+
+.footer-big-text {
+
+  font-size: 13px;
+
+  font-weight: 900;
+
+  letter-spacing: 3px;
+
+  color:
+    rgba(255,255,255,.35);
+}
+
+
+.footer-big-text span {
+
+  color: #facc15;
+}
+
+
+.footer-info {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 12px;
+
+  color:
+    rgba(255,255,255,.35);
+
+  font-size: 8px;
+
+  font-weight: 800;
+
+  letter-spacing: 1.5px;
+}
+
+
+.footer-info i {
+
+  width: 4px;
+  height: 4px;
+
+  border-radius: 50%;
+
+  background: #facc15;
+}
+
+
+/* =====================================================
+   TABLET
+===================================================== */
+
+@media (max-width: 1000px) {
+
+  .principles-header {
+
+    display: block;
+
+  }
+
+  .principles-description {
+
+    margin-top: 30px;
+
+  }
+
+  .principles-timeline {
+
+    grid-template-columns:
+      repeat(3, 1fr);
+
+    row-gap: 40px;
+  }
+
+  .timeline-line {
+
+    display: none;
+  }
+
+}
+
+
+/* =====================================================
+   MOBILE
+===================================================== */
+
+@media (max-width: 650px) {
+
+  .principles-section {
+
+    padding:
+      80px 20px;
+  }
+
+
+  .principles-header {
+
+    margin-bottom: 60px;
+  }
+
+
+  .principles-title h2 {
+
+    font-size: 55px;
+
+    letter-spacing: -3px;
+  }
+
+
+  .principles-timeline {
+
+    display: block;
+
+  }
+
+
+  .principle {
+
+    min-height: 190px;
+
+    padding-left: 30px;
+
+    border-left:
+      1px solid
+      rgba(255,255,255,.2);
+  }
+
+
+  .principle-top {
+
+    height: 55px;
+  }
+
+
+  .principle-index {
+
+    font-size: 50px;
+  }
+
+
+  .principle-icon {
+
+    width: 40px;
+    height: 40px;
+
+  }
+
+
+  .principle-dot {
+
+    position: absolute;
+
+    left: -7px;
+
+    top: 10px;
+  }
+
+
+  .principle-content {
+
+    margin-top: 20px;
+  }
+
+
+  .principle-content h3 {
+
+    font-size: 24px;
+  }
+
+
+  .principles-footer {
+
+    display: block;
+
+    margin-top: 40px;
+  }
+
+
+  .footer-info {
+
+    margin-top: 15px;
+
+    flex-wrap: wrap;
+  }
+
+}
+
+</style>
+
+
 
 <!-- =========================================================
-     PETA POTENSI INVESTASI SURABAYA
+     POTENSI INVESTASI SURABAYA — REDESIGN
 ========================================================= -->
 
-<section class="w-full bg-[#f8f9fc] py-16 md:py-20">
+<section class="investment-potential" id="potensi-investasi">
 
-  <div class="container mx-auto px-4">
+  <!-- Ambient background -->
+  <div class="investment-bg investment-bg-blue" aria-hidden="true"></div>
+  <div class="investment-bg investment-bg-yellow" aria-hidden="true"></div>
+  <div class="investment-grid" aria-hidden="true"></div>
 
-    <div
-      class="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center"
-    >
+  <!-- Watermark logo -->
+  <img
+    class="investment-watermark"
+    src="https://github.com/arbagasdanangh/pps/blob/main/logo.png?raw=true"
+    alt=""
+    aria-hidden="true"
+    onerror="this.onerror=null;this.src='/logo-surabaya.png';"
+  />
 
-      <!-- ===================================================
-           KIRI : PETA
-      ==================================================== -->
+  <div class="investment-container">
 
-      <div class="order-2 lg:order-1 w-full">
+    <!-- HEADER -->
+    <div class="investment-heading">
 
-        <div class="w-full overflow-hidden">
+      <div class="investment-eyebrow">
+        <span class="investment-eyebrow-line"></span>
+        <span class="investment-eyebrow-dot"></span>
+        <span>POTENSI INVESTASI SURABAYA</span>
+        <span class="investment-eyebrow-dot"></span>
+        <span class="investment-eyebrow-line"></span>
+      </div>
 
-          {
-            peta.length > 0 && peta[0]?.gambar ? (
+      <h2>
+        Temukan <strong>Peluang Investasi</strong><br class="investment-desktop" />
+        di Kota Surabaya
+      </h2>
 
-              <img
-                src={peta[0].gambar}
-                alt={
-                  peta[0]?.judul ||
-                  "Peta Potensi Investasi Surabaya"
-                }
-                class="block w-full h-auto object-contain"
-                loading="lazy"
-              />
+      <p>
+        Jelajahi potensi unggulan setiap wilayah dan temukan peluang investasi
+        strategis untuk mendukung keputusan bisnis yang lebih tepat.
+      </p>
 
-            ) : (
+      <div class="investment-heading-rule">
+        <span></span>
+        <i class="fas fa-location-dot"></i>
+        <span></span>
+      </div>
 
-              /*
-               * FALLBACK GAMBAR
-               *
-               * Jadi kalau API belum mengirim gambar,
-               * peta tetap muncul.
-               */
+    </div>
 
-              <img
-                src="https://dpm-ptsp.surabaya.go.id/images/PetaPotensi.png"
-                alt="Peta Potensi Investasi Surabaya"
-                class="block w-full h-auto object-contain"
-                loading="lazy"
-              />
+    <!-- MAIN VISUAL -->
+    <div class="investment-layout">
 
-            )
-          }
+      <!-- MAP -->
+      <div class="investment-map-column">
+
+        <div class="investment-map-stage">
+
+          <div class="investment-map-glow" aria-hidden="true"></div>
+
+          <div class="investment-map-orbit orbit-one" aria-hidden="true"></div>
+          <div class="investment-map-orbit orbit-two" aria-hidden="true"></div>
+
+          <div class="investment-map-badge">
+            <span class="investment-live-dot"></span>
+            <span>PETA POTENSI AKTIF</span>
+          </div>
+
+          <div class="investment-map-image">
+            {
+              peta.length > 0 && peta[0]?.gambar ? (
+                <img
+                  src={peta[0].gambar}
+                  alt={peta[0]?.judul || "Peta Potensi Investasi Surabaya"}
+                  loading="lazy"
+                  onerror="this.onerror=null;this.src='https://dpm-ptsp.surabaya.go.id/images/PetaPotensi.png';"
+                />
+              ) : (
+                <img
+                  src="https://dpm-ptsp.surabaya.go.id/images/PetaPotensi.png"
+                  alt="Peta Potensi Investasi Surabaya"
+                  loading="lazy"
+                />
+              )
+            }
+          </div>
+
+          <div class="investment-map-location">
+            <i class="fas fa-location-dot"></i>
+            <div>
+              <small>WILAYAH</small>
+              <strong>Kota Surabaya</strong>
+            </div>
+          </div>
+
+          <div class="investment-map-corner corner-tl"></div>
+          <div class="investment-map-corner corner-br"></div>
 
         </div>
 
       </div>
 
+      <!-- CONTENT -->
+      <div class="investment-content">
 
-      <!-- ===================================================
-           KANAN : INFORMASI
-      ==================================================== -->
+        <span class="investment-content-kicker">
+          <i class="fas fa-chart-line"></i>
+          INVESTMENT INSIGHT
+        </span>
 
-      <div class="order-1 lg:order-2 w-full">
-
-        <!-- =================================================
-             JUDUL
-        ================================================== -->
-
-        <h2
-          class="text-3xl md:text-4xl lg:text-[42px] leading-tight font-bold text-[#123fb5] mb-7"
-        >
-
+        <h3>
           {
             peta[0]?.judul ||
             "Peta Potensi Investasi Surabaya"
           }
+        </h3>
 
-        </h2>
+        <div class="investment-accent"></div>
 
-
-        <!-- =================================================
-             DESKRIPSI API
-        ================================================== -->
-
-        <p
-          class="text-gray-700 text-base md:text-lg leading-relaxed mb-7 max-w-3xl"
-        >
-
+        <p class="investment-description">
           {
             peta[0]?.deskripsi ||
-            "Temukan sektor unggulan dan peluang investasi di setiap wilayah Kota Surabaya dengan peta interaktif kami."
+            "Temukan sektor unggulan dan peluang investasi di setiap wilayah Kota Surabaya melalui informasi potensi investasi yang terintegrasi."
           }
-
         </p>
 
+        <p class="investment-description investment-description-secondary">
+          Gunakan informasi ini sebagai referensi awal untuk mengenali
+          <strong>sektor unggulan, wilayah potensial,</strong> dan peluang
+          pengembangan investasi di Surabaya.
+        </p>
 
-        <!-- =================================================
-             DESKRIPSI KEDUA
-        ================================================== -->
+        <!-- STATS -->
+        <div class="investment-stats">
 
-        <p
-          class="text-gray-700 text-base md:text-lg leading-relaxed mb-7 max-w-3xl"
+          <div class="investment-stat">
+            <div class="investment-stat-icon">
+              <i class="fas fa-map-location-dot"></i>
+            </div>
+            <div>
+              <strong>31</strong>
+              <span>Kecamatan</span>
+            </div>
+          </div>
+
+          <div class="investment-stat-divider"></div>
+
+          <div class="investment-stat">
+            <div class="investment-stat-icon yellow">
+              <i class="fas fa-city"></i>
+            </div>
+            <div>
+              <strong>1</strong>
+              <span>Kota Surabaya</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- CTA -->
+        <a
+          href={peta[0]?.link && peta[0].link !== "#" ? peta[0].link : "#"}
+          class="investment-cta"
+          target={peta[0]?.link && peta[0].link !== "#" ? "_blank" : undefined}
+          rel={peta[0]?.link && peta[0].link !== "#" ? "noopener noreferrer" : undefined}
+        >
+          <span class="investment-cta-icon">
+            <i class="fas fa-arrow-right"></i>
+          </span>
+          <span>
+            <small>JELAJAHI DATA</small>
+            <strong>Lihat Potensi Investasi</strong>
+          </span>
+        </a>
+
+        <div class="investment-note">
+          <i class="fas fa-shield-halved"></i>
+          <span>Informasi potensi investasi untuk mendukung perencanaan dan pengambilan keputusan.</span>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- BOTTOM STRIP -->
+    <div class="investment-bottom-strip">
+      <div>
+        <i class="fas fa-compass"></i>
+        <span>Eksplorasi Potensi</span>
+      </div>
+      <div>
+        <i class="fas fa-location-crosshairs"></i>
+        <span>Berbasis Wilayah</span>
+      </div>
+      <div>
+        <i class="fas fa-arrow-trend-up"></i>
+        <span>Berorientasi Investasi</span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- =========================================================
+     2. APLIKASI PUBLIK
+========================================================== -->
+
+
+
+
+<section class="content-section berita-section">
+      <div class="section-inner">
+
+
+    <!-- HEADER -->
+
+    <div class="news-top">
+
+      <div>
+
+        <div class="news-label">
+          <i></i>
+          INFORMASI TERKINI
+        </div>
+
+        <h2 class="news-title">
+          Berita &
+          <span>Artikel</span>
+        </h2>
+
+        <p class="news-desc">
+          Informasi terbaru DPMPTSP Kota Surabaya
+          seputar pelayanan, perizinan, investasi
+          dan perkembangan Kota Surabaya.
+        </p>
+
+      </div>
+
+
+      <div class="news-arrows">
+
+        <button
+          type="button"
+          id="newsPrev"
+          aria-label="Berita sebelumnya"
+        >
+          ←
+        </button>
+
+        <button
+          type="button"
+          id="newsNext"
+          aria-label="Berita berikutnya"
+        >
+          →
+        </button>
+
+      </div>
+
+    </div>
+
+
+    {berita.length > 0 ? (
+
+      <>
+
+        <!-- MAIN NEWS -->
+
+        <div
+          class="news-main"
+          id="newsMain"
         >
 
-          Analisis komprehensif terhadap potensi investasi di
-          31 kecamatan Surabaya, membantu investor dalam
-          pengambilan keputusan yang tepat.
+          <div class="news-image">
 
-        </p>
+            <img
+              id="newsImage"
+               src={`https://dpm-ptsp.surabaya.go.id/fileberita/${berita[0].picture}`}
+              alt={berita[0].title}
+        />
+           
 
-
-        <!-- =================================================
-             WILAYAH UNGGULAN
-        ================================================== -->
-
-        <div class="mb-8">
-
-          <h3
-            class="text-lg md:text-xl font-bold text-[#123fb5] mb-4"
-          >
-            Wilayah Unggulan:
-          </h3>
+            <div
+              class="news-badge"
+              id="newsCategory"
+            >
+              {berita[0].category_title || "BERITA"}
+            </div>
 
 
-          <div class="flex flex-wrap gap-2.5">
+            <div
+              class="news-number"
+              id="newsNumber"
+            >
+              01
+            </div>
 
-            {
-              (
-                peta[0]?.wilayah_unggulan ||
-                "Benowo, Pakal, Sambikerep, Mulyorejo, Gubeng, Sukolilo"
-              )
-                .split(",")
-                .map((wilayah) => wilayah.trim())
-                .filter(Boolean)
-                .map((wilayah) => (
+          </div>
 
-                  <span
-                    class="inline-flex items-center rounded-full bg-[#dbeafe] px-4 py-2 text-sm md:text-base font-medium text-[#2451b8]"
-                  >
-                    {wilayah}
-                  </span>
 
-                ))
-            }
+          <div class="news-content">
+
+            <div
+              class="news-meta"
+              id="newsMeta"
+            >
+              {berita[0].category_title || "BERITA"}
+              •
+              {formatDate(berita[0].date)}
+            </div>
+
+
+            <h3 id="newsTitle">
+              {berita[0].title}
+            </h3>
+
+
+            <p id="newsDescription">
+              {excerpt(berita[0].content)}
+            </p>
+
+
+            <a
+              id="newsLink"
+              href={`/media/${slugify(berita[0].content)}`}
+              class="news-read"
+            >
+              Baca Selengkapnya
+
+              <span>
+                ↗
+              </span>
+            </a>
+
+
+            <div class="news-progress">
+
+              <span id="newsProgress"></span>
+
+            </div>
 
           </div>
 
         </div>
 
 
-        <!-- =================================================
-             TOMBOL
-        ================================================== -->
+        <!-- THUMBNAILS -->
 
-        <a
-          href={
-            peta[0]?.link &&
-            peta[0].link !== "#"
-              ? peta[0].link
-              : "https://dpm-ptsp.surabaya.go.id/petapotensiinvestasi/html/interaktif/kecamatan.php"
-          }
-          target="_blank"
-          rel="noopener noreferrer"
-          class="inline-flex items-center gap-3 rounded-xl bg-[#FFD21F] px-7 py-4 text-base md:text-lg font-bold text-[#0014FF] transition-all duration-300 hover:bg-[#FFC400] hover:-translate-y-0.5"
+        <div
+          class="news-thumbs"
+          id="newsThumbs"
         >
 
-          <span>
-            Jelajahi Peta
-          </span>
+          {berita.map((item, index) => (
 
-          <i class="fas fa-map-marked-alt text-lg"></i>
+            <button
+              type="button"
+              class:list={[
+                "news-thumb",
+                { active: index === 0 }
+              ]}
+              data-index={index}
+            >
 
-        </a>
+              <img
+                 src={`https://dpm-ptsp.surabaya.go.id/fileberita/${berita[0].picture}`}
+                alt=""
+                loading={index === 0 ? "eager" : "lazy"}
+              />
 
+              <span>
+                {item.title}
+              </span>
+
+            </button>
+
+          ))}
+
+        </div>
+
+
+        <!-- ALL NEWS -->
+
+        <div class="news-all-wrap">
+
+          <a
+            href="/beritalist"
+            class="news-all"
+          >
+            <span>
+              Lihat Semua
+            </span>
+
+            <span class="news-all-arrow">
+              →
+            </span>
+          </a>
+
+        </div>
+
+      </>
+
+    ) : (
+
+      <div class="news-empty">
+        Belum ada berita.
       </div>
 
-    </div>
+    )}
 
-  </div>
-
-</section>
+        
+      </div>
+    </section>  
 <section class="video-section">
 
   <div class="video-container">
@@ -4601,226 +6017,61 @@ try {
         }
 
         /*pdf viewer */
+/* =========================================================
+   FIX FOTO BERITA — TANPA WARNA / OVERLAY
+========================================================= */
 
+.berita-section .news-image {
+  position: relative !important;
+  overflow: hidden !important;
+  background: transparent !important;
+}
+
+.berita-section .news-image img {
+  position: relative !important;
+  z-index: 1 !important;
+
+  display: block !important;
+
+  width: 100% !important;
+  height: 100% !important;
+
+  object-fit: cover !important;
+
+  opacity: 1 !important;
+  filter: none !important;
+  mix-blend-mode: normal !important;
+}
+
+/* MATIKAN OVERLAY */
+.berita-section .news-image-overlay {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  background: transparent !important;
+}
+
+/* MATIKAN SEMUA PSEUDO-ELEMENT DI FOTO */
+.berita-section .news-image::before,
+.berita-section .news-image::after {
+  display: none !important;
+  content: none !important;
+  background: transparent !important;
+}
+
+/* JANGAN SAMPAI BADGE MENUTUPI FOTO */
+.berita-section .news-badge,
+.berita-section .news-number {
+  z-index: 10 !important;
+}
         
 </style>
-<!-- =========================================================
-     2. APLIKASI PUBLIK
-========================================================== -->
-
-
-
-
-<section class="content-section berita-section">
-      <div class="section-inner">
-
-
-    <!-- HEADER -->
-
-    <div class="news-top">
-
-      <div>
-
-        <div class="news-label">
-          <i></i>
-          INFORMASI TERKINI
-        </div>
-
-        <h2 class="news-title">
-          Berita &
-          <span>Artikel</span>
-        </h2>
-
-        <p class="news-desc">
-          Informasi terbaru DPMPTSP Kota Surabaya
-          seputar pelayanan, perizinan, investasi
-          dan perkembangan Kota Surabaya.
-        </p>
-
-      </div>
-
-
-      <div class="news-arrows">
-
-        <button
-          type="button"
-          id="newsPrev"
-          aria-label="Berita sebelumnya"
-        >
-          ←
-        </button>
-
-        <button
-          type="button"
-          id="newsNext"
-          aria-label="Berita berikutnya"
-        >
-          →
-        </button>
-
-      </div>
-
-    </div>
-
-
-    {berita.length > 0 ? (
-
-      <>
-
-        <!-- MAIN NEWS -->
-
-        <div
-          class="news-main"
-          id="newsMain"
-        >
-
-          <div class="news-image">
-
-            <img
-              id="newsImage"
-               src={`https://dpm-ptsp.surabaya.go.id/fileberita/${berita[0].picture}`}
-              alt={berita[0].title}
-        />
-            <div class="news-image-overlay"></div>
-
-
-            <div
-              class="news-badge"
-              id="newsCategory"
-            >
-              {berita[0].category_title || "BERITA"}
-            </div>
-
-
-            <div
-              class="news-number"
-              id="newsNumber"
-            >
-              01
-            </div>
-
-          </div>
-
-
-          <div class="news-content">
-
-            <div
-              class="news-meta"
-              id="newsMeta"
-            >
-              {berita[0].category_title || "BERITA"}
-              •
-              {formatDate(berita[0].date)}
-            </div>
-
-
-            <h3 id="newsTitle">
-              {berita[0].title}
-            </h3>
-
-
-            <p id="newsDescription">
-              {excerpt(berita[0].content)}
-            </p>
-
-
-            <a
-              id="newsLink"
-              href={`/media/${slugify(berita[0].content)}`}
-              class="news-read"
-            >
-              Baca Selengkapnya
-
-              <span>
-                ↗
-              </span>
-            </a>
-
-
-            <div class="news-progress">
-
-              <span id="newsProgress"></span>
-
-            </div>
-
-          </div>
-
-        </div>
-
-
-        <!-- THUMBNAILS -->
-
-        <div
-          class="news-thumbs"
-          id="newsThumbs"
-        >
-
-          {berita.map((item, index) => (
-
-            <button
-              type="button"
-              class:list={[
-                "news-thumb",
-                { active: index === 0 }
-              ]}
-              data-index={index}
-            >
-
-              <img
-                 src={`https://dpm-ptsp.surabaya.go.id/fileberita/${berita[0].picture}`}
-                alt=""
-                loading={index === 0 ? "eager" : "lazy"}
-              />
-
-              <span>
-                {item.title}
-              </span>
-
-            </button>
-
-          ))}
-
-        </div>
-
-
-        <!-- ALL NEWS -->
-
-        <div class="news-all-wrap">
-
-          <a
-            href="/beritalist"
-            class="news-all"
-          >
-            <span>
-              Lihat Semua
-            </span>
-
-            <span class="news-all-arrow">
-              →
-            </span>
-          </a>
-
-        </div>
-
-      </>
-
-    ) : (
-
-      <div class="news-empty">
-        Belum ada berita.
-      </div>
-
-    )}
-
-        
-      </div>
-    </section>  
 
 <!-- =========================================================
      4. BERITA & ARTIKEL
 ========================================================== -->
 
-<section class="apps-section">
+<!-- <section class="apps-section">
 
   <div class="apps-container">
 
@@ -4894,16 +6145,13 @@ try {
 
   </div>
 
-</section>
-<section class="news-section" id="informasi">
+</section>-->
+<!-- <section class="news-section" id="informasi">
 
  
   <div class="reg-container">
 
-    <!-- =====================================================
-         HEADER
-    ====================================================== -->
-
+   
     <div class="reg-header">
 
       <div class="reg-heading">
@@ -4936,10 +6184,6 @@ try {
     </div>
 
 
-    <!-- =====================================================
-         LIST
-    ====================================================== -->
-
     {regulasi.length > 0 ? (
 
       <div class="reg-list">
@@ -4951,14 +6195,12 @@ try {
             style={`--delay:${index * 80}ms`}
           >
 
-            <!-- NUMBER -->
 
             <div class="reg-number">
               {String(index + 1).padStart(2, "0")}
             </div>
 
 
-            <!-- ICON -->
 
             <div class="reg-icon">
 
@@ -4970,8 +6212,6 @@ try {
 
             </div>
 
-
-            <!-- CONTENT -->
 
             <div class="reg-content">
 
@@ -5006,8 +6246,6 @@ try {
 
             </div>
 
-
-            <!-- DOWNLOAD -->
 
             {item.file ? (
 
@@ -5064,7 +6302,7 @@ try {
 
   </div>
 
-</section>
+</section>-->
 
 
 <style>
@@ -5905,46 +7143,64 @@ try {
 
 </style>
 <!-- =========================================================
-     INSTANSI TERKAIT
+     INSTANSI TERKAIT — REDESIGN
 ========================================================= -->
 
-<section class="related-section" id="instansi-terkait">
+<section class="partner-network" id="instansi-terkait">
 
-  <div class="related-container">
+  <div class="partner-bg-glow partner-glow-left" aria-hidden="true"></div>
+  <div class="partner-bg-glow partner-glow-right" aria-hidden="true"></div>
+  <div class="partner-bg-grid" aria-hidden="true"></div>
 
-    <!-- HEADER -->
-    <div class="related-heading">
+  <!-- WATERMARK LOGO SURABAYA -->
+  <img
+    class="partner-watermark"
+    src="https://github.com/arbagasdanangh/pps/blob/main/logo.png?raw=true"
+    alt=""
+    aria-hidden="true"
+    onerror="this.onerror=null;this.src='/logo-surabaya.png';"
+  />
 
-      <span class="related-eyebrow">
-        MITRA &amp; JEJARING
-      </span>
+  <div class="partner-container">
+
+    <div class="partner-heading">
+
+      <div class="partner-eyebrow">
+        <span></span>
+        MITRA & JEJARING STRATEGIS
+        <span></span>
+      </div>
 
       <h2>
-        Instansi <span>Terkait</span>
+        Instansi <strong>Terkait</strong>
       </h2>
 
-      <div class="related-line"></div>
-
       <p>
-        Akses berbagai instansi dan lembaga terkait
-        untuk mendukung layanan publik dan perizinan
-        DPMPTSP Kota Surabaya.
+        Kolaborasi lintas kementerian, lembaga, pemerintah daerah, dan
+        institusi strategis untuk memperkuat pelayanan publik serta
+        ekosistem investasi Kota Surabaya.
       </p>
+
+      <div class="partner-heading-mark">
+        <i class="fas fa-link"></i>
+      </div>
 
     </div>
 
+    <div class="partner-network-grid">
 
-    <!-- GRID -->
-    <div class="related-grid">
-
-      <!-- KEMENPANRB -->
+      <!-- 01 -->
       <a
         href="https://ppid.menpan.go.id/"
         target="_blank"
         rel="noopener noreferrer"
-        class="related-card"
+        class="partner-card"
       >
-        <div class="related-logo">
+        <span class="partner-number">01</span>
+        <span class="partner-corner"></span>
+
+        <div class="partner-logo">
+          <div class="partner-logo-ring"></div>
           <img
             src="https://ppid.menpan.go.id/system/uploads/2021/07/20210721_new_logo_kemenpanrb-1.png"
             alt="Kementerian PANRB"
@@ -5952,45 +7208,59 @@ try {
           />
         </div>
 
-        <div class="related-name">
-          Kementerian PANRB
+        <div class="partner-card-content">
+          <span class="partner-label">KEMENTERIAN</span>
+          <strong>Kementerian PANRB</strong>
         </div>
 
-        <span class="related-arrow">↗</span>
+        <div class="partner-link">
+          <span>Portal resmi</span>
+          <i class="fas fa-arrow-up-right-from-square"></i>
+        </div>
       </a>
 
-
-      <!-- WBS SURABAYA -->
+      <!-- 02 -->
       <a
         href="https://wbs.surabaya.go.id/"
         target="_blank"
         rel="noopener noreferrer"
-        class="related-card"
+        class="partner-card"
       >
-        <div class="related-logo">
+        <span class="partner-number">02</span>
+        <span class="partner-corner"></span>
+
+        <div class="partner-logo">
+          <div class="partner-logo-ring"></div>
           <img
             src="https://wbs.surabaya.go.id/git_themes/assets/img/logo.png"
-            alt="Whistleblowing System Surabaya"
+            alt="WBS Surabaya"
             loading="lazy"
           />
         </div>
 
-        <div class="related-name">
-          WBS Surabaya
+        <div class="partner-card-content">
+          <span class="partner-label">SURABAYA</span>
+          <strong>WBS Surabaya</strong>
         </div>
 
-        <span class="related-arrow">↗</span>
+        <div class="partner-link">
+          <span>Portal resmi</span>
+          <i class="fas fa-arrow-up-right-from-square"></i>
+        </div>
       </a>
 
-
-      <!-- DPMPTSP JATIM -->
+      <!-- 03 -->
       <a
         href="https://dpmptsp.jatimprov.go.id/"
         target="_blank"
         rel="noopener noreferrer"
-        class="related-card"
+        class="partner-card"
       >
-        <div class="related-logo">
+        <span class="partner-number">03</span>
+        <span class="partner-corner"></span>
+
+        <div class="partner-logo">
+          <div class="partner-logo-ring"></div>
           <img
             src="https://dpmptsp.jatimprov.go.id/wp-content/uploads/2020/07/logo-admin.png"
             alt="DPMPTSP Jawa Timur"
@@ -5998,22 +7268,29 @@ try {
           />
         </div>
 
-        <div class="related-name">
-          DPMPTSP Jawa Timur
+        <div class="partner-card-content">
+          <span class="partner-label">PEMERINTAH DAERAH</span>
+          <strong>DPMPTSP Jawa Timur</strong>
         </div>
 
-        <span class="related-arrow">↗</span>
+        <div class="partner-link">
+          <span>Portal resmi</span>
+          <i class="fas fa-arrow-up-right-from-square"></i>
+        </div>
       </a>
 
-
-      <!-- OSS -->
+      <!-- 04 -->
       <a
         href="https://oss.go.id/"
         target="_blank"
         rel="noopener noreferrer"
-        class="related-card"
+        class="partner-card"
       >
-        <div class="related-logo">
+        <span class="partner-number">04</span>
+        <span class="partner-corner"></span>
+
+        <div class="partner-logo">
+          <div class="partner-logo-ring"></div>
           <img
             src="https://s3.oss.go.id/oss/logo/LOGO_OSS_NEW_ID-222baabce52bc87c29a24178b74429f7.svg"
             alt="OSS Indonesia"
@@ -6021,77 +7298,1321 @@ try {
           />
         </div>
 
-        <div class="related-name">
-          OSS Indonesia
+        <div class="partner-card-content">
+          <span class="partner-label">PERIZINAN BERUSAHA</span>
+          <strong>OSS Indonesia</strong>
         </div>
 
-        <span class="related-arrow">↗</span>
+        <div class="partner-link">
+          <span>Portal resmi</span>
+          <i class="fas fa-arrow-up-right-from-square"></i>
+        </div>
       </a>
 
-
-      <!-- DJKI -->
+      <!-- 05 -->
       <a
         href="https://dgip.go.id/"
         target="_blank"
         rel="noopener noreferrer"
-        class="related-card"
+        class="partner-card"
       >
-        <div class="related-logo">
+        <span class="partner-number">05</span>
+        <span class="partner-corner"></span>
+
+        <div class="partner-logo">
+          <div class="partner-logo-ring"></div>
           <img
             src="https://dgip.go.id/frontend/assets/images/logo-web.png"
-            alt="Direktorat Jenderal Kekayaan Intelektual"
+            alt="DJKI"
             loading="lazy"
           />
         </div>
 
-        <div class="related-name">
-          DJKI
+        <div class="partner-card-content">
+          <span class="partner-label">KEKAYAAN INTELEKTUAL</span>
+          <strong>DJKI</strong>
         </div>
 
-        <span class="related-arrow">↗</span>
+        <div class="partner-link">
+          <span>Portal resmi</span>
+          <i class="fas fa-arrow-up-right-from-square"></i>
+        </div>
       </a>
 
-
-      <!-- BKPM -->
+      <!-- 06 -->
       <a
         href="https://bkpm.go.id"
         target="_blank"
         rel="noopener noreferrer"
-        class="related-card"
+        class="partner-card"
       >
-        <div class="related-logo">
+        <span class="partner-number">06</span>
+        <span class="partner-corner"></span>
+
+        <div class="partner-logo">
+          <div class="partner-logo-ring"></div>
           <img
-            src="https://scontent.fsub32-2.fna.fbcdn.net/v/t39.30808-6/465182884_951548027001973_1156703174824299195_n.jpg?stp=dst-jpg_tt6&cstp=mx2048x2048&ctp=s2048x2048&_nc_cat=109&ccb=1-7&_nc_sid=6ee11a&_nc_eui2=AeGMB081Lw2P6mLuX_qtllyifSb9XTEAcop9Jv1dMQByisar8lNiPfRyWNr4VxX1dJhqCpZJDSRdPZYFEbgO2hqH&_nc_ohc=9sYVYrZ2HogQ7kNvwFgMo2G&_nc_oc=AdqSbDguUAlK1S8cpYbL-zopYTa1QlaAd6Ss8YYvjMozV8RXyFFLgeHQNO_JhcSVWfpc_vVord8kkaCcty3x7Qyz&_nc_zt=23&_nc_ht=scontent.fsub32-2.fna&_nc_gid=YoDC2k9SfHWVb-SFMgz3jg&_nc_ss=7b2a8&oh=00_AQFWJBMAyl4LmQiIs0-SGwcq8AU6Kpf7IHrG-Z-e3zT6jg&oe=6A8E2E6C"
+            src="https://bkpm.go.id/assets/frontend/image/logo/logo-id-2024.png"
             alt="BKPM"
             loading="lazy"
           />
         </div>
 
-        <div class="related-name">
-          BKPM
+        <div class="partner-card-content">
+          <span class="partner-label">INVESTASI INDONESIA</span>
+          <strong>BKPM</strong>
         </div>
 
-        <span class="related-arrow">↗</span>
+        <div class="partner-link">
+          <span>Portal resmi</span>
+          <i class="fas fa-arrow-up-right-from-square"></i>
+        </div>
       </a>
 
     </div>
 
+    <div class="partner-footer">
 
-    <!-- FOOTER -->
-    <div class="related-footer">
+      <div class="partner-status">
+        <span class="partner-status-dot"></span>
+        <div>
+          <strong>Jejaring Terhubung</strong>
+          <small>Portal resmi instansi terkait</small>
+        </div>
+      </div>
 
-      <span>
-        <i></i>
-        Portal resmi instansi terkait
-      </span>
+      <div class="partner-footer-line"></div>
 
-      <span class="related-footer-line"></span>
+      <div class="partner-count">
+        <strong>06</strong>
+        <span>INSTANSI</span>
+      </div>
 
     </div>
 
   </div>
-
 </section>
+
+
+<style>
+/* =========================================================
+   POTENSI INVESTASI SURABAYA
+========================================================= */
+
+.investment-potential {
+  --inv-blue: #123fb5;
+  --inv-blue-dark: #062a7d;
+  --inv-blue-soft: #edf4ff;
+  --inv-yellow: #ffd21f;
+  position: relative;
+  overflow: hidden;
+  padding: 88px 20px 74px;
+  isolation: isolate;
+  background:
+    radial-gradient(circle at 10% 38%, rgba(18,63,181,.10), transparent 30%),
+    radial-gradient(circle at 92% 62%, rgba(255,210,31,.12), transparent 27%),
+    linear-gradient(135deg, #ffffff 0%, #f7faff 50%, #ffffff 100%);
+}
+
+.investment-bg {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(10px);
+  z-index: -2;
+}
+
+.investment-bg-blue {
+  width: 520px;
+  height: 520px;
+  left: -290px;
+  top: 25%;
+  background: radial-gradient(circle, rgba(18,63,181,.16), transparent 68%);
+}
+
+.investment-bg-yellow {
+  width: 460px;
+  height: 460px;
+  right: -260px;
+  bottom: -120px;
+  background: radial-gradient(circle, rgba(255,210,31,.18), transparent 68%);
+}
+
+.investment-grid {
+  position: absolute;
+  inset: 0;
+  opacity: .35;
+  pointer-events: none;
+  z-index: -1;
+  background-image:
+    linear-gradient(rgba(18,63,181,.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(18,63,181,.035) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: linear-gradient(to bottom, transparent, black 15%, black 85%, transparent);
+}
+
+.investment-watermark {
+  position: absolute;
+  width: min(720px, 62vw);
+  height: min(720px, 62vw);
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -48%);
+  object-fit: contain;
+  opacity: .035;
+  pointer-events: none;
+  user-select: none;
+  z-index: -1;
+  filter: grayscale(1);
+}
+
+.investment-container {
+  position: relative;
+  width: min(1380px, 100%);
+  margin: 0 auto;
+}
+
+.investment-heading {
+  max-width: 850px;
+  margin: 0 auto 58px;
+  text-align: center;
+}
+
+.investment-eyebrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: var(--inv-blue);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 3.2px;
+}
+
+.investment-eyebrow-line {
+  width: 42px;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--inv-yellow);
+}
+
+.investment-eyebrow-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--inv-yellow);
+  box-shadow: 0 0 0 5px rgba(255,210,31,.10);
+}
+
+.investment-heading h2 {
+  margin: 18px 0 0;
+  color: #0a2d76;
+  font-size: clamp(38px, 5vw, 64px);
+  line-height: 1.04;
+  letter-spacing: -2.8px;
+  font-weight: 950;
+}
+
+.investment-heading h2 strong {
+  color: var(--inv-blue);
+  position: relative;
+}
+
+.investment-heading p {
+  max-width: 680px;
+  margin: 20px auto 0;
+  color: #64748b;
+  font-size: 15px;
+  line-height: 1.8;
+}
+
+.investment-heading-rule {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 23px;
+}
+
+.investment-heading-rule span {
+  width: 45px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #cbd5e1);
+}
+
+.investment-heading-rule span:last-child {
+  background: linear-gradient(90deg, #cbd5e1, transparent);
+}
+
+.investment-heading-rule i {
+  color: var(--inv-yellow);
+  font-size: 12px;
+}
+
+.investment-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.12fr) minmax(390px, .88fr);
+  align-items: center;
+  gap: clamp(36px, 6vw, 88px);
+}
+
+.investment-map-column {
+  min-width: 0;
+}
+
+.investment-map-stage {
+  position: relative;
+  min-height: 590px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 34px;
+  background:
+    radial-gradient(circle at 50% 45%, rgba(255,255,255,.96), rgba(239,246,255,.68) 52%, rgba(219,234,254,.46) 100%);
+  border: 1px solid rgba(18,63,181,.10);
+  box-shadow:
+    0 30px 90px rgba(18,63,181,.12),
+    inset 0 0 0 1px rgba(255,255,255,.8);
+}
+
+.investment-map-stage::before {
+  content: "";
+  position: absolute;
+  inset: 18px;
+  border-radius: 25px;
+  border: 1px solid rgba(18,63,181,.07);
+  pointer-events: none;
+}
+
+.investment-map-glow {
+  position: absolute;
+  width: 68%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(37,99,235,.15), transparent 68%);
+  filter: blur(25px);
+}
+
+.investment-map-orbit {
+  position: absolute;
+  border: 1px solid rgba(18,63,181,.10);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.orbit-one {
+  width: 520px;
+  height: 520px;
+  animation: investmentOrbit 18s linear infinite;
+}
+
+.orbit-two {
+  width: 680px;
+  height: 360px;
+  transform: rotate(-22deg);
+  border-color: rgba(255,210,31,.20);
+  animation: investmentOrbitReverse 22s linear infinite;
+}
+
+.investment-map-image {
+  position: relative;
+  z-index: 3;
+  width: min(92%, 720px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 44px 26px 40px;
+}
+
+.investment-map-image img {
+  display: block;
+  width: 100%;
+  max-height: 520px;
+  object-fit: contain;
+  filter: drop-shadow(0 25px 28px rgba(18,63,181,.14));
+  transition: transform .6s cubic-bezier(.2,.8,.2,1), filter .6s ease;
+}
+
+.investment-map-stage:hover .investment-map-image img {
+  transform: scale(1.025) translateY(-5px);
+  filter: drop-shadow(0 32px 38px rgba(18,63,181,.20));
+}
+
+.investment-map-badge {
+  position: absolute;
+  left: 26px;
+  top: 25px;
+  z-index: 5;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 13px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.88);
+  border: 1px solid rgba(18,63,181,.09);
+  box-shadow: 0 10px 28px rgba(15,23,42,.08);
+  backdrop-filter: blur(10px);
+  color: #123fb5;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 1.2px;
+}
+
+.investment-live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 0 5px rgba(34,197,94,.10), 0 0 14px rgba(34,197,94,.35);
+  animation: investmentPulse 1.8s ease-in-out infinite;
+}
+
+.investment-map-location {
+  position: absolute;
+  right: 25px;
+  bottom: 25px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 11px 14px;
+  border-radius: 17px;
+  background: rgba(255,255,255,.90);
+  border: 1px solid rgba(18,63,181,.08);
+  box-shadow: 0 12px 30px rgba(15,23,42,.08);
+  backdrop-filter: blur(10px);
+}
+
+.investment-map-location i {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+  background: #fff7cc;
+  color: #123fb5;
+}
+
+.investment-map-location small {
+  display: block;
+  margin-bottom: 2px;
+  color: #94a3b8;
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 1px;
+}
+
+.investment-map-location strong {
+  color: #0f172a;
+  font-size: 11px;
+}
+
+.investment-map-corner {
+  position: absolute;
+  width: 46px;
+  height: 46px;
+  border-color: rgba(18,63,181,.30);
+  z-index: 4;
+}
+
+.corner-tl {
+  left: 17px;
+  top: 17px;
+  border-left: 2px solid;
+  border-top: 2px solid;
+  border-radius: 14px 0 0 0;
+}
+
+.corner-br {
+  right: 17px;
+  bottom: 17px;
+  border-right: 2px solid;
+  border-bottom: 2px solid;
+  border-radius: 0 0 14px 0;
+}
+
+.investment-content {
+  position: relative;
+  padding: 8px 0;
+}
+
+.investment-content-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  color: #123fb5;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 2px;
+}
+
+.investment-content-kicker i {
+  color: #ffd21f;
+}
+
+.investment-content h3 {
+  max-width: 680px;
+  margin: 18px 0 0;
+  color: #0b327f;
+  font-size: clamp(31px, 3.4vw, 50px);
+  line-height: 1.08;
+  letter-spacing: -2px;
+  font-weight: 950;
+}
+
+.investment-accent {
+  width: 70px;
+  height: 5px;
+  margin-top: 22px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #ffd21f, #123fb5);
+}
+
+.investment-description {
+  max-width: 680px;
+  margin: 24px 0 0;
+  color: #475569;
+  font-size: 16px;
+  line-height: 1.85;
+}
+
+.investment-description-secondary {
+  margin-top: 13px;
+  font-size: 14px;
+  color: #64748b;
+}
+
+.investment-description strong {
+  color: #123fb5;
+}
+
+.investment-stats {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-top: 28px;
+}
+
+.investment-stat {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.investment-stat-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  background: #edf4ff;
+  color: #123fb5;
+  box-shadow: inset 0 0 0 1px rgba(18,63,181,.06);
+}
+
+.investment-stat-icon.yellow {
+  background: #fff8d9;
+  color: #a46d00;
+}
+
+.investment-stat strong,
+.investment-stat span {
+  display: block;
+}
+
+.investment-stat strong {
+  color: #123fb5;
+  font-size: 22px;
+  line-height: 1;
+  font-weight: 950;
+}
+
+.investment-stat span {
+  margin-top: 5px;
+  color: #94a3b8;
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.investment-stat-divider {
+  width: 1px;
+  height: 42px;
+  background: #dbe4f2;
+}
+
+.investment-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 13px;
+  margin-top: 30px;
+  padding: 7px 20px 7px 7px;
+  border-radius: 999px;
+  background: #123fb5;
+  color: white;
+  text-decoration: none;
+  box-shadow: 0 16px 35px rgba(18,63,181,.22);
+  transition: transform .3s ease, box-shadow .3s ease, background .3s ease;
+}
+
+.investment-cta:hover {
+  transform: translateY(-4px);
+  background: #0b327f;
+  box-shadow: 0 22px 42px rgba(18,63,181,.30);
+}
+
+.investment-cta-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 43px;
+  height: 43px;
+  border-radius: 50%;
+  background: #ffd21f;
+  color: #092e78;
+  transition: transform .3s ease;
+}
+
+.investment-cta:hover .investment-cta-icon {
+  transform: rotate(-45deg);
+}
+
+.investment-cta small,
+.investment-cta strong {
+  display: block;
+}
+
+.investment-cta small {
+  color: rgba(255,255,255,.58);
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 1.4px;
+}
+
+.investment-cta strong {
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.investment-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  max-width: 560px;
+  margin-top: 20px;
+  color: #94a3b8;
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.investment-note i {
+  margin-top: 2px;
+  color: #123fb5;
+}
+
+.investment-bottom-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin-top: 46px;
+  border-top: 1px solid rgba(18,63,181,.09);
+  border-bottom: 1px solid rgba(18,63,181,.09);
+}
+
+.investment-bottom-strip > div {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 16px 10px;
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .4px;
+}
+
+.investment-bottom-strip > div + div {
+  border-left: 1px solid rgba(18,63,181,.09);
+}
+
+.investment-bottom-strip i {
+  color: #123fb5;
+}
+
+@keyframes investmentPulse {
+  0%,100% { opacity: .5; transform: scale(.9); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+
+@keyframes investmentOrbit {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes investmentOrbitReverse {
+  from { transform: rotate(-22deg); }
+  to { transform: rotate(-382deg); }
+}
+
+
+/* =========================================================
+   INSTANSI TERKAIT
+========================================================= */
+
+.partner-network {
+  --partner-blue: #062a7d;
+  --partner-blue-mid: #0b4aa8;
+  --partner-yellow: #ffd21f;
+  position: relative;
+  overflow: hidden;
+  padding: 96px 20px 78px;
+  isolation: isolate;
+  color: white;
+  background:
+    radial-gradient(circle at 50% 45%, rgba(28,100,220,.40), transparent 33%),
+    linear-gradient(135deg, #031b50 0%, #062d78 45%, #0757b7 100%);
+}
+
+.partner-bg-glow {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(10px);
+  z-index: -3;
+}
+
+.partner-glow-left {
+  width: 580px;
+  height: 580px;
+  left: -340px;
+  top: -220px;
+  background: radial-gradient(circle, rgba(35,126,255,.35), transparent 68%);
+}
+
+.partner-glow-right {
+  width: 500px;
+  height: 500px;
+  right: -300px;
+  bottom: -240px;
+  background: radial-gradient(circle, rgba(255,210,31,.23), transparent 68%);
+}
+
+.partner-bg-grid {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  opacity: .25;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255,255,255,.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.055) 1px, transparent 1px);
+  background-size: 46px 46px;
+  mask-image: radial-gradient(circle at center, black, transparent 80%);
+}
+
+.partner-watermark {
+  position: absolute;
+  width: min(760px, 72vw);
+  height: min(760px, 72vw);
+  left: 50%;
+  top: 52%;
+  transform: translate(-50%, -50%);
+  object-fit: contain;
+  opacity: .085;
+  filter: grayscale(1) brightness(0) invert(1);
+  pointer-events: none;
+  user-select: none;
+  z-index: -1;
+}
+
+.partner-container {
+  position: relative;
+  z-index: 3;
+  width: min(1360px, 100%);
+  margin: 0 auto;
+}
+
+.partner-heading {
+  max-width: 820px;
+  margin: 0 auto 56px;
+  text-align: center;
+}
+
+.partner-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  color: var(--partner-yellow);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 3px;
+}
+
+.partner-eyebrow span {
+  width: 34px;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--partner-yellow);
+}
+
+.partner-heading h2 {
+  margin: 18px 0 0;
+  color: white;
+  font-size: clamp(40px, 5.3vw, 66px);
+  line-height: 1;
+  letter-spacing: -3px;
+  font-weight: 950;
+}
+
+.partner-heading h2 strong {
+  color: var(--partner-yellow);
+}
+
+.partner-heading p {
+  max-width: 700px;
+  margin: 21px auto 0;
+  color: rgba(255,255,255,.72);
+  font-size: 14px;
+  line-height: 1.85;
+}
+
+.partner-heading-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  margin: 22px auto 0;
+  border-radius: 50%;
+  border: 1px solid rgba(255,210,31,.40);
+  color: var(--partner-yellow);
+  font-size: 12px;
+  box-shadow: 0 0 0 8px rgba(255,210,31,.035);
+}
+
+.partner-network-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0,1fr));
+  gap: 15px;
+}
+
+.partner-card {
+  position: relative;
+  min-height: 292px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 24px 13px 17px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.17);
+  border-radius: 25px;
+  background: linear-gradient(145deg, rgba(255,255,255,.145), rgba(255,255,255,.045));
+  box-shadow: 0 20px 55px rgba(0,0,0,.18);
+  backdrop-filter: blur(14px);
+  text-decoration: none;
+  color: white;
+  transition:
+    transform .38s cubic-bezier(.2,.8,.2,1),
+    border-color .35s ease,
+    background .35s ease,
+    box-shadow .35s ease;
+}
+
+.partner-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 14%;
+  right: 14%;
+  height: 3px;
+  border-radius: 0 0 99px 99px;
+  background: linear-gradient(90deg, transparent, var(--partner-yellow), transparent);
+  opacity: .7;
+  transition: left .35s ease, right .35s ease, opacity .35s ease;
+}
+
+.partner-card::after {
+  content: "";
+  position: absolute;
+  width: 190px;
+  height: 190px;
+  left: -150px;
+  top: -150px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,.24), transparent 66%);
+  transition: transform .7s ease;
+  pointer-events: none;
+}
+
+.partner-card:hover {
+  transform: translateY(-13px);
+  border-color: rgba(255,210,31,.55);
+  background: linear-gradient(145deg, rgba(255,255,255,.22), rgba(255,255,255,.065));
+  box-shadow:
+    0 30px 70px rgba(0,0,0,.30),
+    0 0 34px rgba(255,210,31,.07);
+}
+
+.partner-card:hover::before {
+  left: 5%;
+  right: 5%;
+  opacity: 1;
+}
+
+.partner-card:hover::after {
+  transform: translate(285px, 285px);
+}
+
+.partner-number {
+  position: absolute;
+  left: 16px;
+  top: 13px;
+  color: rgba(255,255,255,.40);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+}
+
+.partner-corner {
+  position: absolute;
+  right: 15px;
+  top: 14px;
+  width: 12px;
+  height: 12px;
+  border-right: 1px solid rgba(255,210,31,.60);
+  border-top: 1px solid rgba(255,210,31,.60);
+  border-radius: 0 7px 0 0;
+}
+
+.partner-logo {
+  position: relative;
+  width: 148px;
+  height: 118px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 16px;
+  margin-bottom: 17px;
+  border-radius: 21px;
+  background: rgba(255,255,255,.97);
+  box-shadow:
+    0 18px 38px rgba(0,0,0,.15),
+    inset 0 0 0 1px rgba(18,63,181,.05);
+  transition: transform .38s ease, box-shadow .38s ease;
+}
+
+.partner-logo-ring {
+  position: absolute;
+  inset: -8px;
+  border-radius: 25px;
+  border: 1px solid rgba(255,210,31,.27);
+  transform: rotate(0deg);
+  transition: transform .55s ease, border-color .4s ease;
+}
+
+.partner-card:hover .partner-logo {
+  transform: translateY(-5px) scale(1.04);
+  box-shadow: 0 25px 48px rgba(0,0,0,.22);
+}
+
+.partner-card:hover .partner-logo-ring {
+  transform: rotate(7deg) scale(1.07);
+  border-color: rgba(255,210,31,.72);
+}
+
+.partner-logo img {
+  position: relative;
+  z-index: 2;
+  display: block;
+  max-width: 120px;
+  max-height: 78px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+.partner-card-content {
+  width: 100%;
+  text-align: center;
+}
+
+.partner-label {
+  display: block;
+  margin-bottom: 5px;
+  color: rgba(255,255,255,.42);
+  font-size: 7px;
+  font-weight: 900;
+  letter-spacing: 1.4px;
+}
+
+.partner-card-content strong {
+  display: block;
+  min-height: 34px;
+  color: white;
+  font-size: 12px;
+  line-height: 1.35;
+  font-weight: 900;
+}
+
+.partner-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: auto;
+  color: rgba(255,255,255,.48);
+  font-size: 8px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .8px;
+}
+
+.partner-link i {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.09);
+  color: var(--partner-yellow);
+  transition: transform .3s ease, background .3s ease, color .3s ease;
+}
+
+.partner-card:hover .partner-link i {
+  transform: translate(2px,-2px);
+  background: var(--partner-yellow);
+  color: #062a7d;
+}
+
+.partner-footer {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-top: 34px;
+}
+
+.partner-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.partner-status-dot {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: #30d17b;
+  box-shadow:
+    0 0 0 5px rgba(48,209,123,.10),
+    0 0 16px rgba(48,209,123,.48);
+  animation: partnerStatusPulse 2s ease-in-out infinite;
+}
+
+.partner-status strong,
+.partner-status small {
+  display: block;
+}
+
+.partner-status strong {
+  color: rgba(255,255,255,.82);
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.partner-status small {
+  margin-top: 2px;
+  color: rgba(255,255,255,.38);
+  font-size: 8px;
+}
+
+.partner-footer-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(255,255,255,.22), transparent);
+}
+
+.partner-count {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+}
+
+.partner-count strong {
+  color: var(--partner-yellow);
+  font-size: 19px;
+  font-weight: 950;
+}
+
+.partner-count span {
+  color: rgba(255,255,255,.45);
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+}
+
+@keyframes partnerStatusPulse {
+  0%,100% { opacity: .45; transform: scale(.9); }
+  50% { opacity: 1; transform: scale(1.1); }
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 1180px) {
+  .investment-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(350px, .82fr);
+    gap: 40px;
+  }
+
+  .investment-map-stage {
+    min-height: 520px;
+  }
+
+  .partner-network-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 17px;
+  }
+}
+
+@media (max-width: 900px) {
+  .investment-potential {
+    padding: 72px 18px 60px;
+  }
+
+  .investment-layout {
+    grid-template-columns: 1fr;
+    gap: 35px;
+  }
+
+  .investment-map-stage {
+    min-height: 500px;
+  }
+
+  .investment-content {
+    max-width: 760px;
+    margin: 0 auto;
+  }
+
+  .investment-bottom-strip {
+    margin-top: 35px;
+  }
+}
+
+@media (max-width: 700px) {
+  .investment-heading {
+    margin-bottom: 38px;
+  }
+
+  .investment-heading h2 {
+    font-size: 37px;
+    letter-spacing: -1.7px;
+  }
+
+  .investment-heading p {
+    font-size: 13px;
+  }
+
+  .investment-desktop {
+    display: none;
+  }
+
+  .investment-map-stage {
+    min-height: 380px;
+    border-radius: 25px;
+  }
+
+  .investment-map-image {
+    width: 100%;
+    padding: 48px 13px 34px;
+  }
+
+  .investment-map-badge {
+    left: 15px;
+    top: 15px;
+    padding: 8px 10px;
+    font-size: 7px;
+  }
+
+  .investment-map-location {
+    right: 15px;
+    bottom: 15px;
+    padding: 8px 10px;
+  }
+
+  .investment-map-location i {
+    width: 29px;
+    height: 29px;
+    border-radius: 9px;
+  }
+
+  .investment-map-location strong {
+    font-size: 9px;
+  }
+
+  .investment-content h3 {
+    font-size: 32px;
+    letter-spacing: -1.2px;
+  }
+
+  .investment-description {
+    font-size: 14px;
+    line-height: 1.75;
+  }
+
+  .investment-stats {
+    gap: 15px;
+  }
+
+  .investment-stat-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .investment-bottom-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .investment-bottom-strip > div + div {
+    border-left: 0;
+    border-top: 1px solid rgba(18,63,181,.09);
+  }
+
+  .investment-watermark {
+    width: 95vw;
+    height: 95vw;
+  }
+
+  .partner-network {
+    padding: 72px 15px 58px;
+  }
+
+  .partner-heading {
+    margin-bottom: 38px;
+  }
+
+  .partner-heading h2 {
+    font-size: 40px;
+    letter-spacing: -1.8px;
+  }
+
+  .partner-heading p {
+    font-size: 12px;
+    line-height: 1.75;
+  }
+
+  .partner-network-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 11px;
+  }
+
+  .partner-card {
+    min-height: 222px;
+    padding: 20px 7px 14px;
+    border-radius: 18px;
+  }
+
+  .partner-logo {
+    width: 102px;
+    height: 80px;
+    margin-top: 15px;
+    margin-bottom: 12px;
+    border-radius: 14px;
+  }
+
+  .partner-logo img {
+    max-width: 83px;
+    max-height: 54px;
+  }
+
+  .partner-card-content strong {
+    min-height: 29px;
+    font-size: 9px;
+  }
+
+  .partner-label {
+    font-size: 6px;
+  }
+
+  .partner-link {
+    font-size: 6px;
+    margin-top: 8px;
+  }
+
+  .partner-link i {
+    width: 20px;
+    height: 20px;
+    font-size: 8px;
+  }
+
+  .partner-footer {
+    margin-top: 25px;
+  }
+
+  .partner-status small {
+    font-size: 7px;
+  }
+
+  .partner-watermark {
+    width: 115vw;
+    height: 115vw;
+    opacity: .065;
+  }
+}
+
+@media (max-width: 380px) {
+  .investment-heading h2 {
+    font-size: 33px;
+  }
+
+  .investment-map-stage {
+    min-height: 320px;
+  }
+
+  .investment-map-location {
+    display: none;
+  }
+
+  .investment-stats {
+    flex-wrap: wrap;
+  }
+
+  .investment-stat-divider {
+    display: none;
+  }
+
+  .partner-network-grid {
+    gap: 8px;
+  }
+
+  .partner-card {
+    min-height: 205px;
+  }
+
+  .partner-logo {
+    width: 90px;
+    height: 70px;
+  }
+
+  .partner-logo img {
+    max-width: 73px;
+    max-height: 48px;
+  }
+
+  .partner-count {
+    display: none;
+  }
+}
+</style>
+
 
 
 <style>
@@ -8050,6 +10571,7 @@ h1 {
 
 .news-image-overlay{
   position:absolute;
+  display: none !important;
 
   inset:0;
 
