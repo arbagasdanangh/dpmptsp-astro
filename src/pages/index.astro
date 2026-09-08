@@ -12,6 +12,35 @@ const bgInvestasi = `/bgkeunggulan.jpeg`;
    NOTIFIKASI DARI JSON API
    API: https://dpm-ptsp.surabaya.go.id/sso/apinotifikasi.php
 ========================================================= */
+const API_URL =
+  "https://dpm-ptsp.surabaya.go.id/sso/apinstansiterkait.php";
+
+let partners = [];
+
+try {
+  const response = await fetch(API_URL, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({}),
+  });
+
+  if (!response.ok) {
+    throw new Error(`API Error: ${response.status}`);
+  }
+
+  const result = await response.json();
+
+  if (Array.isArray(result?.data)) {
+    partners = result.data
+      .filter((item) => Number(item.aktif) === 1)
+      .sort((a, b) => Number(a.urutan || 999) - Number(b.urutan || 999));
+  }
+} catch (error) {
+  console.error("Gagal mengambil data instansi terkait:", error);
+}
 
 let notifikasi = [];
 
@@ -7524,252 +7553,113 @@ try {
 ========================================================= -->
 
 <section class="partner-network" id="instansi-terkait">
+  <div class="partner-bg-glow"></div>
+  <div class="partner-grid"></div>
 
-  <div class="partner-bg-glow partner-glow-left" aria-hidden="true"></div>
-  <div class="partner-bg-glow partner-glow-right" aria-hidden="true"></div>
-  <div class="partner-bg-grid" aria-hidden="true"></div>
-
-  <!-- WATERMARK LOGO SURABAYA -->
-  <img
-    class="partner-watermark"
-    src="https://github.com/arbagasdanangh/pps/blob/main/logo.png?raw=true"
-    alt=""
-    aria-hidden="true"
-    onerror="this.onerror=null;this.src='/logo-surabaya.png';"
-  />
+  <div class="partner-watermark">
+    <img src="/logo.png" alt="" />
+  </div>
 
   <div class="partner-container">
 
+    <!-- HEADER -->
     <div class="partner-heading">
 
       <div class="partner-eyebrow">
-        <span></span>
+        <span class="eyebrow-line"></span>
         MITRA & JEJARING STRATEGIS
-        <span></span>
+        <span class="eyebrow-line"></span>
       </div>
 
       <h2>
-        Instansi <strong>Terkait</strong>
+        Instansi <span>Terkait</span>
       </h2>
 
       <p>
-        Kolaborasi lintas kementerian, lembaga, pemerintah daerah, dan
-        institusi strategis untuk memperkuat pelayanan publik serta
-        ekosistem investasi Kota Surabaya.
+        Terhubung dengan berbagai instansi dan lembaga strategis
+        dalam mendukung pelayanan publik serta investasi di Kota Surabaya.
       </p>
 
-      <div class="partner-heading-mark">
-        <i class="fas fa-link"></i>
-      </div>
+    </div>
+
+
+    <!-- PARTNER GRID -->
+    <div class="partner-grid-list">
+
+      {
+        partners.length > 0 ? (
+          partners.map((partner) => (
+            <a
+              href={partner.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="partner-card"
+            >
+
+              <div class="partner-card-number">
+                {String(partner.urutan || partner.id).padStart(2, "0")}
+              </div>
+
+              <div class="partner-logo-wrap">
+                <img
+                  src={partner.logo}
+                  alt={partner.alt_logo || partner.nama}
+                  loading="lazy"
+                />
+              </div>
+
+              <div class="partner-info">
+                <h3>{partner.nama}</h3>
+
+                <span class="partner-link">
+                  Kunjungi Website
+                  <svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path d="M7 17L17 7" />
+                    <path d="M7 7h10v10" />
+                  </svg>
+                </span>
+              </div>
+
+            </a>
+          ))
+        ) : (
+          <div class="partner-empty">
+            Data instansi terkait belum tersedia.
+          </div>
+        )
+      }
 
     </div>
 
-    <div class="partner-network-grid">
 
-      <!-- 01 -->
-      <a
-        href="https://ppid.menpan.go.id/"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="partner-card"
-      >
-        <span class="partner-number">01</span>
-        <span class="partner-corner"></span>
-
-        <div class="partner-logo">
-          <div class="partner-logo-ring"></div>
-          <img
-            src="https://ppid.menpan.go.id/system/uploads/2021/07/20210721_new_logo_kemenpanrb-1.png"
-            alt="Kementerian PANRB"
-            loading="lazy"
-          />
-        </div>
-
-        <div class="partner-card-content">
-          <span class="partner-label">KEMENTERIAN</span>
-          <strong>Kementerian PANRB</strong>
-        </div>
-
-        <div class="partner-link">
-          <span>Portal resmi</span>
-          <i class="fas fa-arrow-up-right-from-square"></i>
-        </div>
-      </a>
-
-      <!-- 02 -->
-      <a
-        href="https://wbs.surabaya.go.id/"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="partner-card"
-      >
-        <span class="partner-number">02</span>
-        <span class="partner-corner"></span>
-
-        <div class="partner-logo">
-          <div class="partner-logo-ring"></div>
-          <img
-            src="https://wbs.surabaya.go.id/git_themes/assets/img/logo.png"
-            alt="WBS Surabaya"
-            loading="lazy"
-          />
-        </div>
-
-        <div class="partner-card-content">
-          <span class="partner-label">SURABAYA</span>
-          <strong>WBS Surabaya</strong>
-        </div>
-
-        <div class="partner-link">
-          <span>Portal resmi</span>
-          <i class="fas fa-arrow-up-right-from-square"></i>
-        </div>
-      </a>
-
-      <!-- 03 -->
-      <a
-        href="https://dpmptsp.jatimprov.go.id/"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="partner-card"
-      >
-        <span class="partner-number">03</span>
-        <span class="partner-corner"></span>
-
-        <div class="partner-logo">
-          <div class="partner-logo-ring"></div>
-          <img
-            src="https://dpmptsp.jatimprov.go.id/wp-content/uploads/2020/07/logo-admin.png"
-            alt="DPMPTSP Jawa Timur"
-            loading="lazy"
-          />
-        </div>
-
-        <div class="partner-card-content">
-          <span class="partner-label">PEMERINTAH DAERAH</span>
-          <strong>DPMPTSP Jawa Timur</strong>
-        </div>
-
-        <div class="partner-link">
-          <span>Portal resmi</span>
-          <i class="fas fa-arrow-up-right-from-square"></i>
-        </div>
-      </a>
-
-      <!-- 04 -->
-      <a
-        href="https://oss.go.id/"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="partner-card"
-      >
-        <span class="partner-number">04</span>
-        <span class="partner-corner"></span>
-
-        <div class="partner-logo">
-          <div class="partner-logo-ring"></div>
-          <img
-            src="https://s3.oss.go.id/oss/logo/LOGO_OSS_NEW_ID-222baabce52bc87c29a24178b74429f7.svg"
-            alt="OSS Indonesia"
-            loading="lazy"
-          />
-        </div>
-
-        <div class="partner-card-content">
-          <span class="partner-label">PERIZINAN BERUSAHA</span>
-          <strong>OSS Indonesia</strong>
-        </div>
-
-        <div class="partner-link">
-          <span>Portal resmi</span>
-          <i class="fas fa-arrow-up-right-from-square"></i>
-        </div>
-      </a>
-
-      <!-- 05 -->
-      <a
-        href="https://dgip.go.id/"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="partner-card"
-      >
-        <span class="partner-number">05</span>
-        <span class="partner-corner"></span>
-
-        <div class="partner-logo">
-          <div class="partner-logo-ring"></div>
-          <img
-            src="https://dgip.go.id/frontend/assets/images/logo-web.png"
-            alt="DJKI"
-            loading="lazy"
-          />
-        </div>
-
-        <div class="partner-card-content">
-          <span class="partner-label">KEKAYAAN INTELEKTUAL</span>
-          <strong>DJKI</strong>
-        </div>
-
-        <div class="partner-link">
-          <span>Portal resmi</span>
-          <i class="fas fa-arrow-up-right-from-square"></i>
-        </div>
-      </a>
-
-      <!-- 06 -->
-      <a
-        href="https://bkpm.go.id"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="partner-card"
-      >
-        <span class="partner-number">06</span>
-        <span class="partner-corner"></span>
-
-        <div class="partner-logo">
-          <div class="partner-logo-ring"></div>
-          <img
-            src="https://bkpm.go.id/assets/frontend/image/logo/logo-id-2024.png"
-            alt="BKPM"
-            loading="lazy"
-          />
-        </div>
-
-        <div class="partner-card-content">
-          <span class="partner-label">INVESTASI INDONESIA</span>
-          <strong>BKPM</strong>
-        </div>
-
-        <div class="partner-link">
-          <span>Portal resmi</span>
-          <i class="fas fa-arrow-up-right-from-square"></i>
-        </div>
-      </a>
-
-    </div>
-
+    <!-- FOOTER -->
     <div class="partner-footer">
 
-      <div class="partner-status">
-        <span class="partner-status-dot"></span>
-        <div>
-          <strong>Jejaring Terhubung</strong>
-          <small>Portal resmi instansi terkait</small>
-        </div>
+      <div class="partner-footer-left">
+        <span class="footer-dot"></span>
+        <span>Jejaring Terhubung</span>
       </div>
 
-      <div class="partner-footer-line"></div>
+      <div class="partner-footer-right">
+        <span>Portal resmi instansi terkait</span>
 
-      <div class="partner-count">
-        <strong>06</strong>
-        <span>INSTANSI</span>
+        <strong>
+          {String(partners.length).padStart(2, "0")}
+          INSTANSI
+        </strong>
       </div>
 
     </div>
 
   </div>
 </section>
-
 
 <style>
 /* =========================================================
