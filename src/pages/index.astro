@@ -6,26 +6,15 @@ import { slugify } from "../utils/slugify";
 
 const bgInvestasi = `/bgkeunggulan.jpeg`;
 /* =========================================================
-   HERO SLIDER
+   INSTANSI TERKAIT — API
 ========================================================= */
 
-/* =========================================================
-   INSTANSI TERKAIT DARI JSON API
-   API:
-   https://dpm-ptsp.surabaya.go.id/sso/apinstansiterkait.php
-========================================================= */
+const INSTANSI_API =
+  "https://dpm-ptsp.surabaya.go.id/sso/apinstansiterkait.php";
 
 let partners = [];
 
 try {
-
-  const apiUrl =
-    "https://dpm-ptsp.surabaya.go.id/sso/apinstansiterkait.php";
-
-  /* =====================================================
-     AUTH
-     SAMA DENGAN API LAIN DI WEBSITE
-  ===================================================== */
 
   const username =
     import.meta.env.API_BERITA_USERNAME;
@@ -33,240 +22,71 @@ try {
   const password =
     import.meta.env.API_BERITA_PASSWORD;
 
-
   if (!username || !password) {
-
     throw new Error(
-      "API_BERITA_USERNAME / API_BERITA_PASSWORD belum diset"
+      "API_BERITA_USERNAME / API_BERITA_PASSWORD belum tersedia"
     );
-
   }
 
-
-  /* =====================================================
-     REQUEST
-  ===================================================== */
-
   const response =
-    await fetch(
-      apiUrl,
-      {
-        method: "POST",
+    await fetch(INSTANSI_API, {
+      method: "POST",
 
-        headers: {
-          username,
-          password,
-          Accept: "application/json",
-        },
-      }
-    );
-
-
-  /* =====================================================
-     RAW RESPONSE
-  ===================================================== */
+      headers: {
+        username,
+        password,
+        Accept: "application/json",
+      },
+    });
 
   const responseText =
     await response.text();
 
-
-  console.log(
-    "========================================"
-  );
-
-  console.log(
-    "[API INSTANSI] STATUS:",
-    response.status
-  );
-
-  console.log(
-    "[API INSTANSI] RAW:",
-    responseText
-  );
-
-  console.log(
-    "========================================"
-  );
-
-
-  /* =====================================================
-     HTTP ERROR
-  ===================================================== */
-
   if (!response.ok) {
-
     throw new Error(
-      `API instansi gagal: HTTP ${response.status} - ${responseText}`
+      `HTTP ${response.status}: ${responseText}`
     );
-
   }
 
+  const result =
+    JSON.parse(responseText);
 
-  /* =====================================================
-     PARSE JSON
-  ===================================================== */
+  console.log(
+    "[API INSTANSI TERKAIT]",
+    result
+  );
 
-  let payload;
+  if (
+    result?.status === true &&
+    Array.isArray(result?.data)
+  ) {
 
-  try {
+    partners =
+      result.data
 
-    payload =
-      JSON.parse(
-        responseText
-      );
+        .filter(
+          (item) =>
+            Number(item?.aktif) === 1
+        )
 
-  } catch {
-
-    throw new Error(
-      `Response API instansi bukan JSON: ${responseText.substring(
-        0,
-        1000
-      )}`
-    );
+        .sort(
+          (a, b) =>
+            Number(a?.urutan ?? 999999) -
+            Number(b?.urutan ?? 999999)
+        );
 
   }
-
-
-  console.log(
-    "[API INSTANSI] PAYLOAD:",
-    payload
-  );
-
-
-  /* =====================================================
-     AMBIL DATA
-  ===================================================== */
-
-  const apiData =
-    Array.isArray(payload)
-      ? payload
-      : Array.isArray(payload?.data)
-        ? payload.data
-        : Array.isArray(payload?.results)
-          ? payload.results
-          : Array.isArray(payload?.result)
-            ? payload.result
-            : [];
-
-
-  console.log(
-    "[API INSTANSI] TOTAL RAW:",
-    apiData.length
-  );
-
-
-  /* =====================================================
-     NORMALISASI
-  ===================================================== */
-
-  partners =
-    apiData
-
-      .map((item) => ({
-
-        id:
-          item?.id ??
-          null,
-
-        nama:
-          item?.nama ??
-          "",
-
-        link:
-          item?.link ??
-          "#",
-
-        logo:
-          item?.logo ??
-          "",
-
-        alt_logo:
-          item?.alt_logo ??
-          item?.nama ??
-          "",
-
-        aktif:
-          Number(
-            item?.aktif ?? 0
-          ),
-
-        urutan:
-          Number(
-            item?.urutan ?? 999999
-          ),
-
-        created_at:
-          item?.created_at ??
-          null,
-
-        updated_at:
-          item?.updated_at ??
-          null,
-
-        raw:
-          item,
-
-      }))
-
-      /* hanya yang aktif */
-
-      .filter(
-        (item) =>
-          item.aktif === 1 &&
-          item.nama
-      )
-
-      /* urut sesuai API */
-
-      .sort(
-        (a, b) =>
-          a.urutan -
-          b.urutan
-      );
-
-
-  /* =====================================================
-     HASIL
-  ===================================================== */
-
-  console.log(
-    "========================================"
-  );
-
-  console.log(
-    "[API INSTANSI] BERHASIL:",
-    partners.length
-  );
-
-  console.log(
-    "[API INSTANSI] DATA:",
-    partners
-  );
-
-  console.log(
-    "========================================"
-  );
-
 
 } catch (error) {
 
   console.error(
-    "========================================"
-  );
-
-  console.error(
-    "[API INSTANSI ERROR]:",
+    "[API INSTANSI TERKAIT ERROR]",
     error
-  );
-
-  console.error(
-    "========================================"
   );
 
   partners = [];
 
 }
-
 /* =========================================================
    NOTIFIKASI DARI JSON API
    API: https://dpm-ptsp.surabaya.go.id/sso/apinotifikasi.php
@@ -7787,131 +7607,137 @@ try {
 ========================================================= -->
 
 <section
-  class="partner-network"
   id="instansi-terkait"
+  class="instansi-api-section"
 >
 
-  <!-- =====================================================
-       BACKGROUND DECORATION
-  ====================================================== -->
+  <!-- BACKGROUND -->
 
   <div
-    class="partner-glow partner-glow-left"
+    class="instansi-api-grid"
     aria-hidden="true"
   ></div>
 
   <div
-    class="partner-glow partner-glow-right"
+    class="instansi-api-glow instansi-api-glow-left"
     aria-hidden="true"
   ></div>
 
   <div
-    class="partner-bg-grid"
+    class="instansi-api-glow instansi-api-glow-right"
     aria-hidden="true"
   ></div>
 
 
-  <!-- =====================================================
-       WATERMARK LOGO DPMPTSP SURABAYA
-  ====================================================== -->
+  <!-- WATERMARK -->
 
   <img
-    class="partner-watermark"
-    src="https://github.com/arbagasdanangh/pps/blob/main/logo.png?raw=true"
+    class="instansi-api-watermark"
+    src="/logo.png"
     alt=""
     aria-hidden="true"
-    loading="lazy"
-    onerror="this.onerror=null;this.src='/logo-surabaya.png';"
   />
 
 
-  <!-- =====================================================
-       CONTAINER
-  ====================================================== -->
+  <div class="instansi-api-container">
 
-  <div class="partner-container">
-
-
-    <!-- ===================================================
+    <!-- =====================================================
          HEADER
-    ==================================================== -->
+    ====================================================== -->
 
-    <div class="partner-heading">
+    <header class="instansi-api-heading">
 
-      <div class="partner-eyebrow">
+      <div class="instansi-api-eyebrow">
 
-        <span class="partner-eyebrow-line"></span>
+        <span></span>
 
-        <span class="partner-eyebrow-dot"></span>
+        <strong>
+          MITRA &amp; JEJARING STRATEGIS
+        </strong>
 
-        <span>
-          MITRA & JEJARING STRATEGIS
-        </span>
-
-        <span class="partner-eyebrow-dot"></span>
-
-        <span class="partner-eyebrow-line"></span>
+        <span></span>
 
       </div>
 
 
       <h2>
-        Instansi <strong>Terkait</strong>
+        Instansi
+        <strong>Terkait</strong>
       </h2>
 
 
       <p>
-        Terhubung dengan berbagai instansi dan lembaga strategis
-        dalam mendukung pelayanan publik serta investasi
-        di Kota Surabaya.
+        Kolaborasi lintas kementerian, lembaga, pemerintah daerah,
+        dan institusi strategis untuk memperkuat pelayanan publik
+        serta ekosistem investasi Kota Surabaya.
       </p>
 
 
-      <div class="partner-heading-line">
-        <span></span>
-        <i class="fas fa-building-columns"></i>
-        <span></span>
+      <div class="instansi-api-mark">
+
+        <i class="fas fa-link"></i>
+
       </div>
 
-    </div>
+    </header>
 
 
-    <!-- ===================================================
-         GRID
-    ==================================================== -->
+    <!-- =====================================================
+         DATA API
+    ====================================================== -->
 
     {
       partners.length > 0 ? (
 
-        <div class="partner-network-grid">
+        <div class="instansi-api-cards">
 
           {partners.map((partner, index) => (
 
             <a
-              href={partner.link || "#"}
-              target="_blank"
-              rel="noopener noreferrer"
-              class="partner-card"
-              style={`--partner-delay:${index * 70}ms`}
+              href={
+                partner.link &&
+                partner.link !== "#"
+                  ? partner.link
+                  : "#"
+              }
+              target={
+                partner.link &&
+                partner.link !== "#"
+                  ? "_blank"
+                  : undefined
+              }
+              rel={
+                partner.link &&
+                partner.link !== "#"
+                  ? "noopener noreferrer"
+                  : undefined
+              }
+              class="instansi-api-card"
             >
 
               <!-- NUMBER -->
 
-              <span class="partner-number">
+              <span class="instansi-api-number">
                 {String(
-                  partner.urutan || index + 1
+                  partner.urutan ??
+                  index + 1
                 ).padStart(2, "0")}
               </span>
 
 
+              <!-- CORNER -->
+
+              <span class="instansi-api-corner"></span>
+
+
               <!-- TOP LINE -->
 
-              <span class="partner-card-line"></span>
+              <span class="instansi-api-topline"></span>
 
 
               <!-- LOGO -->
 
-              <div class="partner-logo">
+              <div class="instansi-api-logo">
 
                 {
                   partner.logo ? (
@@ -7924,15 +7750,15 @@ try {
                         "Instansi terkait"
                       }
                       loading="lazy"
-                      onerror="
-                        this.onerror=null;
-                        this.style.display='none';
-                      "
                     />
 
                   ) : (
 
-                    <i class="fas fa-building-columns"></i>
+                    <div class="instansi-api-logo-empty">
+
+                      <i class="fas fa-building"></i>
+
+                    </div>
 
                   )
                 }
@@ -7940,34 +7766,31 @@ try {
               </div>
 
 
-              <!-- CONTENT -->
+              <!-- LABEL -->
 
-              <div class="partner-card-content">
-
-                <small class="partner-label">
-                  INSTANSI TERKAIT
-                </small>
-
-                <strong>
-                  {partner.nama}
-                </strong>
+              <span class="instansi-api-label">
+                INSTANSI TERKAIT
+              </span>
 
 
-                <span class="partner-link">
+              <!-- NAME -->
 
-                  Kunjungi Website
+              <strong class="instansi-api-name">
+                {partner.nama}
+              </strong>
 
-                  <i class="fas fa-arrow-up-right-from-square"></i>
 
+              <!-- LINK -->
+
+              <span class="instansi-api-link">
+
+                <span>
+                  KUNJUNGI WEBSITE
                 </span>
 
-              </div>
+                <i class="fas fa-arrow-up-right-from-square"></i>
 
-
-              <!-- CORNER -->
-
-              <span class="partner-corner partner-corner-tl"></span>
-              <span class="partner-corner partner-corner-br"></span>
+              </span>
 
             </a>
 
@@ -7977,18 +7800,16 @@ try {
 
       ) : (
 
-        <div class="partner-empty">
+        <div class="instansi-api-empty">
 
-          <div class="partner-empty-icon">
-            <i class="fas fa-building-circle-xmark"></i>
-          </div>
+          <i class="fas fa-building"></i>
 
           <strong>
-            Data instansi terkait belum tersedia
+            Data instansi terkait belum tersedia.
           </strong>
 
           <span>
-            Silakan coba beberapa saat lagi.
+            Data akan dimuat dari API.
           </span>
 
         </div>
@@ -7997,15 +7818,15 @@ try {
     }
 
 
-    <!-- ===================================================
+    <!-- =====================================================
          FOOTER
-    ==================================================== -->
+    ====================================================== -->
 
-    <div class="partner-footer">
+    <div class="instansi-api-footer">
 
-      <div class="partner-status">
+      <div class="instansi-api-status">
 
-        <span class="partner-status-dot"></span>
+        <span></span>
 
         <div>
 
@@ -8022,13 +7843,15 @@ try {
       </div>
 
 
-      <div class="partner-footer-line"></div>
+      <div class="instansi-api-footer-line"></div>
 
 
-      <div class="partner-count">
+      <div class="instansi-api-count">
 
         <strong>
-          {String(partners.length).padStart(2, "0")}
+          {String(
+            partners.length
+          ).padStart(2, "0")}
         </strong>
 
         <span>
@@ -8047,500 +7870,46 @@ try {
 <style>
 
 /* =========================================================
-   INSTANSI TERKAIT
+   SECTION
 ========================================================= */
 
-.partner-network {
+.instansi-api-section {
 
-  --partner-blue:
-    #062a7d;
+  --ia-blue-dark: #031b50;
+  --ia-blue: #062d78;
+  --ia-blue-light: #0757b7;
+  --ia-yellow: #ffd21f;
 
-  --partner-blue-mid:
-    #0b4aa8;
+  position: relative;
 
-  --partner-blue-light:
-    #1677df;
+  width: 100%;
 
-  --partner-yellow:
-    #ffd21f;
-
-
-  position:
-    relative;
-
-  overflow:
-    hidden;
-
-  isolation:
-    isolate;
-
+  min-height: 760px;
 
   padding:
-    96px 20px 78px;
+    88px 20px
+    70px;
 
+  box-sizing: border-box;
 
-  color:
-    #ffffff;
+  overflow: hidden;
 
+  isolation: isolate;
+
+  color: #fff;
 
   background:
-
     radial-gradient(
-      circle at 50% 45%,
-      rgba(28,100,220,.42),
+      circle at 50% 42%,
+      rgba(30,105,225,.38),
       transparent 34%
     ),
-
-    radial-gradient(
-      circle at 10% 90%,
-      rgba(255,210,31,.12),
-      transparent 28%
-    ),
-
     linear-gradient(
       135deg,
-      #031b50 0%,
-      #062d78 45%,
-      #0757b7 100%
+      var(--ia-blue-dark) 0%,
+      var(--ia-blue) 45%,
+      var(--ia-blue-light) 100%
     );
-
-}
-
-
-/* =========================================================
-   GLOW
-========================================================= */
-
-.partner-glow {
-
-  position:
-    absolute;
-
-  border-radius:
-    50%;
-
-  pointer-events:
-    none;
-
-  filter:
-    blur(15px);
-
-  z-index:
-    -3;
-
-}
-
-
-.partner-glow-left {
-
-  width:
-    580px;
-
-  height:
-    580px;
-
-  left:
-    -340px;
-
-  top:
-    -220px;
-
-
-  background:
-
-    radial-gradient(
-      circle,
-      rgba(35,126,255,.38),
-      transparent 68%
-    );
-
-}
-
-
-.partner-glow-right {
-
-  width:
-    520px;
-
-  height:
-    520px;
-
-  right:
-    -300px;
-
-  bottom:
-    -250px;
-
-
-  background:
-
-    radial-gradient(
-      circle,
-      rgba(255,210,31,.24),
-      transparent 68%
-    );
-
-}
-
-
-/* =========================================================
-   GRID BACKGROUND
-========================================================= */
-
-.partner-bg-grid {
-
-  position:
-    absolute;
-
-  inset:
-    0;
-
-  z-index:
-    -2;
-
-  pointer-events:
-    none;
-
-  opacity:
-    .24;
-
-
-  background-image:
-
-    linear-gradient(
-      rgba(255,255,255,.055) 1px,
-      transparent 1px
-    ),
-
-    linear-gradient(
-      90deg,
-      rgba(255,255,255,.055) 1px,
-      transparent 1px
-    );
-
-
-  background-size:
-    46px 46px;
-
-
-  mask-image:
-    radial-gradient(
-      circle at center,
-      black,
-      transparent 82%
-    );
-
-  -webkit-mask-image:
-    radial-gradient(
-      circle at center,
-      black,
-      transparent 82%
-    );
-
-}
-
-
-/* =========================================================
-   WATERMARK DPMPTSP
-========================================================= */
-
-.partner-watermark {
-
-  position:
-    absolute;
-
-
-  width:
-    min(760px, 72vw);
-
-  height:
-    min(760px, 72vw);
-
-
-  left:
-    50%;
-
-  top:
-    53%;
-
-
-  transform:
-    translate(-50%, -50%);
-
-
-  object-fit:
-    contain;
-
-
-  opacity:
-    .085;
-
-
-  filter:
-    grayscale(1)
-    brightness(0)
-    invert(1);
-
-
-  pointer-events:
-    none;
-
-  user-select:
-    none;
-
-
-  z-index:
-    -1;
-
-}
-
-
-/* =========================================================
-   CONTAINER
-========================================================= */
-
-.partner-container {
-
-  position:
-    relative;
-
-  z-index:
-    5;
-
-
-  width:
-    min(1360px, 100%);
-
-
-  margin:
-    0 auto;
-
-}
-
-
-/* =========================================================
-   HEADER
-========================================================= */
-
-.partner-heading {
-
-  max-width:
-    820px;
-
-
-  margin:
-    0 auto 56px;
-
-
-  text-align:
-    center;
-
-}
-
-
-.partner-eyebrow {
-
-  display:
-    inline-flex;
-
-  align-items:
-    center;
-
-  justify-content:
-    center;
-
-
-  gap:
-    10px;
-
-
-  color:
-    var(--partner-yellow);
-
-
-  font-size:
-    10px;
-
-
-  font-weight:
-    900;
-
-
-  letter-spacing:
-    3px;
-
-}
-
-
-.partner-eyebrow-line {
-
-  width:
-    38px;
-
-  height:
-    2px;
-
-
-  background:
-    var(--partner-yellow);
-
-
-  border-radius:
-    999px;
-
-}
-
-
-.partner-eyebrow-dot {
-
-  width:
-    5px;
-
-  height:
-    5px;
-
-
-  border-radius:
-    50%;
-
-
-  background:
-    var(--partner-yellow);
-
-
-  box-shadow:
-    0 0 12px
-    rgba(255,210,31,.8);
-
-}
-
-
-.partner-heading h2 {
-
-  margin:
-    16px 0 0;
-
-
-  color:
-    #ffffff;
-
-
-  font-size:
-    clamp(38px, 5vw, 62px);
-
-
-  line-height:
-    .98;
-
-
-  letter-spacing:
-    -2.8px;
-
-
-  font-weight:
-    900;
-
-}
-
-
-.partner-heading h2 strong {
-
-  color:
-    var(--partner-yellow);
-
-}
-
-
-.partner-heading p {
-
-  max-width:
-    650px;
-
-
-  margin:
-    20px auto 0;
-
-
-  color:
-    rgba(255,255,255,.60);
-
-
-  font-size:
-    13px;
-
-
-  line-height:
-    1.8;
-
-}
-
-
-.partner-heading-line {
-
-  display:
-    flex;
-
-  align-items:
-    center;
-
-  justify-content:
-    center;
-
-
-  gap:
-    10px;
-
-
-  width:
-    180px;
-
-
-  margin:
-    25px auto 0;
-
-}
-
-
-.partner-heading-line span {
-
-  flex:
-    1;
-
-
-  height:
-    1px;
-
-
-  background:
-    linear-gradient(
-      90deg,
-      transparent,
-      rgba(255,255,255,.3)
-    );
-
-}
-
-
-.partner-heading-line span:last-child {
-
-  background:
-    linear-gradient(
-      90deg,
-      rgba(255,255,255,.3),
-      transparent
-    );
-
-}
-
-
-.partner-heading-line i {
-
-  color:
-    var(--partner-yellow);
-
-
-  font-size:
-    12px;
 
 }
 
@@ -8549,18 +7918,380 @@ try {
    GRID
 ========================================================= */
 
-.partner-network-grid {
+.instansi-api-grid {
+
+  position: absolute;
+
+  inset: 0;
+
+  z-index: -4;
+
+  pointer-events: none;
+
+  opacity: .22;
+
+  background-image:
+    linear-gradient(
+      rgba(255,255,255,.045) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      rgba(255,255,255,.045) 1px,
+      transparent 1px
+    );
+
+  background-size:
+    46px 46px;
+
+}
+
+
+/* =========================================================
+   GLOW
+========================================================= */
+
+.instansi-api-glow {
+
+  position: absolute;
+
+  border-radius: 50%;
+
+  pointer-events: none;
+
+  filter: blur(12px);
+
+  z-index: -3;
+
+}
+
+
+.instansi-api-glow-left {
+
+  width: 620px;
+
+  height: 620px;
+
+  left: -390px;
+
+  top: -260px;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(40,130,255,.30),
+      transparent 68%
+    );
+
+}
+
+
+.instansi-api-glow-right {
+
+  width: 620px;
+
+  height: 620px;
+
+  right: -400px;
+
+  bottom: -330px;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(255,210,31,.16),
+      transparent 68%
+    );
+
+}
+
+
+/* =========================================================
+   WATERMARK
+========================================================= */
+
+.instansi-api-watermark {
+
+  position: absolute;
+
+  z-index: -2;
+
+  left: 50%;
+
+  top: 56%;
+
+  width:
+    min(820px, 72vw);
+
+  height:
+    auto;
+
+  transform:
+    translate(-50%, -50%);
+
+  opacity: .075;
+
+  pointer-events: none;
+
+  user-select: none;
+
+  filter:
+    grayscale(1)
+    brightness(0)
+    invert(1);
+
+}
+
+
+/* =========================================================
+   CONTAINER
+========================================================= */
+
+.instansi-api-container {
+
+  position: relative;
+
+  z-index: 5;
+
+  width: 100%;
+
+  max-width: 1390px;
+
+  margin: 0 auto;
+
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.instansi-api-heading {
+
+  position: relative;
+
+  z-index: 10;
+
+  width: 100%;
+
+  max-width: 850px;
+
+  margin:
+    0 auto 54px;
+
+  text-align: center;
+
+}
+
+
+/* =========================================================
+   EYEBROW
+========================================================= */
+
+.instansi-api-eyebrow {
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 12px;
+
+  width: 100%;
+
+  height: 20px;
+
+  margin: 0 auto;
+
+  white-space: nowrap;
+
+}
+
+
+.instansi-api-eyebrow span {
+
+  display: block;
+
+  width: 35px;
+
+  height: 2px;
+
+  flex:
+    0 0 35px;
+
+  border-radius: 999px;
+
+  background:
+    var(--ia-yellow);
+
+}
+
+
+.instansi-api-eyebrow strong {
+
+  display: block;
+
+  flex:
+    0 0 auto;
+
+  margin: 0;
+
+  padding: 0;
+
+  color:
+    var(--ia-yellow);
+
+  font-size:
+    10px;
+
+  line-height:
+    20px;
+
+  font-weight:
+    900;
+
+  letter-spacing:
+    3px;
+
+  white-space:
+    nowrap;
+
+}
+
+
+/* =========================================================
+   TITLE
+========================================================= */
+
+.instansi-api-heading h2 {
+
+  position: relative;
+
+  z-index: 10;
+
+  margin:
+    19px 0 0;
+
+  padding: 0;
+
+  color: #fff;
+
+  font-size:
+    clamp(48px, 5.2vw, 68px);
+
+  line-height:
+    1;
+
+  letter-spacing:
+    -3px;
+
+  font-weight:
+    950;
+
+}
+
+
+.instansi-api-heading h2 strong {
+
+  color:
+    var(--ia-yellow);
+
+}
+
+
+/* =========================================================
+   DESCRIPTION
+========================================================= */
+
+.instansi-api-heading p {
+
+  max-width:
+    760px;
+
+  margin:
+    23px auto 0;
+
+  color:
+    rgba(255,255,255,.64);
+
+  font-size:
+    13px;
+
+  line-height:
+    1.85;
+
+}
+
+
+/* =========================================================
+   MARK
+========================================================= */
+
+.instansi-api-mark {
+
+  width:
+    40px;
+
+  height:
+    40px;
 
   display:
-    grid;
+    flex;
 
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  margin:
+    21px auto 0;
+
+  border:
+    1px solid
+    rgba(255,210,31,.28);
+
+  border-radius:
+    50%;
+
+  color:
+    var(--ia-yellow);
+
+  box-shadow:
+    0 0 0 8px
+    rgba(255,210,31,.025);
+
+}
+
+
+.instansi-api-mark i {
+
+  font-size:
+    13px;
+
+}
+
+
+/* =========================================================
+   CARDS
+========================================================= */
+
+.instansi-api-cards {
+
+  position: relative;
+
+  z-index: 10;
+
+  display: grid;
 
   grid-template-columns:
     repeat(6, minmax(0, 1fr));
 
-
   gap:
-    15px;
+    14px;
+
+  width: 100%;
 
 }
 
@@ -8569,116 +8300,60 @@ try {
    CARD
 ========================================================= */
 
-.partner-card {
+.instansi-api-card {
 
-  position:
-    relative;
+  position: relative;
 
+  display: flex;
 
-  min-width:
-    0;
+  flex-direction: column;
 
+  align-items: center;
 
-  min-height:
-    220px;
+  height:
+    292px;
 
-
-  display:
-    flex;
-
-
-  flex-direction:
-    column;
-
-
-  align-items:
-    center;
-
-
-  justify-content:
-    flex-start;
-
+  min-width: 0;
 
   padding:
-    22px 12px 17px;
+    24px 12px 16px;
 
+  box-sizing: border-box;
 
-  box-sizing:
-    border-box;
+  overflow: hidden;
 
+  text-decoration: none;
 
-  overflow:
-    hidden;
-
-
-  text-decoration:
-    none;
-
+  color: #fff;
 
   border:
     1px solid
-    rgba(255,255,255,.13);
-
+    rgba(255,255,255,.17);
 
   border-radius:
-    18px;
-
+    23px;
 
   background:
-    rgba(255,255,255,.075);
-
+    linear-gradient(
+      145deg,
+      rgba(255,255,255,.15),
+      rgba(255,255,255,.045)
+    );
 
   box-shadow:
-    0 15px 40px
-    rgba(0,0,0,.12);
-
+    0 20px 50px
+    rgba(0,0,0,.16);
 
   backdrop-filter:
-    blur(4px);
-
+    blur(10px);
 
   -webkit-backdrop-filter:
-    blur(4px);
-
+    blur(10px);
 
   transition:
-    transform .35s ease,
-    border-color .35s ease,
-    background .35s ease,
-    box-shadow .35s ease;
-
-
-  animation:
-    partnerCardIn .55s ease both;
-
-
-  animation-delay:
-    var(--partner-delay);
-
-}
-
-
-@keyframes partnerCardIn {
-
-  from {
-
-    opacity:
-      0;
-
-    transform:
-      translateY(18px);
-
-  }
-
-  to {
-
-    opacity:
-      1;
-
-    transform:
-      translateY(0);
-
-  }
+    transform .25s ease,
+    border-color .25s ease,
+    background .25s ease;
 
 }
 
@@ -8687,63 +8362,20 @@ try {
    CARD HOVER
 ========================================================= */
 
-.partner-card::before {
+.instansi-api-card:hover {
 
-  content:
-    "";
+  transform:
+    translateY(-5px);
 
-
-  position:
-    absolute;
-
-
-  inset:
-    0;
-
+  border-color:
+    rgba(255,210,31,.30);
 
   background:
     linear-gradient(
       145deg,
-      rgba(255,255,255,.13),
-      transparent 55%
+      rgba(255,255,255,.18),
+      rgba(255,255,255,.055)
     );
-
-
-  opacity:
-    0;
-
-
-  transition:
-    opacity .35s ease;
-
-}
-
-
-.partner-card:hover {
-
-  transform:
-    translateY(-8px);
-
-
-  border-color:
-    rgba(255,210,31,.48);
-
-
-  background:
-    rgba(255,255,255,.115);
-
-
-  box-shadow:
-    0 25px 55px
-    rgba(0,0,0,.24);
-
-}
-
-
-.partner-card:hover::before {
-
-  opacity:
-    1;
 
 }
 
@@ -8752,31 +8384,22 @@ try {
    NUMBER
 ========================================================= */
 
-.partner-number {
+.instansi-api-number {
 
-  position:
-    absolute;
+  position: absolute;
 
+  left: 15px;
 
-  top:
-    11px;
-
-
-  right:
-    13px;
-
+  top: 13px;
 
   color:
-    rgba(255,255,255,.28);
-
+    rgba(255,255,255,.38);
 
   font-size:
-    9px;
-
+    8px;
 
   font-weight:
     900;
-
 
   letter-spacing:
     1px;
@@ -8785,139 +8408,125 @@ try {
 
 
 /* =========================================================
-   TOP LINE
+   CORNER
 ========================================================= */
 
-.partner-card-line {
+.instansi-api-corner {
 
-  width:
-    30px;
+  position: absolute;
 
+  right: 14px;
 
-  height:
-    2px;
+  top: 14px;
 
+  width: 15px;
 
-  margin-bottom:
-    12px;
+  height: 15px;
 
+  border-top:
+    1px solid
+    rgba(255,255,255,.25);
+
+  border-right:
+    1px solid
+    rgba(255,255,255,.25);
 
   border-radius:
-    99px;
-
-
-  background:
-    var(--partner-yellow);
-
-
-  opacity:
-    .75;
+    0 5px 0 0;
 
 }
 
 
 /* =========================================================
-   LOGO
+   TOP LINE
 ========================================================= */
 
-.partner-logo {
-
-  position:
-    relative;
-
+.instansi-api-topline {
 
   width:
-    110px;
-
+    33px;
 
   height:
-    82px;
+    2px;
 
+  flex:
+    0 0 auto;
+
+  margin:
+    7px 0 14px;
+
+  border-radius:
+    999px;
+
+  background:
+    var(--ia-yellow);
+
+}
+
+
+/* =========================================================
+   LOGO BOX
+========================================================= */
+
+.instansi-api-logo {
+
+  width:
+    158px;
+
+  height:
+    105px;
+
+  flex:
+    0 0 auto;
 
   display:
     flex;
 
-
   align-items:
     center;
-
 
   justify-content:
     center;
 
-
-  margin:
-    2px auto 14px;
-
-
   padding:
     10px;
-
 
   box-sizing:
     border-box;
 
-
-  border-radius:
-    15px;
-
-
-  background:
-    #ffffff;
-
-
   border:
     1px solid
-    rgba(255,255,255,.7);
+    rgba(255,255,255,.8);
 
+  border-radius:
+    17px;
+
+  background:
+    #fff;
 
   box-shadow:
     0 10px 25px
-    rgba(0,0,0,.14);
-
-
-  transition:
-    transform .35s ease,
-    box-shadow .35s ease;
+    rgba(0,0,0,.15);
 
 }
 
 
-.partner-card:hover .partner-logo {
-
-  transform:
-    translateY(-3px)
-    scale(1.035);
-
-
-  box-shadow:
-    0 14px 30px
-    rgba(0,0,0,.20);
-
-}
-
-
-.partner-logo img {
+.instansi-api-logo img {
 
   display:
     block;
 
-
   width:
     auto;
-
 
   height:
     auto;
 
-
   max-width:
-    88px;
-
+    138px;
 
   max-height:
-    58px;
-
+    82px;
 
   object-fit:
     contain;
@@ -8925,35 +8534,62 @@ try {
 }
 
 
-.partner-logo i {
+/* =========================================================
+   LABEL
+========================================================= */
+
+.instansi-api-label {
+
+  margin-top:
+    12px;
 
   color:
-    var(--partner-blue);
-
+    rgba(255,255,255,.36);
 
   font-size:
-    27px;
+    6px;
+
+  font-weight:
+    900;
+
+  letter-spacing:
+    1.8px;
+
+  line-height:
+    1;
+
+  white-space:
+    nowrap;
 
 }
 
 
 /* =========================================================
-   CONTENT
+   NAME
 ========================================================= */
 
-.partner-card-content {
+.instansi-api-name {
 
-  position:
-    relative;
-
-
-  z-index:
-    2;
-
+  display:
+    block;
 
   width:
     100%;
 
+  margin-top:
+    7px;
+
+  color:
+    #fff;
+
+  font-size:
+    10px;
+
+  line-height:
+    1.3;
+
+  font-weight:
+    800;
 
   text-align:
     center;
@@ -8961,27 +8597,49 @@ try {
 }
 
 
-.partner-label {
+/* =========================================================
+   LINK
+========================================================= */
+
+.instansi-api-link {
+
+  position:
+    absolute;
+
+  left:
+    50%;
+
+  bottom:
+    14px;
+
+  transform:
+    translateX(-50%);
 
   display:
-    block;
+    flex;
+
+  align-items:
+    center;
+
+  gap:
+    8px;
+
+  white-space:
+    nowrap;
+
+}
 
 
-  margin-bottom:
-    7px;
-
+.instansi-api-link > span {
 
   color:
-    rgba(255,255,255,.36);
-
+    rgba(255,255,255,.42);
 
   font-size:
     6px;
 
-
   font-weight:
     900;
-
 
   letter-spacing:
     1.3px;
@@ -8989,215 +8647,52 @@ try {
 }
 
 
-.partner-card-content strong {
-
-  display:
-    flex;
-
-
-  align-items:
-    center;
-
-
-  justify-content:
-    center;
-
-
-  min-height:
-    34px;
-
-
-  color:
-    #ffffff;
-
-
-  font-size:
-    10px;
-
-
-  line-height:
-    1.45;
-
-
-  font-weight:
-    850;
-
-
-}
-
-
-.partner-link {
-
-  display:
-    inline-flex;
-
-
-  align-items:
-    center;
-
-
-  gap:
-    6px;
-
-
-  margin-top:
-    9px;
-
-
-  color:
-    rgba(255,255,255,.48);
-
-
-  font-size:
-    7px;
-
-
-  font-weight:
-    800;
-
-
-  transition:
-    color .3s ease;
-
-}
-
-
-.partner-link i {
-
-  display:
-    flex;
-
-
-  align-items:
-    center;
-
-
-  justify-content:
-    center;
-
+.instansi-api-link i {
 
   width:
-    23px;
-
+    24px;
 
   height:
-    23px;
+    24px;
 
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
 
   border-radius:
     50%;
 
+  color:
+    var(--ia-yellow);
 
   background:
-    rgba(255,255,255,.09);
-
-
-  color:
-    var(--partner-yellow);
-
+    rgba(255,255,255,.08);
 
   font-size:
-    8px;
-
+    9px;
 
   transition:
-    transform .3s ease,
-    background .3s ease,
-    color .3s ease;
+    .25s ease;
 
 }
 
 
-.partner-card:hover .partner-link {
+.instansi-api-card:hover
+.instansi-api-link i {
+
+  background:
+    var(--ia-yellow);
 
   color:
-    rgba(255,255,255,.9);
-
-}
-
-
-.partner-card:hover .partner-link i {
+    var(--ia-blue-dark);
 
   transform:
     translate(2px,-2px);
-
-
-  background:
-    var(--partner-yellow);
-
-
-  color:
-    var(--partner-blue);
-
-}
-
-
-/* =========================================================
-   CORNERS
-========================================================= */
-
-.partner-corner {
-
-  position:
-    absolute;
-
-
-  width:
-    17px;
-
-
-  height:
-    17px;
-
-
-  pointer-events:
-    none;
-
-
-  opacity:
-    .55;
-
-}
-
-
-.partner-corner-tl {
-
-  top:
-    0;
-
-  left:
-    0;
-
-
-  border-top:
-    1px solid
-    var(--partner-yellow);
-
-
-  border-left:
-    1px solid
-    var(--partner-yellow);
-
-}
-
-
-.partner-corner-br {
-
-  right:
-    0;
-
-  bottom:
-    0;
-
-
-  border-right:
-    1px solid
-    rgba(255,255,255,.35);
-
-
-  border-bottom:
-    1px solid
-    rgba(255,255,255,.35);
 
 }
 
@@ -9206,100 +8701,68 @@ try {
    EMPTY
 ========================================================= */
 
-.partner-empty {
+.instansi-api-empty {
 
   min-height:
-    180px;
-
+    250px;
 
   display:
     flex;
-
 
   flex-direction:
     column;
 
-
   align-items:
     center;
 
-
   justify-content:
     center;
-
-
-  gap:
-    8px;
-
 
   border:
     1px dashed
-    rgba(255,255,255,.2);
-
-
-  border-radius:
-    18px;
-
-
-  color:
-    rgba(255,255,255,.65);
-
-}
-
-
-.partner-empty-icon {
-
-  width:
-    45px;
-
-
-  height:
-    45px;
-
-
-  display:
-    flex;
-
-
-  align-items:
-    center;
-
-
-  justify-content:
-    center;
-
-
-  margin-bottom:
-    4px;
-
+    rgba(255,255,255,.20);
 
   border-radius:
-    50%;
-
+    20px;
 
   background:
-    rgba(255,255,255,.08);
-
-
-  color:
-    var(--partner-yellow);
+    rgba(255,255,255,.035);
 
 }
 
 
-.partner-empty strong {
+.instansi-api-empty i {
 
-  font-size:
+  margin-bottom:
     12px;
 
+  color:
+    var(--ia-yellow);
+
+  font-size:
+    28px;
+
 }
 
 
-.partner-empty span {
+.instansi-api-empty strong {
+
+  font-size:
+    13px;
+
+  color:
+    rgba(255,255,255,.75);
+
+}
+
+
+.instansi-api-empty span {
+
+  margin-top:
+    6px;
 
   color:
     rgba(255,255,255,.35);
-
 
   font-size:
     9px;
@@ -9311,19 +8774,22 @@ try {
    FOOTER
 ========================================================= */
 
-.partner-footer {
+.instansi-api-footer {
+
+  position:
+    relative;
+
+  z-index:
+    10;
 
   display:
     flex;
 
-
   align-items:
     center;
 
-
   gap:
     18px;
-
 
   margin-top:
     34px;
@@ -9331,77 +8797,59 @@ try {
 }
 
 
-.partner-status {
+/* STATUS */
+
+.instansi-api-status {
 
   display:
     flex;
 
-
   align-items:
     center;
-
 
   gap:
     10px;
 
+  flex:
+    0 0 auto;
+
 }
 
 
-.partner-status-dot {
+.instansi-api-status > span {
 
   width:
     8px;
 
-
   height:
     8px;
-
 
   flex:
     0 0 auto;
 
-
   border-radius:
     50%;
-
 
   background:
     #30d17b;
 
-
   box-shadow:
     0 0 0 5px
-    rgba(48,209,123,.10),
-
-    0 0 16px
-    rgba(48,209,123,.48);
-
-
-  animation:
-    partnerStatusPulse 2s
-    ease-in-out infinite;
+    rgba(48,209,123,.10);
 
 }
 
 
-.partner-status strong,
-.partner-status small {
+.instansi-api-status strong {
 
   display:
     block;
 
-}
-
-
-.partner-status strong {
-
   color:
     rgba(255,255,255,.82);
 
-
   font-size:
-    10px;
-
+    9px;
 
   font-weight:
     900;
@@ -9409,51 +8857,48 @@ try {
 }
 
 
-.partner-status small {
+.instansi-api-status small {
+
+  display:
+    block;
 
   margin-top:
-    2px;
-
+    3px;
 
   color:
-    rgba(255,255,255,.38);
-
+    rgba(255,255,255,.35);
 
   font-size:
-    8px;
+    7px;
 
 }
 
 
-.partner-footer-line {
+/* LINE */
+
+.instansi-api-footer-line {
 
   flex:
     1;
 
-
   height:
     1px;
 
-
   background:
-    linear-gradient(
-      90deg,
-      rgba(255,255,255,.22),
-      transparent
-    );
+    rgba(255,255,255,.15);
 
 }
 
 
-.partner-count {
+/* COUNT */
+
+.instansi-api-count {
 
   display:
     flex;
 
-
   align-items:
     baseline;
-
 
   gap:
     7px;
@@ -9461,35 +8906,30 @@ try {
 }
 
 
-.partner-count strong {
+.instansi-api-count strong {
 
   color:
-    var(--partner-yellow);
-
+    var(--ia-yellow);
 
   font-size:
     19px;
 
-
   font-weight:
-    950;
+    900;
 
 }
 
 
-.partner-count span {
+.instansi-api-count span {
 
   color:
-    rgba(255,255,255,.45);
-
+    rgba(255,255,255,.38);
 
   font-size:
-    8px;
-
+    7px;
 
   font-weight:
     900;
-
 
   letter-spacing:
     1.5px;
@@ -9498,30 +8938,25 @@ try {
 
 
 /* =========================================================
-   PULSE
+   FOCUS
 ========================================================= */
 
-@keyframes partnerStatusPulse {
+.instansi-api-card:focus {
 
-  0%, 100% {
+  outline:
+    none;
 
-    opacity:
-      .45;
+}
 
-    transform:
-      scale(.9);
 
-  }
+.instansi-api-card:focus-visible {
 
-  50% {
+  outline:
+    2px solid
+    rgba(255,210,31,.45);
 
-    opacity:
-      1;
-
-    transform:
-      scale(1.1);
-
-  }
+  outline-offset:
+    3px;
 
 }
 
@@ -9532,13 +8967,10 @@ try {
 
 @media (max-width: 1180px) {
 
-  .partner-network-grid {
+  .instansi-api-cards {
 
     grid-template-columns:
-      repeat(3, 1fr);
-
-    gap:
-      17px;
+      repeat(3, minmax(0,1fr));
 
   }
 
@@ -9546,53 +8978,53 @@ try {
 
 
 /* =========================================================
-   TABLET SMALL
+   MOBILE
 ========================================================= */
 
 @media (max-width: 700px) {
 
-  .partner-network {
+  .instansi-api-section {
+
+    min-height:
+      auto;
 
     padding:
-      72px 15px 55px;
+      70px 15px 55px;
 
   }
 
 
-  .partner-heading {
+  .instansi-api-heading {
 
     margin-bottom:
-      38px;
-
-  }
-
-
-  .partner-heading h2 {
-
-    font-size:
       40px;
 
-    letter-spacing:
-      -1.8px;
-
   }
 
 
-  .partner-heading p {
+  .instansi-api-heading h2 {
 
     font-size:
-      12px;
+      43px;
 
-    line-height:
-      1.75;
+    letter-spacing:
+      -2px;
 
   }
 
 
-  .partner-network-grid {
+  .instansi-api-heading p {
+
+    font-size:
+      11px;
+
+  }
+
+
+  .instansi-api-cards {
 
     grid-template-columns:
-      repeat(2, 1fr);
+      repeat(2, minmax(0,1fr));
 
     gap:
       11px;
@@ -9600,13 +9032,13 @@ try {
   }
 
 
-  .partner-card {
+  .instansi-api-card {
 
-    min-height:
-      222px;
+    height:
+      235px;
 
     padding:
-      20px 7px 14px;
+      18px 7px 14px;
 
     border-radius:
       18px;
@@ -9614,19 +9046,13 @@ try {
   }
 
 
-  .partner-logo {
+  .instansi-api-logo {
 
     width:
-      102px;
+      105px;
 
     height:
-      80px;
-
-    margin-top:
-      15px;
-
-    margin-bottom:
-      12px;
+      78px;
 
     border-radius:
       14px;
@@ -9634,87 +9060,21 @@ try {
   }
 
 
-  .partner-logo img {
+  .instansi-api-logo img {
 
     max-width:
-      83px;
+      88px;
 
     max-height:
-      54px;
+      57px;
 
   }
 
 
-  .partner-card-content strong {
-
-    min-height:
-      29px;
-
-    font-size:
-      9px;
-
-  }
-
-
-  .partner-label {
-
-    font-size:
-      6px;
-
-  }
-
-
-  .partner-link {
-
-    font-size:
-      6px;
-
-    margin-top:
-      8px;
-
-  }
-
-
-  .partner-link i {
-
-    width:
-      20px;
-
-    height:
-      20px;
-
-    font-size:
-      8px;
-
-  }
-
-
-  .partner-footer {
+  .instansi-api-footer {
 
     margin-top:
       25px;
-
-  }
-
-
-  .partner-status small {
-
-    font-size:
-      7px;
-
-  }
-
-
-  .partner-watermark {
-
-    width:
-      115vw;
-
-    height:
-      115vw;
-
-    opacity:
-      .065;
 
   }
 
@@ -9722,50 +9082,42 @@ try {
 
 
 /* =========================================================
-   MOBILE KECIL
+   SMALL MOBILE
 ========================================================= */
 
-@media (max-width: 380px) {
+@media (max-width: 420px) {
 
-  .partner-network-grid {
+  .instansi-api-eyebrow strong {
 
-    gap:
-      8px;
+    font-size:
+      7px;
 
-  }
-
-
-  .partner-card {
-
-    min-height:
-      205px;
+    letter-spacing:
+      2px;
 
   }
 
 
-  .partner-logo {
+  .instansi-api-eyebrow span {
 
     width:
-      90px;
+      22px;
 
-    height:
-      70px;
-
-  }
-
-
-  .partner-logo img {
-
-    max-width:
-      73px;
-
-    max-height:
-      48px;
+    flex-basis:
+      22px;
 
   }
 
 
-  .partner-count {
+  .instansi-api-heading h2 {
+
+    font-size:
+      38px;
+
+  }
+
+
+  .instansi-api-count {
 
     display:
       none;
@@ -15694,5 +15046,109 @@ document.addEventListener("click", function (e) {
   }
 
 });
+</script>
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+
+    const dropdown = document.getElementById("keunggulanDropdown");
+    const pdfFrame = document.getElementById("keunggulanPdf");
+    const title = document.getElementById("keunggulanTitle");
+    const download = document.getElementById("keunggulanDownload");
+    const closeBtn = document.getElementById("keunggulanClose");
+
+    let activeButton = null;
+    let buttonViewportTop = 0;
+
+
+    // ==========================================
+    // BUKA PDF
+    // ==========================================
+
+    document.querySelectorAll(".keunggulan-btn").forEach((button) => {
+
+      button.addEventListener("click", () => {
+
+        // Simpan tombol aktif
+        activeButton = button;
+
+        // Simpan posisi tombol relatif terhadap layar
+        buttonViewportTop = button.getBoundingClientRect().top;
+
+        const pdfLink = button.dataset.link;
+        const pdfTitle = button.dataset.title;
+
+        // Set judul
+        title.textContent = pdfTitle;
+
+        // Set PDF
+        pdfFrame.src = pdfLink;
+
+        // Set download
+        download.href = pdfLink;
+
+        // Tampilkan PDF
+        dropdown.classList.remove("hidden");
+
+
+        // Scroll ke PDF
+        setTimeout(() => {
+
+          dropdown.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+          });
+
+        }, 100);
+
+      });
+
+    });
+
+
+    // ==========================================
+    // CLOSE PDF + KEMBALIKAN POSISI
+    // ==========================================
+
+    closeBtn.addEventListener("click", () => {
+
+      // Tutup dropdown dulu
+      dropdown.classList.add("hidden");
+
+      // Kosongkan PDF
+      pdfFrame.src = "";
+
+
+      // Tunggu browser update layout
+      requestAnimationFrame(() => {
+
+        requestAnimationFrame(() => {
+
+          if (activeButton) {
+
+            // Posisi tombol setelah layout berubah
+            const currentTop =
+              activeButton.getBoundingClientRect().top;
+
+            // Hitung perbedaan posisi
+            const difference =
+              currentTop - buttonViewportTop;
+
+
+            // Geser halaman supaya tombol
+            // kembali ke posisi visual sebelumnya
+            window.scrollBy({
+              top: difference,
+              behavior: "smooth"
+            });
+
+          }
+
+        });
+
+      });
+
+    });
+
+  });
 </script>
 </MainLayout>
