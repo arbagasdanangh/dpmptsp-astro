@@ -5,74 +5,112 @@ import Pdf from "../components/Pdf.astro";
 import { slugify } from "../utils/slugify";
 
 const bgInvestasi = `/bgkeunggulan.jpeg`;
-/* =========================================================
-   INSTANSI TERKAIT DARI API
-========================================================= */
 
-const INSTANSI_API =
-  "https://dpm-ptsp.surabaya.go.id/sso/apinstansiterkait.php";
+/* =========================================================
+   API INSTANSI TERKAIT
+========================================================= */
 
 let partners = [];
 
 try {
+  const apiUrl =
+    "https://dpm-ptsp.surabaya.go.id/sso/apinstansiterkait.php";
 
-  const username =
-    import.meta.env.API_USERNAME;
+  const username = import.meta.env.API_BERITA_USERNAME;
+  const password = import.meta.env.API_BERITA_PASSWORD;
 
-  const password =
-    import.meta.env.API_PASSWORD;
+  if (!username || !password) {
+    throw new Error(
+      "API_BERITA_USERNAME / API_BERITA_PASSWORD belum diset"
+    );
+  }
 
-  const response =
-    await fetch(INSTANSI_API, {
-      method: "POST",
+  const response = await fetch(apiUrl, {
+    method: "POST",
+    headers: {
+      username,
+      password,
+      Accept: "application/json",
+    },
+  });
 
-      headers: {
-        Accept: "application/json",
-        username,
-        password,
-      },
+  const responseText = await response.text();
+
+  if (!response.ok) {
+    throw new Error(
+      `API instansi gagal: HTTP ${response.status} - ${responseText}`
+    );
+  }
+
+  let payload;
+
+  try {
+    payload = JSON.parse(responseText);
+  } catch {
+    throw new Error(
+      `Response API instansi bukan JSON: ${responseText.substring(0, 500)}`
+    );
+  }
+
+  const apiData =
+    Array.isArray(payload)
+      ? payload
+      : Array.isArray(payload?.data)
+        ? payload.data
+        : Array.isArray(payload?.results)
+          ? payload.results
+          : [];
+
+  partners = apiData
+    .map((item) => ({
+      id: item.id ?? null,
+      nama: item.nama ?? "",
+      link: item.link ?? "#",
+      logo: item.logo ?? "",
+      alt_logo: item.alt_logo ?? item.nama ?? "",
+      aktif: item.aktif ?? 1,
+      urutan: Number(item.urutan) || 999999,
+      created_at: item.created_at ?? null,
+      updated_at: item.updated_at ?? null,
+    }))
+    .filter(
+      (item) =>
+        item.nama &&
+        Number(item.aktif) === 1
+    )
+    .sort((a, b) => {
+      if (a.urutan !== b.urutan) {
+        return a.urutan - b.urutan;
+      }
+
+      return (
+        (Number(a.id) || 0) -
+        (Number(b.id) || 0)
+      );
     });
 
-  const text =
-    await response.text();
-
-  const result =
-    JSON.parse(text);
-
   console.log(
-    "[INSTANSI TERKAIT API]",
-    result
+    "[API INSTANSI TERKAIT] berhasil:",
+    partners
   );
-
-  if (
-    result?.status === true &&
-    Array.isArray(result?.data)
-  ) {
-
-    partners =
-      result.data
-        .filter(
-          (item) =>
-            Number(item?.aktif) === 1
-        )
-        .sort(
-          (a, b) =>
-            Number(a?.urutan || 999999) -
-            Number(b?.urutan || 999999)
-        );
-
-  }
 
 } catch (error) {
 
   console.error(
-    "[INSTANSI TERKAIT ERROR]",
+    "[API INSTANSI TERKAIT ERROR]",
     error
   );
 
   partners = [];
-
 }
+
+/* =========================================================
+   WATERMARK
+========================================================= */
+
+const watermarkLogo =
+  "https://github.com/arbagasdanangh/pps/blob/main/logo.png?raw=true";
+
 /* =========================================================
    NOTIFIKASI DARI JSON API
    API: https://dpm-ptsp.surabaya.go.id/sso/apinotifikasi.php
@@ -7588,209 +7626,168 @@ try {
      INSTANSI TERKAIT — REDESIGN
 ========================================================= -->
 
-<!-- =========================================================
-     INSTANSI TERKAIT — API
-========================================================= -->
+<section class="partner-network" id="instansi-terkait">
 
-<section
-  id="instansi-terkait"
-  class="instansi-section"
->
+  <div class="partner-bg-glow partner-glow-left" aria-hidden="true"></div>
+  <div class="partner-bg-glow partner-glow-right" aria-hidden="true"></div>
+  <div class="partner-bg-grid" aria-hidden="true"></div>
 
-  <!-- BACKGROUND -->
-
-  <div
-    class="instansi-bg-grid"
-    aria-hidden="true"
-  ></div>
-
-  <div
-    class="instansi-glow instansi-glow-left"
-    aria-hidden="true"
-  ></div>
-
-  <div
-    class="instansi-glow instansi-glow-right"
-    aria-hidden="true"
-  ></div>
-
-
-  <!-- WATERMARK -->
-
+  <!-- WATERMARK LOGO SURABAYA -->
   <img
-    src="/logo.png"
-    class="instansi-watermark"
+    class="partner-watermark"
+    src="https://github.com/arbagasdanangh/pps/blob/main/logo.png?raw=true"
     alt=""
     aria-hidden="true"
+    onerror="this.onerror=null;this.src='/logo-surabaya.png';"
   />
 
+  <div class="partner-container">
 
-  <div class="instansi-container">
+    <div class="partner-heading">
 
-
-    <!-- =====================================================
-         HEADER
-    ====================================================== -->
-
-    <div class="instansi-heading">
-
-      <div class="instansi-eyebrow">
-
+      <div class="partner-eyebrow">
         <span></span>
-
-        <b>
-          MITRA &amp; JEJARING STRATEGIS
-        </b>
-
+        MITRA & JEJARING STRATEGIS
         <span></span>
-
       </div>
 
-
       <h2>
-        Instansi
-        <strong>Terkait</strong>
+        Instansi <strong>Terkait</strong>
       </h2>
 
-
       <p>
-        Kolaborasi lintas kementerian, lembaga, pemerintah daerah,
-        dan institusi strategis untuk memperkuat pelayanan publik
-        serta ekosistem investasi Kota Surabaya.
+        Kolaborasi lintas kementerian, lembaga, pemerintah daerah, dan
+        institusi strategis untuk memperkuat pelayanan publik serta
+        ekosistem investasi Kota Surabaya.
       </p>
 
-
-      <div class="instansi-heading-icon">
-
+      <div class="partner-heading-mark">
         <i class="fas fa-link"></i>
-
       </div>
 
     </div>
 
 
     <!-- =====================================================
-         CARD API
+         DATA INSTANSI DARI API
     ====================================================== -->
 
     {
       partners.length > 0 ? (
 
-        <div class="instansi-cards">
+        <div class="partner-network-grid">
 
-          {partners.map((partner, index) => (
+          {partners.map((partner, index) => {
 
-            <a
-              href={partner.link || "#"}
-              target={
-                partner.link &&
-                partner.link !== "#"
-                  ? "_blank"
-                  : undefined
-              }
-              rel={
-                partner.link &&
-                partner.link !== "#"
-                  ? "noopener noreferrer"
-                  : undefined
-              }
-              class="instansi-card"
-            >
+            const nama = partner?.nama || "Instansi Terkait";
+            const link = partner?.link || "#";
+            const logo = partner?.logo || "";
+            const altLogo =
+              partner?.alt_logo || nama;
 
+            let label = "INSTANSI TERKAIT";
 
-              <!-- NUMBER -->
+            if (nama.toLowerCase().includes("panrb")) {
+              label = "KEMENTERIAN";
+            } else if (nama.toLowerCase().includes("wbs")) {
+              label = "SURABAYA";
+            } else if (
+              nama.toLowerCase().includes("dpmptsp jawa timur")
+            ) {
+              label = "PEMERINTAH DAERAH";
+            } else if (
+              nama.toLowerCase().includes("oss")
+            ) {
+              label = "PERIZINAN BERUSAHA";
+            } else if (
+              nama.toLowerCase().includes("djki")
+            ) {
+              label = "KEKAYAAN INTELEKTUAL";
+            } else if (
+              nama.toLowerCase().includes("bkpm")
+            ) {
+              label = "INVESTASI INDONESIA";
+            }
 
-              <span class="instansi-number">
+            const number =
+              String(index + 1).padStart(2, "0");
 
-                {
-                  String(
-                    partner.urutan ??
-                    index + 1
-                  ).padStart(2, "0")
-                }
+            return (
+              <a
+                href={link}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="partner-card"
+              >
 
-              </span>
-
-
-              <!-- CORNER -->
-
-              <span class="instansi-corner"></span>
-
-
-              <!-- TOP LINE -->
-
-              <span class="instansi-top-line"></span>
-
-
-              <!-- LOGO -->
-
-              <div class="instansi-logo">
-
-                {
-                  partner.logo ? (
-
-                    <img
-                      src={partner.logo}
-                      alt={
-                        partner.alt_logo ||
-                        partner.nama ||
-                        "Instansi terkait"
-                      }
-                      loading="lazy"
-                    />
-
-                  ) : (
-
-                    <i class="fas fa-building"></i>
-
-                  )
-                }
-
-              </div>
-
-
-              <!-- LABEL -->
-
-              <span class="instansi-label">
-                INSTANSI TERKAIT
-              </span>
-
-
-              <!-- NAME -->
-
-              <strong class="instansi-name">
-                {partner.nama}
-              </strong>
-
-
-              <!-- LINK -->
-
-              <span class="instansi-website">
-
-                <span>
-                  KUNJUNGI WEBSITE
+                <span class="partner-number">
+                  {number}
                 </span>
 
-                <i class="fas fa-arrow-up-right-from-square"></i>
-
-              </span>
+                <span class="partner-corner"></span>
 
 
-            </a>
+                <div class="partner-logo">
 
-          ))}
+                  <div class="partner-logo-ring"></div>
+
+                  {logo ? (
+                    <img
+                      src={logo}
+                      alt={altLogo}
+                      loading="lazy"
+                      onerror="this.style.display='none';"
+                    />
+                  ) : (
+                    <i class="fas fa-building"></i>
+                  )}
+
+                </div>
+
+
+                <div class="partner-card-content">
+
+                  <span class="partner-label">
+                    {label}
+                  </span>
+
+                  <strong>
+                    {nama}
+                  </strong>
+
+                </div>
+
+
+                <div class="partner-link">
+
+                  <span>
+                    Portal resmi
+                  </span>
+
+                  <i class="fas fa-arrow-up-right-from-square"></i>
+
+                </div>
+
+              </a>
+            );
+
+          })}
 
         </div>
 
       ) : (
 
-        <div class="instansi-empty">
+        <div class="partner-empty">
 
-          <i class="fas fa-building"></i>
+          <i class="fas fa-building-circle-exclamation"></i>
 
           <strong>
             Data instansi terkait belum tersedia.
           </strong>
+
+          <span>
+            Jejaring instansi akan ditampilkan setelah data tersedia.
+          </span>
 
         </div>
 
@@ -7802,12 +7799,11 @@ try {
          FOOTER
     ====================================================== -->
 
-    <div class="instansi-footer">
+    <div class="partner-footer">
 
+      <div class="partner-status">
 
-      <div class="instansi-status">
-
-        <span></span>
+        <span class="partner-status-dot"></span>
 
         <div>
 
@@ -7824,17 +7820,13 @@ try {
       </div>
 
 
-      <div class="instansi-footer-line"></div>
+      <div class="partner-footer-line"></div>
 
 
-      <div class="instansi-count">
+      <div class="partner-count">
 
         <strong>
-          {
-            String(
-              partners.length
-            ).padStart(2, "0")
-          }
+          {String(partners.length).padStart(2, "0")}
         </strong>
 
         <span>
@@ -7843,7 +7835,6 @@ try {
 
       </div>
 
-
     </div>
 
   </div>
@@ -7851,1186 +7842,6 @@ try {
 </section>
 
 
-<style>
-
-/* =========================================================
-   INSTANSI SECTION
-========================================================= */
-
-.instansi-section {
-
-  --blue-dark: #031b50;
-  --blue-mid: #073b92;
-  --blue-light: #0757b7;
-  --yellow: #ffd21f;
-
-  position: relative;
-
-  width: 100%;
-
-  overflow: hidden;
-
-  isolation: isolate;
-
-  padding:
-    94px 20px
-    76px;
-
-  color: #fff;
-
-  background:
-    radial-gradient(
-      circle at 50% 45%,
-      rgba(40,110,235,.38),
-      transparent 34%
-    ),
-    linear-gradient(
-      135deg,
-      var(--blue-dark) 0%,
-      var(--blue-mid) 52%,
-      var(--blue-light) 100%
-    );
-
-}
-
-
-/* =========================================================
-   CONTAINER
-========================================================= */
-
-.instansi-container {
-
-  position: relative;
-
-  z-index: 10;
-
-  width: 100%;
-
-  max-width: 1380px;
-
-  margin: 0 auto;
-
-}
-
-
-/* =========================================================
-   GRID BACKGROUND
-========================================================= */
-
-.instansi-bg-grid {
-
-  position: absolute;
-
-  inset: 0;
-
-  z-index: -4;
-
-  pointer-events: none;
-
-  opacity: .20;
-
-  background-image:
-    linear-gradient(
-      rgba(255,255,255,.045) 1px,
-      transparent 1px
-    ),
-    linear-gradient(
-      90deg,
-      rgba(255,255,255,.045) 1px,
-      transparent 1px
-    );
-
-  background-size:
-    46px 46px;
-
-}
-
-
-/* =========================================================
-   GLOW
-========================================================= */
-
-.instansi-glow {
-
-  position: absolute;
-
-  z-index: -3;
-
-  width: 600px;
-
-  height: 600px;
-
-  border-radius: 50%;
-
-  pointer-events: none;
-
-  filter: blur(10px);
-
-}
-
-
-.instansi-glow-left {
-
-  left: -360px;
-
-  top: -230px;
-
-  background:
-    radial-gradient(
-      circle,
-      rgba(40,125,255,.35),
-      transparent 68%
-    );
-
-}
-
-
-.instansi-glow-right {
-
-  right: -360px;
-
-  bottom: -300px;
-
-  background:
-    radial-gradient(
-      circle,
-      rgba(255,210,31,.16),
-      transparent 68%
-    );
-
-}
-
-
-/* =========================================================
-   WATERMARK
-========================================================= */
-
-.instansi-watermark {
-
-  position: absolute;
-
-  z-index: -2;
-
-  top: 51%;
-
-  left: 50%;
-
-  width:
-    min(850px, 75vw);
-
-  height:
-    auto;
-
-  transform:
-    translate(-50%, -50%);
-
-  opacity: .075;
-
-  pointer-events: none;
-
-  user-select: none;
-
-  filter:
-    grayscale(1)
-    brightness(0)
-    invert(1);
-
-}
-
-
-/* =========================================================
-   HEADER
-========================================================= */
-
-.instansi-heading {
-
-  width: 100%;
-
-  max-width: 850px;
-
-  margin:
-    0 auto 55px;
-
-  text-align: center;
-
-}
-
-
-/* =========================================================
-   EYEBROW
-========================================================= */
-
-.instansi-eyebrow {
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: center;
-
-  gap: 12px;
-
-  width: 100%;
-
-}
-
-
-.instansi-eyebrow span {
-
-  width: 35px;
-
-  height: 2px;
-
-  flex:
-    0 0 35px;
-
-  background:
-    var(--yellow);
-
-  border-radius:
-    999px;
-
-}
-
-
-.instansi-eyebrow b {
-
-  display: block;
-
-  margin: 0;
-
-  padding: 0;
-
-  color:
-    var(--yellow);
-
-  font-size:
-    10px;
-
-  line-height:
-    1;
-
-  font-weight:
-    900;
-
-  letter-spacing:
-    3px;
-
-  white-space:
-    nowrap;
-
-}
-
-
-/* =========================================================
-   TITLE
-========================================================= */
-
-.instansi-heading h2 {
-
-  margin:
-    20px 0 0;
-
-  padding: 0;
-
-  color:
-    #fff;
-
-  font-size:
-    clamp(48px, 5.2vw, 68px);
-
-  line-height:
-    .95;
-
-  letter-spacing:
-    -3px;
-
-  font-weight:
-    900;
-
-}
-
-
-.instansi-heading h2 strong {
-
-  color:
-    var(--yellow);
-
-}
-
-
-/* =========================================================
-   DESCRIPTION
-========================================================= */
-
-.instansi-heading p {
-
-  max-width:
-    760px;
-
-  margin:
-    23px auto 0;
-
-  color:
-    rgba(255,255,255,.66);
-
-  font-size:
-    13px;
-
-  line-height:
-    1.85;
-
-}
-
-
-/* =========================================================
-   HEADING ICON
-========================================================= */
-
-.instansi-heading-icon {
-
-  width:
-    42px;
-
-  height:
-    42px;
-
-  display:
-    flex;
-
-  align-items:
-    center;
-
-  justify-content:
-    center;
-
-  margin:
-    20px auto 0;
-
-  border:
-    1px solid
-    rgba(255,210,31,.30);
-
-  border-radius:
-    50%;
-
-  color:
-    var(--yellow);
-
-  box-shadow:
-    0 0 0 8px
-    rgba(255,210,31,.025);
-
-}
-
-
-.instansi-heading-icon i {
-
-  font-size:
-    13px;
-
-}
-
-
-/* =========================================================
-   CARDS
-========================================================= */
-
-.instansi-cards {
-
-  display: grid;
-
-  grid-template-columns:
-    repeat(6, minmax(0, 1fr));
-
-  gap:
-    14px;
-
-  width: 100%;
-
-}
-
-
-/* =========================================================
-   CARD
-========================================================= */
-
-.instansi-card {
-
-  position: relative;
-
-  display: flex;
-
-  flex-direction: column;
-
-  align-items: center;
-
-  min-width: 0;
-
-  height:
-    298px;
-
-  padding:
-    16px 10px;
-
-  overflow: hidden;
-
-  text-decoration: none;
-
-  color: #fff;
-
-  border:
-    1px solid
-    rgba(255,255,255,.17);
-
-  border-radius:
-    22px;
-
-  background:
-    linear-gradient(
-      145deg,
-      rgba(255,255,255,.14),
-      rgba(255,255,255,.045)
-    );
-
-  box-shadow:
-    0 20px 45px
-    rgba(0,0,0,.14);
-
-  backdrop-filter:
-    blur(8px);
-
-  -webkit-backdrop-filter:
-    blur(8px);
-
-  transition:
-    transform .25s ease,
-    border-color .25s ease,
-    background .25s ease;
-
-}
-
-
-.instansi-card:hover {
-
-  transform:
-    translateY(-5px);
-
-  border-color:
-    rgba(255,210,31,.45);
-
-  background:
-    linear-gradient(
-      145deg,
-      rgba(255,255,255,.18),
-      rgba(255,255,255,.065)
-    );
-
-}
-
-
-/* =========================================================
-   NUMBER
-========================================================= */
-
-.instansi-number {
-
-  position: absolute;
-
-  top: 13px;
-
-  left: 16px;
-
-  color:
-    rgba(255,255,255,.38);
-
-  font-size:
-    8px;
-
-  line-height:
-    1;
-
-  font-weight:
-    900;
-
-  letter-spacing:
-    1px;
-
-}
-
-
-/* =========================================================
-   CORNER
-========================================================= */
-
-.instansi-corner {
-
-  position: absolute;
-
-  top: 13px;
-
-  right: 14px;
-
-  width: 15px;
-
-  height: 15px;
-
-  border-top:
-    1px solid
-    rgba(255,255,255,.30);
-
-  border-right:
-    1px solid
-    rgba(255,255,255,.30);
-
-  border-radius:
-    0 5px 0 0;
-
-}
-
-
-/* =========================================================
-   TOP LINE
-========================================================= */
-
-.instansi-top-line {
-
-  width:
-    32px;
-
-  height:
-    2px;
-
-  margin:
-    5px 0 14px;
-
-  flex:
-    0 0 auto;
-
-  border-radius:
-    999px;
-
-  background:
-    var(--yellow);
-
-}
-
-
-/* =========================================================
-   LOGO
-========================================================= */
-
-.instansi-logo {
-
-  position: relative;
-
-  display:
-    flex;
-
-  align-items:
-    center;
-
-  justify-content:
-    center;
-
-  width:
-    158px;
-
-  height:
-    108px;
-
-  flex:
-    0 0 auto;
-
-  padding:
-    10px;
-
-  box-sizing:
-    border-box;
-
-  overflow:
-    hidden;
-
-  border:
-    1px solid
-    rgba(255,255,255,.80);
-
-  border-radius:
-    17px;
-
-  background:
-    #fff;
-
-  box-shadow:
-    0 10px 28px
-    rgba(0,0,0,.16);
-
-}
-
-
-.instansi-logo img {
-
-  display:
-    block;
-
-  width:
-    auto;
-
-  height:
-    auto;
-
-  max-width:
-    138px;
-
-  max-height:
-    84px;
-
-  object-fit:
-    contain;
-
-}
-
-
-/* =========================================================
-   LABEL
-========================================================= */
-
-.instansi-label {
-
-  margin-top:
-    12px;
-
-  color:
-    rgba(255,255,255,.36);
-
-  font-size:
-    6px;
-
-  line-height:
-    1;
-
-  font-weight:
-    900;
-
-  letter-spacing:
-    1.8px;
-
-}
-
-
-/* =========================================================
-   NAME
-========================================================= */
-
-.instansi-name {
-
-  display:
-    block;
-
-  width:
-    100%;
-
-  margin-top:
-    8px;
-
-  color:
-    #fff;
-
-  font-size:
-    10px;
-
-  line-height:
-    1.25;
-
-  font-weight:
-    800;
-
-  text-align:
-    center;
-
-}
-
-
-/* =========================================================
-   WEBSITE
-========================================================= */
-
-.instansi-website {
-
-  position:
-    absolute;
-
-  left:
-    50%;
-
-  bottom:
-    14px;
-
-  transform:
-    translateX(-50%);
-
-  display:
-    flex;
-
-  align-items:
-    center;
-
-  gap:
-    8px;
-
-  white-space:
-    nowrap;
-
-}
-
-
-.instansi-website span {
-
-  color:
-    rgba(255,255,255,.42);
-
-  font-size:
-    6px;
-
-  font-weight:
-    900;
-
-  letter-spacing:
-    1.25px;
-
-}
-
-
-.instansi-website i {
-
-  width:
-    24px;
-
-  height:
-    24px;
-
-  display:
-    flex;
-
-  align-items:
-    center;
-
-  justify-content:
-    center;
-
-  border-radius:
-    50%;
-
-  background:
-    rgba(255,255,255,.08);
-
-  color:
-    var(--yellow);
-
-  font-size:
-    9px;
-
-  transition:
-    .25s ease;
-
-}
-
-
-.instansi-card:hover
-.instansi-website i {
-
-  background:
-    var(--yellow);
-
-  color:
-    #062a7d;
-
-  transform:
-    translate(2px,-2px);
-
-}
-
-
-/* =========================================================
-   EMPTY
-========================================================= */
-
-.instansi-empty {
-
-  grid-column:
-    1 / -1;
-
-  min-height:
-    280px;
-
-  display:
-    flex;
-
-  flex-direction:
-    column;
-
-  align-items:
-    center;
-
-  justify-content:
-    center;
-
-  border:
-    1px dashed
-    rgba(255,255,255,.22);
-
-  border-radius:
-    22px;
-
-  background:
-    rgba(255,255,255,.04);
-
-}
-
-
-.instansi-empty i {
-
-  margin-bottom:
-    12px;
-
-  color:
-    var(--yellow);
-
-  font-size:
-    30px;
-
-}
-
-
-.instansi-empty strong {
-
-  color:
-    rgba(255,255,255,.75);
-
-  font-size:
-    13px;
-
-}
-
-
-/* =========================================================
-   FOOTER
-========================================================= */
-
-.instansi-footer {
-
-  display:
-    flex;
-
-  align-items:
-    center;
-
-  gap:
-    18px;
-
-  margin-top:
-    34px;
-
-}
-
-
-.instansi-status {
-
-  display:
-    flex;
-
-  align-items:
-    center;
-
-  gap:
-    10px;
-
-  flex:
-    0 0 auto;
-
-}
-
-
-.instansi-status > span {
-
-  width:
-    8px;
-
-  height:
-    8px;
-
-  flex:
-    0 0 auto;
-
-  border-radius:
-    50%;
-
-  background:
-    #30d17b;
-
-  box-shadow:
-    0 0 0 5px
-    rgba(48,209,123,.10);
-
-}
-
-
-.instansi-status strong {
-
-  display:
-    block;
-
-  color:
-    rgba(255,255,255,.82);
-
-  font-size:
-    9px;
-
-  font-weight:
-    900;
-
-}
-
-
-.instansi-status small {
-
-  display:
-    block;
-
-  margin-top:
-    3px;
-
-  color:
-    rgba(255,255,255,.35);
-
-  font-size:
-    7px;
-
-}
-
-
-.instansi-footer-line {
-
-  flex:
-    1;
-
-  height:
-    1px;
-
-  background:
-    rgba(255,255,255,.16);
-
-}
-
-
-.instansi-count {
-
-  display:
-    flex;
-
-  align-items:
-    baseline;
-
-  gap:
-    7px;
-
-}
-
-
-.instansi-count strong {
-
-  color:
-    var(--yellow);
-
-  font-size:
-    20px;
-
-  line-height:
-    1;
-
-  font-weight:
-    900;
-
-}
-
-
-.instansi-count span {
-
-  color:
-    rgba(255,255,255,.40);
-
-  font-size:
-    7px;
-
-  font-weight:
-    900;
-
-  letter-spacing:
-    1.5px;
-
-}
-
-
-/* =========================================================
-   TABLET
-========================================================= */
-
-@media (max-width: 1180px) {
-
-  .instansi-cards {
-
-    grid-template-columns:
-      repeat(3, minmax(0, 1fr));
-
-  }
-
-}
-
-
-/* =========================================================
-   MOBILE
-========================================================= */
-
-@media (max-width: 700px) {
-
-  .instansi-section {
-
-    padding:
-      70px 15px 55px;
-
-  }
-
-
-  .instansi-heading {
-
-    margin-bottom:
-      40px;
-
-  }
-
-
-  .instansi-heading h2 {
-
-    font-size:
-      43px;
-
-    letter-spacing:
-      -2px;
-
-  }
-
-
-  .instansi-heading p {
-
-    font-size:
-      11px;
-
-  }
-
-
-  .instansi-cards {
-
-    grid-template-columns:
-      repeat(2, minmax(0, 1fr));
-
-    gap:
-      11px;
-
-  }
-
-
-  .instansi-card {
-
-    height:
-      238px;
-
-    border-radius:
-      18px;
-
-  }
-
-
-  .instansi-logo {
-
-    width:
-      105px;
-
-    height:
-      78px;
-
-    border-radius:
-      14px;
-
-  }
-
-
-  .instansi-logo img {
-
-    max-width:
-      88px;
-
-    max-height:
-      58px;
-
-  }
-
-
-  .instansi-footer {
-
-    gap:
-      10px;
-
-  }
-
-}
-
-
-/* =========================================================
-   VERY SMALL
-========================================================= */
-
-@media (max-width: 420px) {
-
-  .instansi-eyebrow b {
-
-    font-size:
-      7px;
-
-    letter-spacing:
-      2px;
-
-  }
-
-
-  .instansi-eyebrow span {
-
-    width:
-      20px;
-
-    flex-basis:
-      20px;
-
-  }
-
-
-  .instansi-heading h2 {
-
-    font-size:
-      38px;
-
-  }
-
-
-  .instansi-count {
-
-    display:
-      none;
-
-  }
-
-}
-
-</style>
 <style>
 /* =========================================================
    POTENSI INVESTASI SURABAYA
