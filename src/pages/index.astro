@@ -6,7 +6,7 @@ import { slugify } from "../utils/slugify";
 
 const bgInvestasi = `/bgkeunggulan.jpeg`;
 /* =========================================================
-   INSTANSI TERKAIT — API
+   INSTANSI TERKAIT DARI API
 ========================================================= */
 
 const INSTANSI_API =
@@ -17,42 +17,30 @@ let partners = [];
 try {
 
   const username =
-    import.meta.env.API_BERITA_USERNAME;
+    import.meta.env.API_USERNAME;
 
   const password =
-    import.meta.env.API_BERITA_PASSWORD;
-
-  if (!username || !password) {
-    throw new Error(
-      "API_BERITA_USERNAME / API_BERITA_PASSWORD belum tersedia"
-    );
-  }
+    import.meta.env.API_PASSWORD;
 
   const response =
     await fetch(INSTANSI_API, {
       method: "POST",
 
       headers: {
+        Accept: "application/json",
         username,
         password,
-        Accept: "application/json",
       },
     });
 
-  const responseText =
+  const text =
     await response.text();
 
-  if (!response.ok) {
-    throw new Error(
-      `HTTP ${response.status}: ${responseText}`
-    );
-  }
-
   const result =
-    JSON.parse(responseText);
+    JSON.parse(text);
 
   console.log(
-    "[API INSTANSI TERKAIT]",
+    "[INSTANSI TERKAIT API]",
     result
   );
 
@@ -63,16 +51,14 @@ try {
 
     partners =
       result.data
-
         .filter(
           (item) =>
             Number(item?.aktif) === 1
         )
-
         .sort(
           (a, b) =>
-            Number(a?.urutan ?? 999999) -
-            Number(b?.urutan ?? 999999)
+            Number(a?.urutan || 999999) -
+            Number(b?.urutan || 999999)
         );
 
   }
@@ -80,7 +66,7 @@ try {
 } catch (error) {
 
   console.error(
-    "[API INSTANSI TERKAIT ERROR]",
+    "[INSTANSI TERKAIT ERROR]",
     error
   );
 
@@ -7603,28 +7589,28 @@ try {
 ========================================================= -->
 
 <!-- =========================================================
-     INSTANSI TERKAIT
+     INSTANSI TERKAIT — API
 ========================================================= -->
 
 <section
   id="instansi-terkait"
-  class="instansi-api-section"
+  class="instansi-section"
 >
 
   <!-- BACKGROUND -->
 
   <div
-    class="instansi-api-grid"
+    class="instansi-bg-grid"
     aria-hidden="true"
   ></div>
 
   <div
-    class="instansi-api-glow instansi-api-glow-left"
+    class="instansi-glow instansi-glow-left"
     aria-hidden="true"
   ></div>
 
   <div
-    class="instansi-api-glow instansi-api-glow-right"
+    class="instansi-glow instansi-glow-right"
     aria-hidden="true"
   ></div>
 
@@ -7632,28 +7618,29 @@ try {
   <!-- WATERMARK -->
 
   <img
-    class="instansi-api-watermark"
     src="/logo.png"
+    class="instansi-watermark"
     alt=""
     aria-hidden="true"
   />
 
 
-  <div class="instansi-api-container">
+  <div class="instansi-container">
+
 
     <!-- =====================================================
          HEADER
     ====================================================== -->
 
-    <header class="instansi-api-heading">
+    <div class="instansi-heading">
 
-      <div class="instansi-api-eyebrow">
+      <div class="instansi-eyebrow">
 
         <span></span>
 
-        <strong>
+        <b>
           MITRA &amp; JEJARING STRATEGIS
-        </strong>
+        </b>
 
         <span></span>
 
@@ -7673,33 +7660,28 @@ try {
       </p>
 
 
-      <div class="instansi-api-mark">
+      <div class="instansi-heading-icon">
 
         <i class="fas fa-link"></i>
 
       </div>
 
-    </header>
+    </div>
 
 
     <!-- =====================================================
-         DATA API
+         CARD API
     ====================================================== -->
 
     {
       partners.length > 0 ? (
 
-        <div class="instansi-api-cards">
+        <div class="instansi-cards">
 
           {partners.map((partner, index) => (
 
             <a
-              href={
-                partner.link &&
-                partner.link !== "#"
-                  ? partner.link
-                  : "#"
-              }
+              href={partner.link || "#"}
               target={
                 partner.link &&
                 partner.link !== "#"
@@ -7712,32 +7694,37 @@ try {
                   ? "noopener noreferrer"
                   : undefined
               }
-              class="instansi-api-card"
+              class="instansi-card"
             >
+
 
               <!-- NUMBER -->
 
-              <span class="instansi-api-number">
-                {String(
-                  partner.urutan ??
-                  index + 1
-                ).padStart(2, "0")}
+              <span class="instansi-number">
+
+                {
+                  String(
+                    partner.urutan ??
+                    index + 1
+                  ).padStart(2, "0")
+                }
+
               </span>
 
 
               <!-- CORNER -->
 
-              <span class="instansi-api-corner"></span>
+              <span class="instansi-corner"></span>
 
 
               <!-- TOP LINE -->
 
-              <span class="instansi-api-topline"></span>
+              <span class="instansi-top-line"></span>
 
 
               <!-- LOGO -->
 
-              <div class="instansi-api-logo">
+              <div class="instansi-logo">
 
                 {
                   partner.logo ? (
@@ -7754,11 +7741,7 @@ try {
 
                   ) : (
 
-                    <div class="instansi-api-logo-empty">
-
-                      <i class="fas fa-building"></i>
-
-                    </div>
+                    <i class="fas fa-building"></i>
 
                   )
                 }
@@ -7768,21 +7751,21 @@ try {
 
               <!-- LABEL -->
 
-              <span class="instansi-api-label">
+              <span class="instansi-label">
                 INSTANSI TERKAIT
               </span>
 
 
               <!-- NAME -->
 
-              <strong class="instansi-api-name">
+              <strong class="instansi-name">
                 {partner.nama}
               </strong>
 
 
               <!-- LINK -->
 
-              <span class="instansi-api-link">
+              <span class="instansi-website">
 
                 <span>
                   KUNJUNGI WEBSITE
@@ -7792,6 +7775,7 @@ try {
 
               </span>
 
+
             </a>
 
           ))}
@@ -7800,17 +7784,13 @@ try {
 
       ) : (
 
-        <div class="instansi-api-empty">
+        <div class="instansi-empty">
 
           <i class="fas fa-building"></i>
 
           <strong>
             Data instansi terkait belum tersedia.
           </strong>
-
-          <span>
-            Data akan dimuat dari API.
-          </span>
 
         </div>
 
@@ -7822,16 +7802,17 @@ try {
          FOOTER
     ====================================================== -->
 
-    <div class="instansi-api-footer">
+    <div class="instansi-footer">
 
-      <div class="instansi-api-status">
+
+      <div class="instansi-status">
 
         <span></span>
 
         <div>
 
           <strong>
-            JEJARING TERHUBUNG
+            Jejaring Terhubung
           </strong>
 
           <small>
@@ -7843,15 +7824,17 @@ try {
       </div>
 
 
-      <div class="instansi-api-footer-line"></div>
+      <div class="instansi-footer-line"></div>
 
 
-      <div class="instansi-api-count">
+      <div class="instansi-count">
 
         <strong>
-          {String(
-            partners.length
-          ).padStart(2, "0")}
+          {
+            String(
+              partners.length
+            ).padStart(2, "0")
+          }
         </strong>
 
         <span>
@@ -7859,6 +7842,7 @@ try {
         </span>
 
       </div>
+
 
     </div>
 
@@ -7870,55 +7854,70 @@ try {
 <style>
 
 /* =========================================================
-   SECTION
+   INSTANSI SECTION
 ========================================================= */
 
-.instansi-api-section {
+.instansi-section {
 
-  --ia-blue-dark: #031b50;
-  --ia-blue: #062d78;
-  --ia-blue-light: #0757b7;
-  --ia-yellow: #ffd21f;
+  --blue-dark: #031b50;
+  --blue-mid: #073b92;
+  --blue-light: #0757b7;
+  --yellow: #ffd21f;
 
   position: relative;
 
   width: 100%;
 
-  min-height: 760px;
-
-  padding:
-    88px 20px
-    70px;
-
-  box-sizing: border-box;
-
   overflow: hidden;
 
   isolation: isolate;
+
+  padding:
+    94px 20px
+    76px;
 
   color: #fff;
 
   background:
     radial-gradient(
-      circle at 50% 42%,
-      rgba(30,105,225,.38),
+      circle at 50% 45%,
+      rgba(40,110,235,.38),
       transparent 34%
     ),
     linear-gradient(
       135deg,
-      var(--ia-blue-dark) 0%,
-      var(--ia-blue) 45%,
-      var(--ia-blue-light) 100%
+      var(--blue-dark) 0%,
+      var(--blue-mid) 52%,
+      var(--blue-light) 100%
     );
 
 }
 
 
 /* =========================================================
-   GRID
+   CONTAINER
 ========================================================= */
 
-.instansi-api-grid {
+.instansi-container {
+
+  position: relative;
+
+  z-index: 10;
+
+  width: 100%;
+
+  max-width: 1380px;
+
+  margin: 0 auto;
+
+}
+
+
+/* =========================================================
+   GRID BACKGROUND
+========================================================= */
+
+.instansi-bg-grid {
 
   position: absolute;
 
@@ -7928,7 +7927,7 @@ try {
 
   pointer-events: none;
 
-  opacity: .22;
+  opacity: .20;
 
   background-image:
     linear-gradient(
@@ -7951,50 +7950,46 @@ try {
    GLOW
 ========================================================= */
 
-.instansi-api-glow {
+.instansi-glow {
 
   position: absolute;
+
+  z-index: -3;
+
+  width: 600px;
+
+  height: 600px;
 
   border-radius: 50%;
 
   pointer-events: none;
 
-  filter: blur(12px);
-
-  z-index: -3;
+  filter: blur(10px);
 
 }
 
 
-.instansi-api-glow-left {
+.instansi-glow-left {
 
-  width: 620px;
+  left: -360px;
 
-  height: 620px;
-
-  left: -390px;
-
-  top: -260px;
+  top: -230px;
 
   background:
     radial-gradient(
       circle,
-      rgba(40,130,255,.30),
+      rgba(40,125,255,.35),
       transparent 68%
     );
 
 }
 
 
-.instansi-api-glow-right {
+.instansi-glow-right {
 
-  width: 620px;
+  right: -360px;
 
-  height: 620px;
-
-  right: -400px;
-
-  bottom: -330px;
+  bottom: -300px;
 
   background:
     radial-gradient(
@@ -8010,18 +8005,18 @@ try {
    WATERMARK
 ========================================================= */
 
-.instansi-api-watermark {
+.instansi-watermark {
 
   position: absolute;
 
   z-index: -2;
 
+  top: 51%;
+
   left: 50%;
 
-  top: 56%;
-
   width:
-    min(820px, 72vw);
+    min(850px, 75vw);
 
   height:
     auto;
@@ -8044,40 +8039,17 @@ try {
 
 
 /* =========================================================
-   CONTAINER
-========================================================= */
-
-.instansi-api-container {
-
-  position: relative;
-
-  z-index: 5;
-
-  width: 100%;
-
-  max-width: 1390px;
-
-  margin: 0 auto;
-
-}
-
-
-/* =========================================================
    HEADER
 ========================================================= */
 
-.instansi-api-heading {
-
-  position: relative;
-
-  z-index: 10;
+.instansi-heading {
 
   width: 100%;
 
   max-width: 850px;
 
   margin:
-    0 auto 54px;
+    0 auto 55px;
 
   text-align: center;
 
@@ -8088,7 +8060,7 @@ try {
    EYEBROW
 ========================================================= */
 
-.instansi-api-eyebrow {
+.instansi-eyebrow {
 
   display: flex;
 
@@ -8100,18 +8072,10 @@ try {
 
   width: 100%;
 
-  height: 20px;
-
-  margin: 0 auto;
-
-  white-space: nowrap;
-
 }
 
 
-.instansi-api-eyebrow span {
-
-  display: block;
+.instansi-eyebrow span {
 
   width: 35px;
 
@@ -8120,33 +8084,31 @@ try {
   flex:
     0 0 35px;
 
-  border-radius: 999px;
-
   background:
-    var(--ia-yellow);
+    var(--yellow);
+
+  border-radius:
+    999px;
 
 }
 
 
-.instansi-api-eyebrow strong {
+.instansi-eyebrow b {
 
   display: block;
-
-  flex:
-    0 0 auto;
 
   margin: 0;
 
   padding: 0;
 
   color:
-    var(--ia-yellow);
+    var(--yellow);
 
   font-size:
     10px;
 
   line-height:
-    20px;
+    1;
 
   font-weight:
     900;
@@ -8164,38 +8126,35 @@ try {
    TITLE
 ========================================================= */
 
-.instansi-api-heading h2 {
-
-  position: relative;
-
-  z-index: 10;
+.instansi-heading h2 {
 
   margin:
-    19px 0 0;
+    20px 0 0;
 
   padding: 0;
 
-  color: #fff;
+  color:
+    #fff;
 
   font-size:
     clamp(48px, 5.2vw, 68px);
 
   line-height:
-    1;
+    .95;
 
   letter-spacing:
     -3px;
 
   font-weight:
-    950;
+    900;
 
 }
 
 
-.instansi-api-heading h2 strong {
+.instansi-heading h2 strong {
 
   color:
-    var(--ia-yellow);
+    var(--yellow);
 
 }
 
@@ -8204,7 +8163,7 @@ try {
    DESCRIPTION
 ========================================================= */
 
-.instansi-api-heading p {
+.instansi-heading p {
 
   max-width:
     760px;
@@ -8213,7 +8172,7 @@ try {
     23px auto 0;
 
   color:
-    rgba(255,255,255,.64);
+    rgba(255,255,255,.66);
 
   font-size:
     13px;
@@ -8225,16 +8184,16 @@ try {
 
 
 /* =========================================================
-   MARK
+   HEADING ICON
 ========================================================= */
 
-.instansi-api-mark {
+.instansi-heading-icon {
 
   width:
-    40px;
+    42px;
 
   height:
-    40px;
+    42px;
 
   display:
     flex;
@@ -8246,17 +8205,17 @@ try {
     center;
 
   margin:
-    21px auto 0;
+    20px auto 0;
 
   border:
     1px solid
-    rgba(255,210,31,.28);
+    rgba(255,210,31,.30);
 
   border-radius:
     50%;
 
   color:
-    var(--ia-yellow);
+    var(--yellow);
 
   box-shadow:
     0 0 0 8px
@@ -8265,7 +8224,7 @@ try {
 }
 
 
-.instansi-api-mark i {
+.instansi-heading-icon i {
 
   font-size:
     13px;
@@ -8277,11 +8236,7 @@ try {
    CARDS
 ========================================================= */
 
-.instansi-api-cards {
-
-  position: relative;
-
-  z-index: 10;
+.instansi-cards {
 
   display: grid;
 
@@ -8300,7 +8255,7 @@ try {
    CARD
 ========================================================= */
 
-.instansi-api-card {
+.instansi-card {
 
   position: relative;
 
@@ -8310,15 +8265,13 @@ try {
 
   align-items: center;
 
-  height:
-    292px;
-
   min-width: 0;
 
-  padding:
-    24px 12px 16px;
+  height:
+    298px;
 
-  box-sizing: border-box;
+  padding:
+    16px 10px;
 
   overflow: hidden;
 
@@ -8331,24 +8284,24 @@ try {
     rgba(255,255,255,.17);
 
   border-radius:
-    23px;
+    22px;
 
   background:
     linear-gradient(
       145deg,
-      rgba(255,255,255,.15),
+      rgba(255,255,255,.14),
       rgba(255,255,255,.045)
     );
 
   box-shadow:
-    0 20px 50px
-    rgba(0,0,0,.16);
+    0 20px 45px
+    rgba(0,0,0,.14);
 
   backdrop-filter:
-    blur(10px);
+    blur(8px);
 
   -webkit-backdrop-filter:
-    blur(10px);
+    blur(8px);
 
   transition:
     transform .25s ease,
@@ -8358,23 +8311,19 @@ try {
 }
 
 
-/* =========================================================
-   CARD HOVER
-========================================================= */
-
-.instansi-api-card:hover {
+.instansi-card:hover {
 
   transform:
     translateY(-5px);
 
   border-color:
-    rgba(255,210,31,.30);
+    rgba(255,210,31,.45);
 
   background:
     linear-gradient(
       145deg,
       rgba(255,255,255,.18),
-      rgba(255,255,255,.055)
+      rgba(255,255,255,.065)
     );
 
 }
@@ -8384,19 +8333,22 @@ try {
    NUMBER
 ========================================================= */
 
-.instansi-api-number {
+.instansi-number {
 
   position: absolute;
 
-  left: 15px;
-
   top: 13px;
+
+  left: 16px;
 
   color:
     rgba(255,255,255,.38);
 
   font-size:
     8px;
+
+  line-height:
+    1;
 
   font-weight:
     900;
@@ -8411,13 +8363,13 @@ try {
    CORNER
 ========================================================= */
 
-.instansi-api-corner {
+.instansi-corner {
 
   position: absolute;
 
-  right: 14px;
+  top: 13px;
 
-  top: 14px;
+  right: 14px;
 
   width: 15px;
 
@@ -8425,11 +8377,11 @@ try {
 
   border-top:
     1px solid
-    rgba(255,255,255,.25);
+    rgba(255,255,255,.30);
 
   border-right:
     1px solid
-    rgba(255,255,255,.25);
+    rgba(255,255,255,.30);
 
   border-radius:
     0 5px 0 0;
@@ -8441,43 +8393,36 @@ try {
    TOP LINE
 ========================================================= */
 
-.instansi-api-topline {
+.instansi-top-line {
 
   width:
-    33px;
+    32px;
 
   height:
     2px;
 
+  margin:
+    5px 0 14px;
+
   flex:
     0 0 auto;
-
-  margin:
-    7px 0 14px;
 
   border-radius:
     999px;
 
   background:
-    var(--ia-yellow);
+    var(--yellow);
 
 }
 
 
 /* =========================================================
-   LOGO BOX
+   LOGO
 ========================================================= */
 
-.instansi-api-logo {
+.instansi-logo {
 
-  width:
-    158px;
-
-  height:
-    105px;
-
-  flex:
-    0 0 auto;
+  position: relative;
 
   display:
     flex;
@@ -8488,15 +8433,27 @@ try {
   justify-content:
     center;
 
+  width:
+    158px;
+
+  height:
+    108px;
+
+  flex:
+    0 0 auto;
+
   padding:
     10px;
 
   box-sizing:
     border-box;
 
+  overflow:
+    hidden;
+
   border:
     1px solid
-    rgba(255,255,255,.8);
+    rgba(255,255,255,.80);
 
   border-radius:
     17px;
@@ -8505,13 +8462,13 @@ try {
     #fff;
 
   box-shadow:
-    0 10px 25px
-    rgba(0,0,0,.15);
+    0 10px 28px
+    rgba(0,0,0,.16);
 
 }
 
 
-.instansi-api-logo img {
+.instansi-logo img {
 
   display:
     block;
@@ -8526,7 +8483,7 @@ try {
     138px;
 
   max-height:
-    82px;
+    84px;
 
   object-fit:
     contain;
@@ -8538,7 +8495,7 @@ try {
    LABEL
 ========================================================= */
 
-.instansi-api-label {
+.instansi-label {
 
   margin-top:
     12px;
@@ -8549,17 +8506,14 @@ try {
   font-size:
     6px;
 
+  line-height:
+    1;
+
   font-weight:
     900;
 
   letter-spacing:
     1.8px;
-
-  line-height:
-    1;
-
-  white-space:
-    nowrap;
 
 }
 
@@ -8568,7 +8522,7 @@ try {
    NAME
 ========================================================= */
 
-.instansi-api-name {
+.instansi-name {
 
   display:
     block;
@@ -8577,7 +8531,7 @@ try {
     100%;
 
   margin-top:
-    7px;
+    8px;
 
   color:
     #fff;
@@ -8586,7 +8540,7 @@ try {
     10px;
 
   line-height:
-    1.3;
+    1.25;
 
   font-weight:
     800;
@@ -8598,10 +8552,10 @@ try {
 
 
 /* =========================================================
-   LINK
+   WEBSITE
 ========================================================= */
 
-.instansi-api-link {
+.instansi-website {
 
   position:
     absolute;
@@ -8630,7 +8584,7 @@ try {
 }
 
 
-.instansi-api-link > span {
+.instansi-website span {
 
   color:
     rgba(255,255,255,.42);
@@ -8642,12 +8596,12 @@ try {
     900;
 
   letter-spacing:
-    1.3px;
+    1.25px;
 
 }
 
 
-.instansi-api-link i {
+.instansi-website i {
 
   width:
     24px;
@@ -8667,11 +8621,11 @@ try {
   border-radius:
     50%;
 
-  color:
-    var(--ia-yellow);
-
   background:
     rgba(255,255,255,.08);
+
+  color:
+    var(--yellow);
 
   font-size:
     9px;
@@ -8682,14 +8636,14 @@ try {
 }
 
 
-.instansi-api-card:hover
-.instansi-api-link i {
+.instansi-card:hover
+.instansi-website i {
 
   background:
-    var(--ia-yellow);
+    var(--yellow);
 
   color:
-    var(--ia-blue-dark);
+    #062a7d;
 
   transform:
     translate(2px,-2px);
@@ -8701,10 +8655,13 @@ try {
    EMPTY
 ========================================================= */
 
-.instansi-api-empty {
+.instansi-empty {
+
+  grid-column:
+    1 / -1;
 
   min-height:
-    250px;
+    280px;
 
   display:
     flex;
@@ -8720,52 +8677,38 @@ try {
 
   border:
     1px dashed
-    rgba(255,255,255,.20);
+    rgba(255,255,255,.22);
 
   border-radius:
-    20px;
+    22px;
 
   background:
-    rgba(255,255,255,.035);
+    rgba(255,255,255,.04);
 
 }
 
 
-.instansi-api-empty i {
+.instansi-empty i {
 
   margin-bottom:
     12px;
 
   color:
-    var(--ia-yellow);
+    var(--yellow);
 
   font-size:
-    28px;
+    30px;
 
 }
 
 
-.instansi-api-empty strong {
-
-  font-size:
-    13px;
+.instansi-empty strong {
 
   color:
     rgba(255,255,255,.75);
 
-}
-
-
-.instansi-api-empty span {
-
-  margin-top:
-    6px;
-
-  color:
-    rgba(255,255,255,.35);
-
   font-size:
-    9px;
+    13px;
 
 }
 
@@ -8774,13 +8717,7 @@ try {
    FOOTER
 ========================================================= */
 
-.instansi-api-footer {
-
-  position:
-    relative;
-
-  z-index:
-    10;
+.instansi-footer {
 
   display:
     flex;
@@ -8797,9 +8734,7 @@ try {
 }
 
 
-/* STATUS */
-
-.instansi-api-status {
+.instansi-status {
 
   display:
     flex;
@@ -8816,7 +8751,7 @@ try {
 }
 
 
-.instansi-api-status > span {
+.instansi-status > span {
 
   width:
     8px;
@@ -8840,7 +8775,7 @@ try {
 }
 
 
-.instansi-api-status strong {
+.instansi-status strong {
 
   display:
     block;
@@ -8857,7 +8792,7 @@ try {
 }
 
 
-.instansi-api-status small {
+.instansi-status small {
 
   display:
     block;
@@ -8874,9 +8809,7 @@ try {
 }
 
 
-/* LINE */
-
-.instansi-api-footer-line {
+.instansi-footer-line {
 
   flex:
     1;
@@ -8885,14 +8818,12 @@ try {
     1px;
 
   background:
-    rgba(255,255,255,.15);
+    rgba(255,255,255,.16);
 
 }
 
 
-/* COUNT */
-
-.instansi-api-count {
+.instansi-count {
 
   display:
     flex;
@@ -8906,13 +8837,16 @@ try {
 }
 
 
-.instansi-api-count strong {
+.instansi-count strong {
 
   color:
-    var(--ia-yellow);
+    var(--yellow);
 
   font-size:
-    19px;
+    20px;
+
+  line-height:
+    1;
 
   font-weight:
     900;
@@ -8920,10 +8854,10 @@ try {
 }
 
 
-.instansi-api-count span {
+.instansi-count span {
 
   color:
-    rgba(255,255,255,.38);
+    rgba(255,255,255,.40);
 
   font-size:
     7px;
@@ -8938,39 +8872,15 @@ try {
 
 
 /* =========================================================
-   FOCUS
-========================================================= */
-
-.instansi-api-card:focus {
-
-  outline:
-    none;
-
-}
-
-
-.instansi-api-card:focus-visible {
-
-  outline:
-    2px solid
-    rgba(255,210,31,.45);
-
-  outline-offset:
-    3px;
-
-}
-
-
-/* =========================================================
    TABLET
 ========================================================= */
 
 @media (max-width: 1180px) {
 
-  .instansi-api-cards {
+  .instansi-cards {
 
     grid-template-columns:
-      repeat(3, minmax(0,1fr));
+      repeat(3, minmax(0, 1fr));
 
   }
 
@@ -8983,10 +8893,7 @@ try {
 
 @media (max-width: 700px) {
 
-  .instansi-api-section {
-
-    min-height:
-      auto;
+  .instansi-section {
 
     padding:
       70px 15px 55px;
@@ -8994,7 +8901,7 @@ try {
   }
 
 
-  .instansi-api-heading {
+  .instansi-heading {
 
     margin-bottom:
       40px;
@@ -9002,7 +8909,7 @@ try {
   }
 
 
-  .instansi-api-heading h2 {
+  .instansi-heading h2 {
 
     font-size:
       43px;
@@ -9013,7 +8920,7 @@ try {
   }
 
 
-  .instansi-api-heading p {
+  .instansi-heading p {
 
     font-size:
       11px;
@@ -9021,10 +8928,10 @@ try {
   }
 
 
-  .instansi-api-cards {
+  .instansi-cards {
 
     grid-template-columns:
-      repeat(2, minmax(0,1fr));
+      repeat(2, minmax(0, 1fr));
 
     gap:
       11px;
@@ -9032,13 +8939,10 @@ try {
   }
 
 
-  .instansi-api-card {
+  .instansi-card {
 
     height:
-      235px;
-
-    padding:
-      18px 7px 14px;
+      238px;
 
     border-radius:
       18px;
@@ -9046,7 +8950,7 @@ try {
   }
 
 
-  .instansi-api-logo {
+  .instansi-logo {
 
     width:
       105px;
@@ -9060,21 +8964,21 @@ try {
   }
 
 
-  .instansi-api-logo img {
+  .instansi-logo img {
 
     max-width:
       88px;
 
     max-height:
-      57px;
+      58px;
 
   }
 
 
-  .instansi-api-footer {
+  .instansi-footer {
 
-    margin-top:
-      25px;
+    gap:
+      10px;
 
   }
 
@@ -9082,12 +8986,12 @@ try {
 
 
 /* =========================================================
-   SMALL MOBILE
+   VERY SMALL
 ========================================================= */
 
 @media (max-width: 420px) {
 
-  .instansi-api-eyebrow strong {
+  .instansi-eyebrow b {
 
     font-size:
       7px;
@@ -9098,18 +9002,18 @@ try {
   }
 
 
-  .instansi-api-eyebrow span {
+  .instansi-eyebrow span {
 
     width:
-      22px;
+      20px;
 
     flex-basis:
-      22px;
+      20px;
 
   }
 
 
-  .instansi-api-heading h2 {
+  .instansi-heading h2 {
 
     font-size:
       38px;
@@ -9117,7 +9021,7 @@ try {
   }
 
 
-  .instansi-api-count {
+  .instansi-count {
 
     display:
       none;
@@ -9127,7 +9031,6 @@ try {
 }
 
 </style>
-
 <style>
 /* =========================================================
    POTENSI INVESTASI SURABAYA
