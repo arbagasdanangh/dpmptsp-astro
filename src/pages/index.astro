@@ -7782,114 +7782,1999 @@ try {
      INSTANSI TERKAIT — REDESIGN
 ========================================================= -->
 
-<section class="partner-network" id="instansi-terkait">
-  <div class="partner-bg-glow"></div>
-  <div class="partner-grid"></div>
+<!-- =========================================================
+     INSTANSI TERKAIT
+========================================================= -->
 
-  <div class="partner-watermark">
-    <img src="/logo.png" alt="" />
-  </div>
+<section
+  class="partner-network"
+  id="instansi-terkait"
+>
+
+  <!-- =====================================================
+       BACKGROUND DECORATION
+  ====================================================== -->
+
+  <div
+    class="partner-glow partner-glow-left"
+    aria-hidden="true"
+  ></div>
+
+  <div
+    class="partner-glow partner-glow-right"
+    aria-hidden="true"
+  ></div>
+
+  <div
+    class="partner-bg-grid"
+    aria-hidden="true"
+  ></div>
+
+
+  <!-- =====================================================
+       WATERMARK LOGO DPMPTSP SURABAYA
+  ====================================================== -->
+
+  <img
+    class="partner-watermark"
+    src="https://github.com/arbagasdanangh/pps/blob/main/logo.png?raw=true"
+    alt=""
+    aria-hidden="true"
+    loading="lazy"
+    onerror="this.onerror=null;this.src='/logo-surabaya.png';"
+  />
+
+
+  <!-- =====================================================
+       CONTAINER
+  ====================================================== -->
 
   <div class="partner-container">
 
-    <!-- HEADER -->
+
+    <!-- ===================================================
+         HEADER
+    ==================================================== -->
+
     <div class="partner-heading">
 
       <div class="partner-eyebrow">
-        <span class="eyebrow-line"></span>
-        MITRA & JEJARING STRATEGIS
-        <span class="eyebrow-line"></span>
+
+        <span class="partner-eyebrow-line"></span>
+
+        <span class="partner-eyebrow-dot"></span>
+
+        <span>
+          MITRA & JEJARING STRATEGIS
+        </span>
+
+        <span class="partner-eyebrow-dot"></span>
+
+        <span class="partner-eyebrow-line"></span>
+
       </div>
 
+
       <h2>
-        Instansi <span>Terkait</span>
+        Instansi <strong>Terkait</strong>
       </h2>
+
 
       <p>
         Terhubung dengan berbagai instansi dan lembaga strategis
-        dalam mendukung pelayanan publik serta investasi di Kota Surabaya.
+        dalam mendukung pelayanan publik serta investasi
+        di Kota Surabaya.
       </p>
+
+
+      <div class="partner-heading-line">
+        <span></span>
+        <i class="fas fa-building-columns"></i>
+        <span></span>
+      </div>
 
     </div>
 
 
-    <!-- PARTNER GRID -->
-    <div class="partner-grid-list">
+    <!-- ===================================================
+         GRID
+    ==================================================== -->
 
-      {
-        partners.length > 0 ? (
-          partners.map((partner) => (
+    {
+      partners.length > 0 ? (
+
+        <div class="partner-network-grid">
+
+          {partners.map((partner, index) => (
+
             <a
-              href={partner.link}
+              href={partner.link || "#"}
               target="_blank"
               rel="noopener noreferrer"
               class="partner-card"
+              style={`--partner-delay:${index * 70}ms`}
             >
 
-              <div class="partner-card-number">
-                {String(partner.urutan || partner.id).padStart(2, "0")}
+              <!-- NUMBER -->
+
+              <span class="partner-number">
+                {String(
+                  partner.urutan || index + 1
+                ).padStart(2, "0")}
+              </span>
+
+
+              <!-- TOP LINE -->
+
+              <span class="partner-card-line"></span>
+
+
+              <!-- LOGO -->
+
+              <div class="partner-logo">
+
+                {
+                  partner.logo ? (
+
+                    <img
+                      src={partner.logo}
+                      alt={
+                        partner.alt_logo ||
+                        partner.nama ||
+                        "Instansi terkait"
+                      }
+                      loading="lazy"
+                      onerror="
+                        this.onerror=null;
+                        this.style.display='none';
+                      "
+                    />
+
+                  ) : (
+
+                    <i class="fas fa-building-columns"></i>
+
+                  )
+                }
+
               </div>
 
-              <div class="partner-logo-wrap">
-                <img
-                  src={partner.logo}
-                  alt={partner.alt_logo || partner.nama}
-                  loading="lazy"
-                />
-              </div>
 
-              <div class="partner-info">
-                <h3>{partner.nama}</h3>
+              <!-- CONTENT -->
+
+              <div class="partner-card-content">
+
+                <small class="partner-label">
+                  INSTANSI TERKAIT
+                </small>
+
+                <strong>
+                  {partner.nama}
+                </strong>
+
 
                 <span class="partner-link">
+
                   Kunjungi Website
-                  <svg
-                    width="15"
-                    height="15"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                  >
-                    <path d="M7 17L17 7" />
-                    <path d="M7 7h10v10" />
-                  </svg>
+
+                  <i class="fas fa-arrow-up-right-from-square"></i>
+
                 </span>
+
               </div>
 
+
+              <!-- CORNER -->
+
+              <span class="partner-corner partner-corner-tl"></span>
+              <span class="partner-corner partner-corner-br"></span>
+
             </a>
-          ))
-        ) : (
-          <div class="partner-empty">
-            Data instansi terkait belum tersedia.
+
+          ))}
+
+        </div>
+
+      ) : (
+
+        <div class="partner-empty">
+
+          <div class="partner-empty-icon">
+            <i class="fas fa-building-circle-xmark"></i>
           </div>
-        )
-      }
 
-    </div>
+          <strong>
+            Data instansi terkait belum tersedia
+          </strong>
+
+          <span>
+            Silakan coba beberapa saat lagi.
+          </span>
+
+        </div>
+
+      )
+    }
 
 
-    <!-- FOOTER -->
+    <!-- ===================================================
+         FOOTER
+    ==================================================== -->
+
     <div class="partner-footer">
 
-      <div class="partner-footer-left">
-        <span class="footer-dot"></span>
-        <span>Jejaring Terhubung</span>
+      <div class="partner-status">
+
+        <span class="partner-status-dot"></span>
+
+        <div>
+
+          <strong>
+            JEJARING TERHUBUNG
+          </strong>
+
+          <small>
+            Portal resmi instansi terkait
+          </small>
+
+        </div>
+
       </div>
 
-      <div class="partner-footer-right">
-        <span>Portal resmi instansi terkait</span>
+
+      <div class="partner-footer-line"></div>
+
+
+      <div class="partner-count">
 
         <strong>
           {String(partners.length).padStart(2, "0")}
-          INSTANSI
         </strong>
+
+        <span>
+          INSTANSI
+        </span>
+
       </div>
 
     </div>
 
   </div>
+
 </section>
+
+
+<style>
+
+/* =========================================================
+   INSTANSI TERKAIT
+========================================================= */
+
+.partner-network {
+
+  --partner-blue:
+    #062a7d;
+
+  --partner-blue-mid:
+    #0b4aa8;
+
+  --partner-blue-light:
+    #1677df;
+
+  --partner-yellow:
+    #ffd21f;
+
+
+  position:
+    relative;
+
+  overflow:
+    hidden;
+
+  isolation:
+    isolate;
+
+
+  padding:
+    96px 20px 78px;
+
+
+  color:
+    #ffffff;
+
+
+  background:
+
+    radial-gradient(
+      circle at 50% 45%,
+      rgba(28,100,220,.42),
+      transparent 34%
+    ),
+
+    radial-gradient(
+      circle at 10% 90%,
+      rgba(255,210,31,.12),
+      transparent 28%
+    ),
+
+    linear-gradient(
+      135deg,
+      #031b50 0%,
+      #062d78 45%,
+      #0757b7 100%
+    );
+
+}
+
+
+/* =========================================================
+   GLOW
+========================================================= */
+
+.partner-glow {
+
+  position:
+    absolute;
+
+  border-radius:
+    50%;
+
+  pointer-events:
+    none;
+
+  filter:
+    blur(15px);
+
+  z-index:
+    -3;
+
+}
+
+
+.partner-glow-left {
+
+  width:
+    580px;
+
+  height:
+    580px;
+
+  left:
+    -340px;
+
+  top:
+    -220px;
+
+
+  background:
+
+    radial-gradient(
+      circle,
+      rgba(35,126,255,.38),
+      transparent 68%
+    );
+
+}
+
+
+.partner-glow-right {
+
+  width:
+    520px;
+
+  height:
+    520px;
+
+  right:
+    -300px;
+
+  bottom:
+    -250px;
+
+
+  background:
+
+    radial-gradient(
+      circle,
+      rgba(255,210,31,.24),
+      transparent 68%
+    );
+
+}
+
+
+/* =========================================================
+   GRID BACKGROUND
+========================================================= */
+
+.partner-bg-grid {
+
+  position:
+    absolute;
+
+  inset:
+    0;
+
+  z-index:
+    -2;
+
+  pointer-events:
+    none;
+
+  opacity:
+    .24;
+
+
+  background-image:
+
+    linear-gradient(
+      rgba(255,255,255,.055) 1px,
+      transparent 1px
+    ),
+
+    linear-gradient(
+      90deg,
+      rgba(255,255,255,.055) 1px,
+      transparent 1px
+    );
+
+
+  background-size:
+    46px 46px;
+
+
+  mask-image:
+    radial-gradient(
+      circle at center,
+      black,
+      transparent 82%
+    );
+
+  -webkit-mask-image:
+    radial-gradient(
+      circle at center,
+      black,
+      transparent 82%
+    );
+
+}
+
+
+/* =========================================================
+   WATERMARK DPMPTSP
+========================================================= */
+
+.partner-watermark {
+
+  position:
+    absolute;
+
+
+  width:
+    min(760px, 72vw);
+
+  height:
+    min(760px, 72vw);
+
+
+  left:
+    50%;
+
+  top:
+    53%;
+
+
+  transform:
+    translate(-50%, -50%);
+
+
+  object-fit:
+    contain;
+
+
+  opacity:
+    .085;
+
+
+  filter:
+    grayscale(1)
+    brightness(0)
+    invert(1);
+
+
+  pointer-events:
+    none;
+
+  user-select:
+    none;
+
+
+  z-index:
+    -1;
+
+}
+
+
+/* =========================================================
+   CONTAINER
+========================================================= */
+
+.partner-container {
+
+  position:
+    relative;
+
+  z-index:
+    5;
+
+
+  width:
+    min(1360px, 100%);
+
+
+  margin:
+    0 auto;
+
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.partner-heading {
+
+  max-width:
+    820px;
+
+
+  margin:
+    0 auto 56px;
+
+
+  text-align:
+    center;
+
+}
+
+
+.partner-eyebrow {
+
+  display:
+    inline-flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+
+  gap:
+    10px;
+
+
+  color:
+    var(--partner-yellow);
+
+
+  font-size:
+    10px;
+
+
+  font-weight:
+    900;
+
+
+  letter-spacing:
+    3px;
+
+}
+
+
+.partner-eyebrow-line {
+
+  width:
+    38px;
+
+  height:
+    2px;
+
+
+  background:
+    var(--partner-yellow);
+
+
+  border-radius:
+    999px;
+
+}
+
+
+.partner-eyebrow-dot {
+
+  width:
+    5px;
+
+  height:
+    5px;
+
+
+  border-radius:
+    50%;
+
+
+  background:
+    var(--partner-yellow);
+
+
+  box-shadow:
+    0 0 12px
+    rgba(255,210,31,.8);
+
+}
+
+
+.partner-heading h2 {
+
+  margin:
+    16px 0 0;
+
+
+  color:
+    #ffffff;
+
+
+  font-size:
+    clamp(38px, 5vw, 62px);
+
+
+  line-height:
+    .98;
+
+
+  letter-spacing:
+    -2.8px;
+
+
+  font-weight:
+    900;
+
+}
+
+
+.partner-heading h2 strong {
+
+  color:
+    var(--partner-yellow);
+
+}
+
+
+.partner-heading p {
+
+  max-width:
+    650px;
+
+
+  margin:
+    20px auto 0;
+
+
+  color:
+    rgba(255,255,255,.60);
+
+
+  font-size:
+    13px;
+
+
+  line-height:
+    1.8;
+
+}
+
+
+.partner-heading-line {
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+
+  gap:
+    10px;
+
+
+  width:
+    180px;
+
+
+  margin:
+    25px auto 0;
+
+}
+
+
+.partner-heading-line span {
+
+  flex:
+    1;
+
+
+  height:
+    1px;
+
+
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      rgba(255,255,255,.3)
+    );
+
+}
+
+
+.partner-heading-line span:last-child {
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(255,255,255,.3),
+      transparent
+    );
+
+}
+
+
+.partner-heading-line i {
+
+  color:
+    var(--partner-yellow);
+
+
+  font-size:
+    12px;
+
+}
+
+
+/* =========================================================
+   GRID
+========================================================= */
+
+.partner-network-grid {
+
+  display:
+    grid;
+
+
+  grid-template-columns:
+    repeat(6, minmax(0, 1fr));
+
+
+  gap:
+    15px;
+
+}
+
+
+/* =========================================================
+   CARD
+========================================================= */
+
+.partner-card {
+
+  position:
+    relative;
+
+
+  min-width:
+    0;
+
+
+  min-height:
+    220px;
+
+
+  display:
+    flex;
+
+
+  flex-direction:
+    column;
+
+
+  align-items:
+    center;
+
+
+  justify-content:
+    flex-start;
+
+
+  padding:
+    22px 12px 17px;
+
+
+  box-sizing:
+    border-box;
+
+
+  overflow:
+    hidden;
+
+
+  text-decoration:
+    none;
+
+
+  border:
+    1px solid
+    rgba(255,255,255,.13);
+
+
+  border-radius:
+    18px;
+
+
+  background:
+    rgba(255,255,255,.075);
+
+
+  box-shadow:
+    0 15px 40px
+    rgba(0,0,0,.12);
+
+
+  backdrop-filter:
+    blur(4px);
+
+
+  -webkit-backdrop-filter:
+    blur(4px);
+
+
+  transition:
+    transform .35s ease,
+    border-color .35s ease,
+    background .35s ease,
+    box-shadow .35s ease;
+
+
+  animation:
+    partnerCardIn .55s ease both;
+
+
+  animation-delay:
+    var(--partner-delay);
+
+}
+
+
+@keyframes partnerCardIn {
+
+  from {
+
+    opacity:
+      0;
+
+    transform:
+      translateY(18px);
+
+  }
+
+  to {
+
+    opacity:
+      1;
+
+    transform:
+      translateY(0);
+
+  }
+
+}
+
+
+/* =========================================================
+   CARD HOVER
+========================================================= */
+
+.partner-card::before {
+
+  content:
+    "";
+
+
+  position:
+    absolute;
+
+
+  inset:
+    0;
+
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255,255,255,.13),
+      transparent 55%
+    );
+
+
+  opacity:
+    0;
+
+
+  transition:
+    opacity .35s ease;
+
+}
+
+
+.partner-card:hover {
+
+  transform:
+    translateY(-8px);
+
+
+  border-color:
+    rgba(255,210,31,.48);
+
+
+  background:
+    rgba(255,255,255,.115);
+
+
+  box-shadow:
+    0 25px 55px
+    rgba(0,0,0,.24);
+
+}
+
+
+.partner-card:hover::before {
+
+  opacity:
+    1;
+
+}
+
+
+/* =========================================================
+   NUMBER
+========================================================= */
+
+.partner-number {
+
+  position:
+    absolute;
+
+
+  top:
+    11px;
+
+
+  right:
+    13px;
+
+
+  color:
+    rgba(255,255,255,.28);
+
+
+  font-size:
+    9px;
+
+
+  font-weight:
+    900;
+
+
+  letter-spacing:
+    1px;
+
+}
+
+
+/* =========================================================
+   TOP LINE
+========================================================= */
+
+.partner-card-line {
+
+  width:
+    30px;
+
+
+  height:
+    2px;
+
+
+  margin-bottom:
+    12px;
+
+
+  border-radius:
+    99px;
+
+
+  background:
+    var(--partner-yellow);
+
+
+  opacity:
+    .75;
+
+}
+
+
+/* =========================================================
+   LOGO
+========================================================= */
+
+.partner-logo {
+
+  position:
+    relative;
+
+
+  width:
+    110px;
+
+
+  height:
+    82px;
+
+
+  display:
+    flex;
+
+
+  align-items:
+    center;
+
+
+  justify-content:
+    center;
+
+
+  margin:
+    2px auto 14px;
+
+
+  padding:
+    10px;
+
+
+  box-sizing:
+    border-box;
+
+
+  border-radius:
+    15px;
+
+
+  background:
+    #ffffff;
+
+
+  border:
+    1px solid
+    rgba(255,255,255,.7);
+
+
+  box-shadow:
+    0 10px 25px
+    rgba(0,0,0,.14);
+
+
+  transition:
+    transform .35s ease,
+    box-shadow .35s ease;
+
+}
+
+
+.partner-card:hover .partner-logo {
+
+  transform:
+    translateY(-3px)
+    scale(1.035);
+
+
+  box-shadow:
+    0 14px 30px
+    rgba(0,0,0,.20);
+
+}
+
+
+.partner-logo img {
+
+  display:
+    block;
+
+
+  width:
+    auto;
+
+
+  height:
+    auto;
+
+
+  max-width:
+    88px;
+
+
+  max-height:
+    58px;
+
+
+  object-fit:
+    contain;
+
+}
+
+
+.partner-logo i {
+
+  color:
+    var(--partner-blue);
+
+
+  font-size:
+    27px;
+
+}
+
+
+/* =========================================================
+   CONTENT
+========================================================= */
+
+.partner-card-content {
+
+  position:
+    relative;
+
+
+  z-index:
+    2;
+
+
+  width:
+    100%;
+
+
+  text-align:
+    center;
+
+}
+
+
+.partner-label {
+
+  display:
+    block;
+
+
+  margin-bottom:
+    7px;
+
+
+  color:
+    rgba(255,255,255,.36);
+
+
+  font-size:
+    6px;
+
+
+  font-weight:
+    900;
+
+
+  letter-spacing:
+    1.3px;
+
+}
+
+
+.partner-card-content strong {
+
+  display:
+    flex;
+
+
+  align-items:
+    center;
+
+
+  justify-content:
+    center;
+
+
+  min-height:
+    34px;
+
+
+  color:
+    #ffffff;
+
+
+  font-size:
+    10px;
+
+
+  line-height:
+    1.45;
+
+
+  font-weight:
+    850;
+
+
+}
+
+
+.partner-link {
+
+  display:
+    inline-flex;
+
+
+  align-items:
+    center;
+
+
+  gap:
+    6px;
+
+
+  margin-top:
+    9px;
+
+
+  color:
+    rgba(255,255,255,.48);
+
+
+  font-size:
+    7px;
+
+
+  font-weight:
+    800;
+
+
+  transition:
+    color .3s ease;
+
+}
+
+
+.partner-link i {
+
+  display:
+    flex;
+
+
+  align-items:
+    center;
+
+
+  justify-content:
+    center;
+
+
+  width:
+    23px;
+
+
+  height:
+    23px;
+
+
+  border-radius:
+    50%;
+
+
+  background:
+    rgba(255,255,255,.09);
+
+
+  color:
+    var(--partner-yellow);
+
+
+  font-size:
+    8px;
+
+
+  transition:
+    transform .3s ease,
+    background .3s ease,
+    color .3s ease;
+
+}
+
+
+.partner-card:hover .partner-link {
+
+  color:
+    rgba(255,255,255,.9);
+
+}
+
+
+.partner-card:hover .partner-link i {
+
+  transform:
+    translate(2px,-2px);
+
+
+  background:
+    var(--partner-yellow);
+
+
+  color:
+    var(--partner-blue);
+
+}
+
+
+/* =========================================================
+   CORNERS
+========================================================= */
+
+.partner-corner {
+
+  position:
+    absolute;
+
+
+  width:
+    17px;
+
+
+  height:
+    17px;
+
+
+  pointer-events:
+    none;
+
+
+  opacity:
+    .55;
+
+}
+
+
+.partner-corner-tl {
+
+  top:
+    0;
+
+  left:
+    0;
+
+
+  border-top:
+    1px solid
+    var(--partner-yellow);
+
+
+  border-left:
+    1px solid
+    var(--partner-yellow);
+
+}
+
+
+.partner-corner-br {
+
+  right:
+    0;
+
+  bottom:
+    0;
+
+
+  border-right:
+    1px solid
+    rgba(255,255,255,.35);
+
+
+  border-bottom:
+    1px solid
+    rgba(255,255,255,.35);
+
+}
+
+
+/* =========================================================
+   EMPTY
+========================================================= */
+
+.partner-empty {
+
+  min-height:
+    180px;
+
+
+  display:
+    flex;
+
+
+  flex-direction:
+    column;
+
+
+  align-items:
+    center;
+
+
+  justify-content:
+    center;
+
+
+  gap:
+    8px;
+
+
+  border:
+    1px dashed
+    rgba(255,255,255,.2);
+
+
+  border-radius:
+    18px;
+
+
+  color:
+    rgba(255,255,255,.65);
+
+}
+
+
+.partner-empty-icon {
+
+  width:
+    45px;
+
+
+  height:
+    45px;
+
+
+  display:
+    flex;
+
+
+  align-items:
+    center;
+
+
+  justify-content:
+    center;
+
+
+  margin-bottom:
+    4px;
+
+
+  border-radius:
+    50%;
+
+
+  background:
+    rgba(255,255,255,.08);
+
+
+  color:
+    var(--partner-yellow);
+
+}
+
+
+.partner-empty strong {
+
+  font-size:
+    12px;
+
+}
+
+
+.partner-empty span {
+
+  color:
+    rgba(255,255,255,.35);
+
+
+  font-size:
+    9px;
+
+}
+
+
+/* =========================================================
+   FOOTER
+========================================================= */
+
+.partner-footer {
+
+  display:
+    flex;
+
+
+  align-items:
+    center;
+
+
+  gap:
+    18px;
+
+
+  margin-top:
+    34px;
+
+}
+
+
+.partner-status {
+
+  display:
+    flex;
+
+
+  align-items:
+    center;
+
+
+  gap:
+    10px;
+
+}
+
+
+.partner-status-dot {
+
+  width:
+    8px;
+
+
+  height:
+    8px;
+
+
+  flex:
+    0 0 auto;
+
+
+  border-radius:
+    50%;
+
+
+  background:
+    #30d17b;
+
+
+  box-shadow:
+    0 0 0 5px
+    rgba(48,209,123,.10),
+
+    0 0 16px
+    rgba(48,209,123,.48);
+
+
+  animation:
+    partnerStatusPulse 2s
+    ease-in-out infinite;
+
+}
+
+
+.partner-status strong,
+.partner-status small {
+
+  display:
+    block;
+
+}
+
+
+.partner-status strong {
+
+  color:
+    rgba(255,255,255,.82);
+
+
+  font-size:
+    10px;
+
+
+  font-weight:
+    900;
+
+}
+
+
+.partner-status small {
+
+  margin-top:
+    2px;
+
+
+  color:
+    rgba(255,255,255,.38);
+
+
+  font-size:
+    8px;
+
+}
+
+
+.partner-footer-line {
+
+  flex:
+    1;
+
+
+  height:
+    1px;
+
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(255,255,255,.22),
+      transparent
+    );
+
+}
+
+
+.partner-count {
+
+  display:
+    flex;
+
+
+  align-items:
+    baseline;
+
+
+  gap:
+    7px;
+
+}
+
+
+.partner-count strong {
+
+  color:
+    var(--partner-yellow);
+
+
+  font-size:
+    19px;
+
+
+  font-weight:
+    950;
+
+}
+
+
+.partner-count span {
+
+  color:
+    rgba(255,255,255,.45);
+
+
+  font-size:
+    8px;
+
+
+  font-weight:
+    900;
+
+
+  letter-spacing:
+    1.5px;
+
+}
+
+
+/* =========================================================
+   PULSE
+========================================================= */
+
+@keyframes partnerStatusPulse {
+
+  0%, 100% {
+
+    opacity:
+      .45;
+
+    transform:
+      scale(.9);
+
+  }
+
+  50% {
+
+    opacity:
+      1;
+
+    transform:
+      scale(1.1);
+
+  }
+
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 1180px) {
+
+  .partner-network-grid {
+
+    grid-template-columns:
+      repeat(3, 1fr);
+
+    gap:
+      17px;
+
+  }
+
+}
+
+
+/* =========================================================
+   TABLET SMALL
+========================================================= */
+
+@media (max-width: 700px) {
+
+  .partner-network {
+
+    padding:
+      72px 15px 55px;
+
+  }
+
+
+  .partner-heading {
+
+    margin-bottom:
+      38px;
+
+  }
+
+
+  .partner-heading h2 {
+
+    font-size:
+      40px;
+
+    letter-spacing:
+      -1.8px;
+
+  }
+
+
+  .partner-heading p {
+
+    font-size:
+      12px;
+
+    line-height:
+      1.75;
+
+  }
+
+
+  .partner-network-grid {
+
+    grid-template-columns:
+      repeat(2, 1fr);
+
+    gap:
+      11px;
+
+  }
+
+
+  .partner-card {
+
+    min-height:
+      222px;
+
+    padding:
+      20px 7px 14px;
+
+    border-radius:
+      18px;
+
+  }
+
+
+  .partner-logo {
+
+    width:
+      102px;
+
+    height:
+      80px;
+
+    margin-top:
+      15px;
+
+    margin-bottom:
+      12px;
+
+    border-radius:
+      14px;
+
+  }
+
+
+  .partner-logo img {
+
+    max-width:
+      83px;
+
+    max-height:
+      54px;
+
+  }
+
+
+  .partner-card-content strong {
+
+    min-height:
+      29px;
+
+    font-size:
+      9px;
+
+  }
+
+
+  .partner-label {
+
+    font-size:
+      6px;
+
+  }
+
+
+  .partner-link {
+
+    font-size:
+      6px;
+
+    margin-top:
+      8px;
+
+  }
+
+
+  .partner-link i {
+
+    width:
+      20px;
+
+    height:
+      20px;
+
+    font-size:
+      8px;
+
+  }
+
+
+  .partner-footer {
+
+    margin-top:
+      25px;
+
+  }
+
+
+  .partner-status small {
+
+    font-size:
+      7px;
+
+  }
+
+
+  .partner-watermark {
+
+    width:
+      115vw;
+
+    height:
+      115vw;
+
+    opacity:
+      .065;
+
+  }
+
+}
+
+
+/* =========================================================
+   MOBILE KECIL
+========================================================= */
+
+@media (max-width: 380px) {
+
+  .partner-network-grid {
+
+    gap:
+      8px;
+
+  }
+
+
+  .partner-card {
+
+    min-height:
+      205px;
+
+  }
+
+
+  .partner-logo {
+
+    width:
+      90px;
+
+    height:
+      70px;
+
+  }
+
+
+  .partner-logo img {
+
+    max-width:
+      73px;
+
+    max-height:
+      48px;
+
+  }
+
+
+  .partner-count {
+
+    display:
+      none;
+
+  }
+
+}
+
+</style>
 
 <style>
 /* =========================================================
