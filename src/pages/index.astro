@@ -8,10 +8,7 @@ const bgInvestasi = `/bgkeunggulan.jpeg`;
 /* =========================================================
    HERO SLIDER
 ========================================================= */
-/* =========================================================
-   NOTIFIKASI DARI JSON API
-   API: https://dpm-ptsp.surabaya.go.id/sso/apinotifikasi.php
-========================================================= */
+
 const API_URL =
   "https://dpm-ptsp.surabaya.go.id/sso/apinstansiterkait.php";
 
@@ -23,24 +20,39 @@ try {
     headers: {
       Accept: "application/json",
       "Content-Type": "application/json",
+
+      // WAJIB sesuai header di API
+      username: import.meta.env.API_USERNAME,
+      password: import.meta.env.API_PASSWORD,
     },
+
     body: JSON.stringify({}),
   });
 
-  if (!response.ok) {
-    throw new Error(`API Error: ${response.status}`);
-  }
-
   const result = await response.json();
 
-  if (Array.isArray(result?.data)) {
+  console.log("API INSTANSI TERKAIT:", result);
+
+  if (result?.status === true && Array.isArray(result.data)) {
     partners = result.data
       .filter((item) => Number(item.aktif) === 1)
-      .sort((a, b) => Number(a.urutan || 999) - Number(b.urutan || 999));
+      .sort(
+        (a, b) =>
+          Number(a.urutan || 999) -
+          Number(b.urutan || 999)
+      );
   }
 } catch (error) {
-  console.error("Gagal mengambil data instansi terkait:", error);
+  console.error(
+    "Gagal mengambil API instansi terkait:",
+    error
+  );
 }
+
+/* =========================================================
+   NOTIFIKASI DARI JSON API
+   API: https://dpm-ptsp.surabaya.go.id/sso/apinotifikasi.php
+========================================================= */
 
 let notifikasi = [];
 
