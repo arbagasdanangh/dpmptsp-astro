@@ -9,44 +9,262 @@ const bgInvestasi = `/bgkeunggulan.jpeg`;
    HERO SLIDER
 ========================================================= */
 
-const API_URL =
-  "https://dpm-ptsp.surabaya.go.id/sso/apinstansiterkait.php";
+/* =========================================================
+   INSTANSI TERKAIT DARI JSON API
+   API:
+   https://dpm-ptsp.surabaya.go.id/sso/apinstansiterkait.php
+========================================================= */
 
 let partners = [];
 
 try {
-  const response = await fetch(API_URL, {
-    method: "POST",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
 
-      // WAJIB sesuai header di API
-      username: import.meta.env.API_USERNAME,
-      password: import.meta.env.API_PASSWORD,
-    },
+  const apiUrl =
+    "https://dpm-ptsp.surabaya.go.id/sso/apinstansiterkait.php";
 
-    body: JSON.stringify({}),
-  });
+  /* =====================================================
+     AUTH
+     SAMA DENGAN API LAIN DI WEBSITE
+  ===================================================== */
 
-  const result = await response.json();
+  const username =
+    import.meta.env.API_BERITA_USERNAME;
 
-  console.log("API INSTANSI TERKAIT:", result);
+  const password =
+    import.meta.env.API_BERITA_PASSWORD;
 
-  if (result?.status === true && Array.isArray(result.data)) {
-    partners = result.data
-      .filter((item) => Number(item.aktif) === 1)
+
+  if (!username || !password) {
+
+    throw new Error(
+      "API_BERITA_USERNAME / API_BERITA_PASSWORD belum diset"
+    );
+
+  }
+
+
+  /* =====================================================
+     REQUEST
+  ===================================================== */
+
+  const response =
+    await fetch(
+      apiUrl,
+      {
+        method: "POST",
+
+        headers: {
+          username,
+          password,
+          Accept: "application/json",
+        },
+      }
+    );
+
+
+  /* =====================================================
+     RAW RESPONSE
+  ===================================================== */
+
+  const responseText =
+    await response.text();
+
+
+  console.log(
+    "========================================"
+  );
+
+  console.log(
+    "[API INSTANSI] STATUS:",
+    response.status
+  );
+
+  console.log(
+    "[API INSTANSI] RAW:",
+    responseText
+  );
+
+  console.log(
+    "========================================"
+  );
+
+
+  /* =====================================================
+     HTTP ERROR
+  ===================================================== */
+
+  if (!response.ok) {
+
+    throw new Error(
+      `API instansi gagal: HTTP ${response.status} - ${responseText}`
+    );
+
+  }
+
+
+  /* =====================================================
+     PARSE JSON
+  ===================================================== */
+
+  let payload;
+
+  try {
+
+    payload =
+      JSON.parse(
+        responseText
+      );
+
+  } catch {
+
+    throw new Error(
+      `Response API instansi bukan JSON: ${responseText.substring(
+        0,
+        1000
+      )}`
+    );
+
+  }
+
+
+  console.log(
+    "[API INSTANSI] PAYLOAD:",
+    payload
+  );
+
+
+  /* =====================================================
+     AMBIL DATA
+  ===================================================== */
+
+  const apiData =
+    Array.isArray(payload)
+      ? payload
+      : Array.isArray(payload?.data)
+        ? payload.data
+        : Array.isArray(payload?.results)
+          ? payload.results
+          : Array.isArray(payload?.result)
+            ? payload.result
+            : [];
+
+
+  console.log(
+    "[API INSTANSI] TOTAL RAW:",
+    apiData.length
+  );
+
+
+  /* =====================================================
+     NORMALISASI
+  ===================================================== */
+
+  partners =
+    apiData
+
+      .map((item) => ({
+
+        id:
+          item?.id ??
+          null,
+
+        nama:
+          item?.nama ??
+          "",
+
+        link:
+          item?.link ??
+          "#",
+
+        logo:
+          item?.logo ??
+          "",
+
+        alt_logo:
+          item?.alt_logo ??
+          item?.nama ??
+          "",
+
+        aktif:
+          Number(
+            item?.aktif ?? 0
+          ),
+
+        urutan:
+          Number(
+            item?.urutan ?? 999999
+          ),
+
+        created_at:
+          item?.created_at ??
+          null,
+
+        updated_at:
+          item?.updated_at ??
+          null,
+
+        raw:
+          item,
+
+      }))
+
+      /* hanya yang aktif */
+
+      .filter(
+        (item) =>
+          item.aktif === 1 &&
+          item.nama
+      )
+
+      /* urut sesuai API */
+
       .sort(
         (a, b) =>
-          Number(a.urutan || 999) -
-          Number(b.urutan || 999)
+          a.urutan -
+          b.urutan
       );
-  }
+
+
+  /* =====================================================
+     HASIL
+  ===================================================== */
+
+  console.log(
+    "========================================"
+  );
+
+  console.log(
+    "[API INSTANSI] BERHASIL:",
+    partners.length
+  );
+
+  console.log(
+    "[API INSTANSI] DATA:",
+    partners
+  );
+
+  console.log(
+    "========================================"
+  );
+
+
 } catch (error) {
+
   console.error(
-    "Gagal mengambil API instansi terkait:",
+    "========================================"
+  );
+
+  console.error(
+    "[API INSTANSI ERROR]:",
     error
   );
+
+  console.error(
+    "========================================"
+  );
+
+  partners = [];
+
 }
 
 /* =========================================================
