@@ -1,0 +1,4239 @@
+---
+export const prerender = false;
+
+import MainLayout from "../../layouts/MainLayout.astro";
+import { slugify } from "../../utils/slugify";
+
+/* =========================================================
+   SLUG
+========================================================= */
+
+const rawSlug = Astro.params.slug || "";
+
+const slug = decodeURIComponent(rawSlug)
+  .toString()
+  .toLowerCase()
+  .trim();
+
+
+/* =========================================================
+   API DATE
+========================================================= */
+
+const awal = "2024-01-01";
+
+const sekarang = new Date();
+
+const akhir =
+  `${sekarang.getFullYear()}-` +
+  `${String(sekarang.getMonth() + 1).padStart(2, "0")}-` +
+  `${String(sekarang.getDate()).padStart(2, "0")}`;
+
+
+/* =========================================================
+   DATA
+========================================================= */
+
+let rows = [];
+
+
+/* =========================================================
+   API BERITA + ARTIKEL
+========================================================= */
+
+try {
+
+  const apiUrl =
+    "https://dpm-ptsp.surabaya.go.id/sso/apiberita.php";
+
+  const username =
+    import.meta.env.API_BERITA_USERNAME;
+
+  const password =
+    import.meta.env.API_BERITA_PASSWORD;
+
+
+  if (!username || !password) {
+
+    throw new Error(
+      "API_BERITA_USERNAME / API_BERITA_PASSWORD belum diset"
+    );
+
+  }
+
+
+  const form =
+    new URLSearchParams();
+
+  form.append(
+    "awal",
+    awal
+  );
+
+  form.append(
+    "akhir",
+    akhir
+  );
+
+
+  const response =
+    await fetch(
+      apiUrl,
+      {
+        method: "POST",
+
+        headers: {
+          username,
+          password,
+          Accept: "application/json",
+          "Content-Type":
+            "application/x-www-form-urlencoded"
+        },
+
+        body:
+          form.toString()
+      }
+    );
+
+
+  const responseText =
+    await response.text();
+
+
+  if (!response.ok) {
+
+    throw new Error(
+      `API Berita HTTP ${response.status}: ${responseText}`
+    );
+
+  }
+
+
+  let payload;
+
+  try {
+
+    payload =
+      JSON.parse(
+        responseText
+      );
+
+  } catch {
+
+    throw new Error(
+      `Response API bukan JSON: ${responseText.substring(0, 1000)}`
+    );
+
+  }
+
+
+  /* =======================================================
+     AMBIL ARRAY RESPONSE
+  ======================================================= */
+
+  let apiData = [];
+
+
+  if (Array.isArray(payload)) {
+
+    apiData = payload;
+
+  }
+
+  else if (Array.isArray(payload?.data)) {
+
+    apiData = payload.data;
+
+  }
+
+  else if (Array.isArray(payload?.results)) {
+
+    apiData = payload.results;
+
+  }
+
+  else if (Array.isArray(payload?.result)) {
+
+    apiData = payload.result;
+
+  }
+
+  else if (Array.isArray(payload?.items)) {
+
+    apiData = payload.items;
+
+  }
+
+  else if (Array.isArray(payload?.rows)) {
+
+    apiData = payload.rows;
+
+  }
+
+
+  /* =======================================================
+     NORMALISASI DATA
+  ======================================================= */
+
+  rows =
+    apiData
+      .map(
+        (item) => ({
+
+          id_post:
+            Number(
+              item?.id_post ??
+              item?.id ??
+              0
+            ),
+
+          id_category:
+            Number(
+              item?.id_category ??
+              0
+            ),
+
+          title:
+            item?.title ??
+            item?.judul ??
+            "",
+
+          content:
+            item?.content ??
+            item?.isi ??
+            item?.isi_konten ??
+            "",
+
+          ref_content:
+            item?.ref_content ??
+            item?.content ??
+            item?.isi ??
+            "",
+
+          seotitle:
+            item?.seotitle ??
+            item?.seo_title ??
+            "",
+
+          tag:
+            item?.tag ??
+            "",
+
+          date:
+            item?.date ??
+            item?.tanggal ??
+            "",
+
+          time:
+            item?.time ??
+            item?.jam ??
+            "",
+
+          editor:
+            item?.editor ??
+            "",
+
+          active:
+            item?.active ??
+            item?.aktif ??
+            "Y",
+
+          headline:
+            item?.headline ??
+            "N",
+
+          picture:
+            item?.picture ??
+            item?.gambar ??
+            item?.foto ??
+            "",
+
+          hits:
+            Number(
+              item?.hits ??
+              0
+            ),
+
+          category_title:
+            item?.category_title ??
+            item?.category ??
+            item?.nama_category ??
+            "",
+
+          raw:
+            item
+
+        })
+      )
+      .filter(
+        (item) =>
+          String(
+            item.active
+          )
+            .toUpperCase() === "Y"
+      );
+
+
+} catch (error) {
+
+  console.error(
+    "[API BERITA ERROR]",
+    error
+  );
+
+  rows = [];
+
+}
+
+
+/* =========================================================
+   CATEGORY
+=========================================================
+
+   BERITA
+   ID 1 / 8
+
+   ARTIKEL
+   ID 2 / 3
+========================================================= */
+
+function getCategoryType(item) {
+
+  const id =
+    Number(
+      item?.id_category
+    );
+
+  const name =
+    String(
+      item?.category_title || ""
+    )
+      .toLowerCase()
+      .trim();
+
+
+  if (
+    id === 1 ||
+    id === 8 ||
+    name === "berita" ||
+    name.includes("berita")
+  ) {
+
+    return "berita";
+
+  }
+
+
+  if (
+    id === 2 ||
+    id === 3 ||
+    name === "artikel" ||
+    name.includes("artikel")
+  ) {
+
+    return "artikel";
+
+  }
+
+
+  return "lainnya";
+
+}
+
+
+/* =========================================================
+   SORT TERBARU
+========================================================= */
+
+function sortTerbaru(a, b) {
+
+  const dateA =
+    `${a.date || ""} ${a.time || ""}`;
+
+  const dateB =
+    `${b.date || ""} ${b.time || ""}`;
+
+
+  return dateB.localeCompare(
+    dateA
+  );
+
+}
+
+
+/* =========================================================
+   MEDIA LIST
+========================================================= */
+
+const mediaList =
+  [...rows]
+    .filter(
+      (item) =>
+        [
+          "berita",
+          "artikel"
+        ].includes(
+          getCategoryType(item)
+        )
+    )
+    .sort(
+      sortTerbaru
+    );
+
+
+/* =========================================================
+   10 BERITA TERBARU
+========================================================= */
+
+const beritaMedia =
+  mediaList
+    .filter(
+      (item) =>
+        getCategoryType(item) === "berita"
+    )
+    .slice(0, 10);
+
+
+/* =========================================================
+   10 ARTIKEL TERBARU
+========================================================= */
+
+const artikelMedia =
+  mediaList
+    .filter(
+      (item) =>
+        getCategoryType(item) === "artikel"
+    )
+    .slice(0, 10);
+
+
+/* =========================================================
+   TOTAL 20
+   10 BERITA + 10 ARTIKEL
+========================================================= */
+
+const mediaListDisplay = [
+  ...beritaMedia,
+  ...artikelMedia
+];
+
+
+/* =========================================================
+   CARI POST DETAIL
+========================================================= */
+
+const post =
+  rows.find(
+    (row) => {
+
+      const rowSlug =
+        slugify(
+          row.title || ""
+        )
+          .toLowerCase()
+          .trim();
+
+
+      return (
+        rowSlug === slug
+      );
+
+    }
+  );
+
+
+/* =========================================================
+   KATEGORI POST
+========================================================= */
+
+let namaKategori =
+  "Tanpa Kategori";
+
+
+if (post) {
+
+  const detected =
+    getCategoryType(
+      post
+    );
+
+
+  if (
+    detected === "berita"
+  ) {
+
+    namaKategori =
+      "Berita";
+
+  }
+
+  else if (
+    detected === "artikel"
+  ) {
+
+    namaKategori =
+      "Artikel";
+
+  }
+
+  else if (
+    post.category_title
+  ) {
+
+    namaKategori =
+      post.category_title;
+
+  }
+
+}
+
+
+/* =========================================================
+   DEBUG
+========================================================= */
+
+console.log(
+  "[MEDIA DETAIL]",
+  {
+    slug,
+    post: post?.title,
+    kategori: namaKategori,
+    totalRows: rows.length,
+    totalMedia: mediaList.length,
+    totalBerita: beritaMedia.length,
+    totalArtikel: artikelMedia.length,
+    totalDisplay: mediaListDisplay.length
+  }
+);
+
+
+/* =========================================================
+   404
+========================================================= */
+
+if (!post) {
+
+  throw new Error(
+    `Media tidak ditemukan: ${slug}`
+  );
+
+}
+
+
+/* =========================================================
+   FORMAT DATE
+========================================================= */
+
+function formatDate(date) {
+
+  if (!date) {
+
+    return "—";
+
+  }
+
+
+  const parsed =
+    new Date(date);
+
+
+  if (
+    Number.isNaN(
+      parsed.getTime()
+    )
+  ) {
+
+    return date;
+
+  }
+
+
+  return parsed.toLocaleDateString(
+    "id-ID",
+    {
+      day: "numeric",
+      month: "long",
+      year: "numeric"
+    }
+  );
+
+}
+
+
+/* =========================================================
+   IMAGE URL
+========================================================= */
+
+function imageUrl(picture) {
+
+  if (!picture) {
+
+    return "";
+
+  }
+
+
+  if (
+    String(picture)
+      .startsWith("http")
+  ) {
+
+    return picture;
+
+  }
+
+
+  return (
+    "https://dpm-ptsp.surabaya.go.id/fileberita/" +
+    picture
+  );
+
+}
+
+---
+
+<style>
+
+@import url(
+  'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap'
+);
+
+
+/* =========================================================
+   GLOBAL
+========================================================= */
+
+:global(html) {
+  scroll-behavior: smooth;
+}
+
+
+:global(body) {
+
+  margin: 0;
+
+  font-family:
+    'Inter',
+    sans-serif;
+
+  background:
+    #f4f9ff;
+
+  color:
+    #0f172a;
+
+}
+
+
+.font-display {
+
+  font-family:
+    'Plus Jakarta Sans',
+    sans-serif;
+
+}
+
+
+/* =========================================================
+   READING PROGRESS
+========================================================= */
+
+.reading-progress {
+
+  position: fixed;
+
+  left: 0;
+  top: 0;
+
+  width: 0;
+
+  height: 4px;
+
+  z-index: 99999;
+
+  background:
+    linear-gradient(
+      90deg,
+      #facc15,
+      #38bdf8,
+      #0755bd
+    );
+
+}
+
+
+/* =========================================================
+   HERO
+========================================================= */
+
+.media-hero {
+
+  position: relative;
+
+  min-height: 540px;
+
+  overflow: hidden;
+
+  background:
+    linear-gradient(
+      110deg,
+      #062d70 0%,
+      #064b9d 48%,
+      #0756ad 100%
+    );
+
+  color: white;
+
+}
+
+
+/* =========================================================
+   HERO BACKGROUND
+========================================================= */
+
+.hero-bg {
+
+  position: absolute;
+
+  inset: 0;
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(3,39,92,.97) 0%,
+      rgba(4,72,148,.91) 48%,
+      rgba(5,83,165,.75) 100%
+    );
+
+  z-index: 1;
+
+}
+
+
+/* =========================================================
+   FOTO SIOLA
+========================================================= */
+
+.hero-city {
+
+  position: absolute;
+
+  right: 0;
+  top: 0;
+
+  width: 58%;
+  height: 100%;
+
+  background-image:
+    linear-gradient(
+      90deg,
+      rgba(4,65,135,1) 0%,
+      rgba(4,65,135,.78) 22%,
+      rgba(4,65,135,.35) 60%,
+      rgba(4,65,135,.18) 100%
+    ),
+    url("/images/siola.jpg");
+
+  background-size:
+    cover;
+
+  background-position:
+    center;
+
+  opacity:
+    .72;
+
+  z-index:
+    2;
+
+}
+
+
+/* =========================================================
+   GRID
+========================================================= */
+
+.hero-grid {
+
+  position: absolute;
+
+  inset: 0;
+
+  background-image:
+    linear-gradient(
+      rgba(255,255,255,.045) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      rgba(255,255,255,.045) 1px,
+      transparent 1px
+    );
+
+  background-size:
+    38px 38px;
+
+  opacity:
+    .55;
+
+  z-index:
+    3;
+
+  pointer-events:
+    none;
+
+}
+
+
+/* =========================================================
+   LINGKARAN BIRU
+========================================================= */
+
+.hero-blue-circle {
+
+  position: absolute;
+
+  width: 390px;
+  height: 390px;
+
+  left: -190px;
+  top: -160px;
+
+  border-radius:
+    50%;
+
+  border:
+    75px solid
+    rgba(30,112,208,.45);
+
+  z-index:
+    4;
+
+}
+
+
+.hero-blue-circle-2 {
+
+  position: absolute;
+
+  width: 300px;
+  height: 300px;
+
+  left: -170px;
+  bottom: -205px;
+
+  border-radius:
+    50%;
+
+  background:
+    rgba(5,47,111,.55);
+
+  z-index:
+    4;
+
+}
+
+
+/* =========================================================
+   KUNING
+========================================================= */
+
+.hero-yellow-left {
+
+  position: absolute;
+
+  width: 220px;
+  height: 72px;
+
+  left: -65px;
+  top: 125px;
+
+  background:
+    #ffd21c;
+
+  border-radius:
+    50px;
+
+  transform:
+    rotate(-32deg);
+
+  z-index:
+    5;
+
+}
+
+
+.hero-yellow-right {
+
+  position: absolute;
+
+  width: 310px;
+  height: 80px;
+
+  right: -75px;
+  bottom: 8px;
+
+  background:
+    #ffd21c;
+
+  border-radius:
+    60px;
+
+  transform:
+    rotate(-38deg);
+
+  z-index:
+    5;
+
+}
+
+
+/* =========================================================
+   CONTENT
+========================================================= */
+
+.hero-inner {
+
+  position: relative;
+
+  z-index:
+    10;
+
+  width:
+    min(
+      1180px,
+      calc(100% - 40px)
+    );
+
+  margin:
+    auto;
+
+  padding-top:
+    58px;
+
+  padding-bottom:
+    55px;
+
+}
+
+
+/* =========================================================
+   BREADCRUMB
+========================================================= */
+
+.hero-breadcrumb {
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  gap:
+    10px;
+
+  margin-bottom:
+    28px;
+
+  font-size:
+    13px;
+
+  color:
+    rgba(255,255,255,.72);
+
+}
+
+
+.hero-breadcrumb a {
+
+  color:
+    white;
+
+  text-decoration:
+    none;
+
+}
+
+
+.hero-breadcrumb a:hover {
+
+  color:
+    #ffd21c;
+
+}
+
+
+/* =========================================================
+   CATEGORY
+========================================================= */
+
+.hero-category {
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  flex-wrap:
+    wrap;
+
+  gap:
+    16px;
+
+  margin-bottom:
+    22px;
+
+}
+
+
+.category-badge {
+
+  display:
+    inline-flex;
+
+  align-items:
+    center;
+
+  gap:
+    9px;
+
+  padding:
+    10px 17px;
+
+  background:
+    #ffd21c;
+
+  color:
+    #082f70;
+
+  border-radius:
+    999px;
+
+  font-size:
+    11px;
+
+  font-weight:
+    900;
+
+  text-transform:
+    uppercase;
+
+  letter-spacing:
+    .12em;
+
+  box-shadow:
+    0 8px 20px
+    rgba(0,0,0,.12);
+
+}
+
+
+.hero-date {
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  gap:
+    8px;
+
+  font-size:
+    14px;
+
+  color:
+    rgba(255,255,255,.9);
+
+}
+
+
+.hero-date i {
+
+  color:
+    #ffd21c;
+
+}
+
+
+/* =========================================================
+   TITLE
+========================================================= */
+
+.hero-inner h1 {
+
+  max-width:
+    900px;
+
+  margin:
+    0;
+
+  font-size:
+    clamp(
+      38px,
+      5vw,
+      67px
+    );
+
+  line-height:
+    1.04;
+
+  font-weight:
+    900;
+
+  letter-spacing:
+    -.045em;
+
+  text-shadow:
+    0 4px 25px
+    rgba(0,0,0,.12);
+
+}
+
+
+/* =========================================================
+   DESCRIPTION
+========================================================= */
+
+.hero-description {
+
+  max-width:
+    690px;
+
+  margin-top:
+    25px;
+
+  font-size:
+    16px;
+
+  line-height:
+    1.7;
+
+  color:
+    rgba(255,255,255,.84);
+
+}
+
+
+/* =========================================================
+   META
+========================================================= */
+
+.hero-meta {
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  flex-wrap:
+    wrap;
+
+  gap:
+    22px;
+
+  margin-top:
+    28px;
+
+}
+
+
+.meta-item {
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  gap:
+    10px;
+
+}
+
+
+.meta-icon {
+
+  width:
+    38px;
+
+  height:
+    38px;
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  border-radius:
+    50%;
+
+  background:
+    rgba(255,255,255,.12);
+
+  border:
+    1px solid
+    rgba(255,255,255,.12);
+
+}
+
+
+.meta-icon i {
+
+  color:
+    #ffd21c;
+
+}
+
+
+.meta-item small {
+
+  display:
+    block;
+
+  font-size:
+    9px;
+
+  color:
+    rgba(255,255,255,.62);
+
+}
+
+
+.meta-item strong {
+
+  display:
+    block;
+
+  font-size:
+    12px;
+
+  color:
+    white;
+
+}
+
+
+.meta-item-simple {
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  gap:
+    9px;
+
+  font-size:
+    12px;
+
+  color:
+    rgba(255,255,255,.9);
+
+}
+
+
+.meta-item-simple i {
+
+  color:
+    #ffd21c;
+
+  font-size:
+    15px;
+
+}
+
+
+.meta-line {
+
+  width:
+    1px;
+
+  height:
+    28px;
+
+  background:
+    rgba(255,255,255,.18);
+
+}
+
+
+/* =========================================================
+   BACK BUTTON
+========================================================= */
+
+.back-button {
+
+  display:
+    inline-flex;
+
+  align-items:
+    center;
+
+  gap:
+    10px;
+
+  margin-top:
+    30px;
+
+  padding:
+    13px 20px;
+
+  border-radius:
+    13px;
+
+  color:
+    white;
+
+  text-decoration:
+    none;
+
+  font-size:
+    12px;
+
+  font-weight:
+    800;
+
+  background:
+    rgba(255,255,255,.11);
+
+  border:
+    1px solid
+    rgba(255,255,255,.18);
+
+  backdrop-filter:
+    blur(10px);
+
+  transition:
+    .25s ease;
+
+}
+
+
+.back-button:hover {
+
+  background:
+    #ffd21c;
+
+  color:
+    #082f70;
+
+  transform:
+    translateY(-2px);
+
+}
+
+
+/* =========================================================
+   ANIMATION
+========================================================= */
+
+@keyframes fadeUp {
+
+  from {
+
+    opacity:
+      0;
+
+    transform:
+      translateY(18px);
+
+  }
+
+  to {
+
+    opacity:
+      1;
+
+    transform:
+      translateY(0);
+
+  }
+
+}
+
+
+.animate-fade {
+
+  animation:
+    fadeUp
+    .7s
+    cubic-bezier(.22,1,.36,1)
+    both;
+
+}
+
+
+.delay-1 {
+
+  animation-delay:
+    .08s;
+
+}
+
+
+.delay-2 {
+
+  animation-delay:
+    .16s;
+
+}
+
+
+.delay-3 {
+
+  animation-delay:
+    .24s;
+
+}
+
+
+/* =========================================================
+   CARD
+========================================================= */
+
+.soft-card {
+
+  box-shadow:
+    0 18px 50px
+      rgba(15,23,42,.07),
+    0 3px 12px
+      rgba(15,23,42,.035);
+
+}
+
+
+/* =========================================================
+   ARTICLE
+========================================================= */
+
+.article-content {
+
+  color:
+    #355276;
+
+  font-size:
+    16px;
+
+}
+
+
+.article-content :global(p) {
+
+  margin:
+    0 0 1.45rem;
+
+  line-height:
+    1.9;
+
+}
+
+
+.article-content :global(h2) {
+
+  margin:
+    2.8rem 0 1rem;
+
+  color:
+    #0b3978;
+
+  font-family:
+    'Plus Jakarta Sans',
+    sans-serif;
+
+  font-size:
+    1.55rem;
+
+  line-height:
+    1.3;
+
+  font-weight:
+    800;
+
+}
+
+
+.article-content :global(h3) {
+
+  margin:
+    2rem 0 1rem;
+
+  color:
+    #0b3978;
+
+  font-weight:
+    800;
+
+}
+
+
+.article-content :global(img) {
+
+  display:
+    block;
+
+  max-width:
+    100%;
+
+  height:
+    auto;
+
+  margin:
+    2rem auto;
+
+  border-radius:
+    18px;
+
+  box-shadow:
+    0 15px 40px
+    rgba(15,23,42,.1);
+
+}
+
+
+.article-content :global(a) {
+
+  color:
+    #0754bd;
+
+  font-weight:
+    700;
+
+}
+
+
+.article-content :global(ul),
+.article-content :global(ol) {
+
+  margin:
+    1.4rem 0;
+
+  padding-left:
+    1.5rem;
+
+}
+
+
+.article-content :global(li) {
+
+  margin-bottom:
+    .6rem;
+
+  line-height:
+    1.8;
+
+}
+
+
+.article-content :global(blockquote) {
+
+  margin:
+    2rem 0;
+
+  padding:
+    1.2rem 1.5rem;
+
+  border-left:
+    4px solid #facc15;
+
+  border-radius:
+    0 16px 16px 0;
+
+  background:
+    #eff6ff;
+
+}
+
+
+/* =========================================================
+   MEDIA CARD
+========================================================= */
+
+.media-card {
+
+  min-height:
+    84px;
+
+  transition:
+    transform .25s ease,
+    box-shadow .25s ease,
+    border-color .25s ease;
+
+}
+
+
+.media-card:hover {
+
+  transform:
+    translateY(-2px);
+
+  box-shadow:
+    0 12px 28px
+    rgba(15,23,42,.08);
+
+  border-color:
+    #bfdbfe;
+
+}
+
+
+.media-thumb {
+
+  transition:
+    transform .4s ease;
+
+}
+
+
+.media-card:hover
+.media-thumb {
+
+  transform:
+    scale(1.06);
+
+}
+
+
+/* =========================================================
+   MEDIA TABS
+========================================================= */
+
+.media-tab {
+
+  cursor:
+    pointer;
+
+  transition:
+    all .2s ease;
+
+}
+
+
+.media-tab.active {
+
+  background:
+    #fff;
+
+  color:
+    #0754bd;
+
+  box-shadow:
+    0 2px 8px
+    rgba(15,23,42,.08);
+
+}
+
+
+.media-tab:hover {
+
+  color:
+    #0754bd;
+
+  background:
+    white;
+
+}
+
+
+/* =========================================================
+   SEARCH
+========================================================= */
+
+.media-search {
+
+  transition:
+    border-color .2s ease,
+    box-shadow .2s ease;
+
+}
+
+
+.media-search:focus {
+
+  border-color:
+    #3b82f6;
+
+  box-shadow:
+    0 0 0 4px
+    rgba(59,130,246,.10);
+
+}
+
+
+/* =========================================================
+   STICKY FILTER
+========================================================= */
+
+.media-filter-sticky {
+
+  position:
+    sticky;
+
+  top:
+    82px;
+
+  z-index:
+    50;
+
+  padding-top:
+    4px;
+
+  padding-bottom:
+    6px;
+
+  background:
+    rgba(255,255,255,.96);
+
+  backdrop-filter:
+    blur(14px);
+
+  -webkit-backdrop-filter:
+    blur(14px);
+
+}
+
+
+/* =========================================================
+   QUICK SERVICE
+========================================================= */
+
+.quick-service {
+
+  position:
+    relative;
+
+  overflow:
+    hidden;
+
+  background:
+    linear-gradient(
+      135deg,
+      #0751b3,
+      #0a68d2
+    );
+
+}
+
+
+.quick-service::after {
+
+  content:
+    "";
+
+  position:
+    absolute;
+
+  right:
+    -65px;
+
+  top:
+    -65px;
+
+  width:
+    170px;
+
+  height:
+    170px;
+
+  border-radius:
+    50%;
+
+  border:
+    35px solid
+    rgba(255,255,255,.08);
+
+}
+
+
+.quick-link {
+
+  transition:
+    transform .2s ease,
+    background .2s ease;
+
+}
+
+
+.quick-link:hover {
+
+  transform:
+    translateX(4px);
+
+  background:
+    rgba(255,255,255,.18);
+
+}
+
+
+/* =========================================================
+   SHARE
+========================================================= */
+
+.share-button {
+
+  transition:
+    transform .2s ease,
+    box-shadow .2s ease;
+
+}
+
+
+.share-button:hover {
+
+  transform:
+    translateY(-3px);
+
+  box-shadow:
+    0 10px 25px
+    rgba(15,23,42,.14);
+
+}
+
+
+/* =========================================================
+   FOOTER
+========================================================= */
+
+.footer-wave {
+
+  position:
+    relative;
+
+  overflow:
+    hidden;
+
+}
+
+
+.footer-wave::before {
+
+  content:
+    "";
+
+  position:
+    absolute;
+
+  left:
+    -5%;
+
+  top:
+    -95px;
+
+  width:
+    110%;
+
+  height:
+    150px;
+
+  border-radius:
+    50%;
+
+  background:
+    #f4f9ff;
+
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 900px) {
+
+  .media-hero {
+
+    min-height:
+      560px;
+
+  }
+
+  .hero-city {
+
+    width:
+      72%;
+
+  }
+
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 768px) {
+
+  .media-hero {
+
+    min-height:
+      570px;
+
+    background:
+      linear-gradient(
+        180deg,
+        rgba(3,55,130,.97),
+        rgba(3,70,145,.92)
+      );
+
+  }
+
+
+  .hero-city {
+
+    width:
+      100%;
+
+    opacity:
+      .32;
+
+  }
+
+
+  .hero-inner {
+
+    width:
+      min(
+        100% - 30px,
+        1180px
+      );
+
+    padding-top:
+      38px;
+
+    padding-bottom:
+      45px;
+
+  }
+
+
+  .hero-inner h1 {
+
+    font-size:
+      38px;
+
+  }
+
+
+  .hero-description {
+
+    font-size:
+      14px;
+
+  }
+
+
+  .hero-meta {
+
+    gap:
+      15px;
+
+  }
+
+
+  .meta-line {
+
+    display:
+      none;
+
+  }
+
+
+  .hero-yellow-left {
+
+    width:
+      160px;
+
+    height:
+      55px;
+
+    left:
+      -60px;
+
+  }
+
+
+  .hero-yellow-right {
+
+    width:
+      190px;
+
+    height:
+      55px;
+
+  }
+
+
+  .article-content {
+
+    font-size:
+      15px;
+
+  }
+
+
+  .article-content :global(p) {
+
+    line-height:
+      1.85;
+
+  }
+
+
+  .media-tab {
+
+    font-size:
+      10px;
+
+    padding-left:
+      8px;
+
+    padding-right:
+      8px;
+
+  }
+
+
+  .media-filter-sticky {
+
+    top:
+      0;
+
+  }
+
+}
+
+</style>
+
+
+<!-- =====================================================
+     READING PROGRESS
+====================================================== -->
+
+<div
+  id="reading-progress"
+  class="reading-progress"
+></div>
+
+
+<MainLayout
+  title={post.title}
+>
+
+
+<!-- =====================================================
+     HERO
+====================================================== -->
+
+<section class="media-hero">
+
+  <div class="hero-bg"></div>
+
+  <div class="hero-grid"></div>
+
+  <div class="hero-blue-circle"></div>
+
+  <div class="hero-blue-circle-2"></div>
+
+  <div class="hero-yellow-left"></div>
+
+  <div class="hero-yellow-right"></div>
+
+  <div class="hero-city"></div>
+
+
+  <div class="hero-inner">
+
+    <!-- BREADCRUMB -->
+
+    <div class="hero-breadcrumb">
+
+      <a href="/berita">
+        Media
+      </a>
+
+      <span>
+        ›
+      </span>
+
+      <span>
+        Detail
+      </span>
+
+    </div>
+
+
+    <!-- CATEGORY -->
+
+    <div class="hero-category">
+
+      <span class="category-badge">
+
+        <i
+          class={
+            namaKategori === "Artikel"
+              ? "fas fa-book-open"
+              : "fas fa-newspaper"
+          }
+        ></i>
+
+        {namaKategori}
+
+      </span>
+
+
+      <span class="hero-date">
+
+        <i class="far fa-calendar"></i>
+
+        {formatDate(post.date)}
+
+      </span>
+
+    </div>
+
+
+    <!-- TITLE -->
+
+    <h1>
+      {post.title}
+    </h1>
+
+
+    <!-- DESCRIPTION -->
+
+    <p class="hero-description">
+
+      Informasi dan perkembangan terbaru
+      seputar layanan, kebijakan, dan
+      kegiatan DPMPTSP Kota Surabaya.
+
+    </p>
+
+
+    <!-- META -->
+
+    <div class="hero-meta">
+
+      <div class="meta-item">
+
+        <span class="meta-icon">
+
+          <i class="fas fa-user"></i>
+
+        </span>
+
+        <div>
+
+          <small>
+            Ditulis oleh
+          </small>
+
+          <strong>
+            {post.editor || "Admin DPMPTSP"}
+          </strong>
+
+        </div>
+
+      </div>
+
+
+      <div class="meta-line"></div>
+
+
+      <div class="meta-item-simple">
+
+        <i class="far fa-clock"></i>
+
+        <span>
+          {post.time || "—"}
+        </span>
+
+      </div>
+
+
+      <div class="meta-line"></div>
+
+
+      <div class="meta-item-simple">
+
+        <i class="far fa-eye"></i>
+
+        <span>
+          {post.hits || 0} views
+        </span>
+
+      </div>
+
+    </div>
+
+
+    <!-- BACK -->
+
+    <a
+      href="/berita"
+      class="back-button"
+    >
+
+      <i class="fas fa-arrow-left"></i>
+
+      Kembali ke Media
+
+    </a>
+
+  </div>
+
+</section>
+
+
+<!-- =====================================================
+     MAIN
+====================================================== -->
+
+<main
+  class="
+    mx-auto
+    max-w-7xl
+    px-5
+    py-10
+    sm:px-6
+    md:py-14
+    lg:px-8
+  "
+>
+
+  <div
+    class="
+      grid
+      grid-cols-1
+      gap-8
+      lg:grid-cols-[minmax(0,1fr)_350px]
+      lg:gap-10
+    "
+  >
+
+
+    <!-- =================================================
+         LEFT CONTENT
+    ================================================== -->
+
+    <article
+      class="
+        min-w-0
+        animate-fade
+      "
+    >
+
+
+      <!-- IMAGE -->
+
+      {post.picture ? (
+
+        <figure
+          class="
+            group
+            relative
+            overflow-hidden
+            rounded-[22px]
+            border
+            border-white
+            bg-white
+            soft-card
+          "
+        >
+
+          <img
+            src={imageUrl(post.picture)}
+            alt={post.title}
+            class="
+              aspect-[16/9]
+              w-full
+              object-cover
+              transition
+              duration-700
+              group-hover:scale-[1.02]
+            "
+            loading="eager"
+          />
+
+
+          <div
+            class="
+              pointer-events-none
+              absolute
+              inset-0
+              bg-gradient-to-t
+              from-black/20
+              via-transparent
+              to-white/5
+            "
+          ></div>
+
+
+          <div
+            class="
+              absolute
+              bottom-4
+              left-4
+              max-w-[80%]
+              rounded-full
+              bg-yellow-400
+              px-4
+              py-2
+              text-[10px]
+              font-extrabold
+              text-blue-950
+              shadow-lg
+            "
+          >
+            {namaKategori}
+          </div>
+
+        </figure>
+
+      ) : (
+
+        <div
+          class="
+            flex
+            aspect-[16/9]
+            items-center
+            justify-center
+            rounded-[22px]
+            bg-gradient-to-br
+            from-blue-100
+            to-blue-50
+            text-blue-500
+            soft-card
+          "
+        >
+
+          <div class="text-center">
+
+            <i
+              class={
+                `fas ${
+                  namaKategori === "Artikel"
+                    ? "fa-book-open"
+                    : "fa-newspaper"
+                } mb-3 text-5xl`
+              }
+            ></i>
+
+            <p
+              class="
+                text-sm
+                font-bold
+              "
+            >
+              DPMPTSP Kota Surabaya
+            </p>
+
+          </div>
+
+        </div>
+
+      )}
+
+
+      <!-- META BAR -->
+
+      <div
+        class="
+          mt-4
+          flex
+          flex-wrap
+          items-center
+          justify-between
+          gap-4
+          rounded-2xl
+          border
+          border-blue-100
+          bg-white
+          px-5
+          py-4
+          soft-card
+        "
+      >
+
+        <div
+          class="
+            flex
+            flex-wrap
+            items-center
+            gap-x-6
+            gap-y-3
+            text-xs
+            text-slate-500
+          "
+        >
+
+          <div
+            class="
+              flex
+              items-center
+              gap-2
+            "
+          >
+
+            <span
+              class="
+                flex
+                h-8
+                w-8
+                items-center
+                justify-center
+                rounded-lg
+                bg-blue-50
+                text-blue-600
+              "
+            >
+
+              <i
+                class="
+                  fas
+                  fa-user
+                  text-xs
+                "
+              ></i>
+
+            </span>
+
+            <strong class="text-slate-700">
+              DPMPTSP Kota Surabaya
+            </strong>
+
+          </div>
+
+
+          <span
+            class="
+              hidden
+              h-5
+              w-px
+              bg-slate-200
+              sm:block
+            "
+          ></span>
+
+
+          <span
+            class="
+              flex
+              items-center
+              gap-2
+            "
+          >
+
+            <i
+              class="
+                far
+                fa-calendar
+                text-blue-600
+              "
+            ></i>
+
+            {formatDate(post.date)}
+
+          </span>
+
+
+          <span
+            class="
+              hidden
+              h-5
+              w-px
+              bg-slate-200
+              sm:block
+            "
+          ></span>
+
+
+          <span
+            class="
+              flex
+              items-center
+              gap-2
+            "
+          >
+
+            <i
+              class="
+                far
+                fa-eye
+                text-blue-600
+              "
+            ></i>
+
+            {post.hits || 0}
+
+            <span>
+              views
+            </span>
+
+          </span>
+
+        </div>
+
+
+        <span
+          class="
+            inline-flex
+            items-center
+            gap-2
+            rounded-full
+            bg-emerald-50
+            px-3
+            py-1.5
+            text-[10px]
+            font-bold
+            text-emerald-700
+          "
+        >
+
+          <span
+            class="
+              h-1.5
+              w-1.5
+              rounded-full
+              bg-emerald-500
+            "
+          ></span>
+
+          Publikasi
+
+        </span>
+
+      </div>
+
+
+      <!-- CONTENT -->
+
+      <div
+        class="
+          article-content
+          mt-5
+          rounded-[22px]
+          border
+          border-blue-100
+          bg-white
+          px-5
+          py-7
+          sm:px-8
+          md:px-10
+          md:py-10
+          soft-card
+        "
+      >
+
+        <div
+          set:html={post.ref_content}
+        ></div>
+
+
+        <!-- TAG -->
+
+        <div
+          class="
+            mt-10
+            border-t
+            border-slate-200
+            pt-6
+          "
+        >
+
+          <div
+            class="
+              flex
+              flex-wrap
+              items-center
+              gap-2
+            "
+          >
+
+            <span
+              class="
+                mr-1
+                text-[9px]
+                font-extrabold
+                uppercase
+                tracking-[.18em]
+                text-slate-400
+              "
+            >
+              Tagar
+            </span>
+
+
+            <span
+              class="
+                rounded-full
+                bg-blue-50
+                px-3
+                py-1.5
+                text-[10px]
+                font-bold
+                text-blue-700
+              "
+            >
+              #{namaKategori}
+            </span>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </article>
+
+
+    <!-- =================================================
+         RIGHT SIDEBAR
+    ================================================== -->
+
+    <!-- =====================================================
+     RIGHT SIDEBAR / NAVBAR SAMPING
+====================================================== -->
+
+<aside
+  class="
+    sidebar-wrapper
+    self-start
+    lg:sticky
+    lg:top-24
+  "
+>
+
+  <div class="sidebar-stack">
+
+    <!-- =================================================
+         MEDIA TERBARU
+    ================================================== -->
+
+    <section
+      class="
+        media-sidebar
+        overflow-hidden
+        rounded-[26px]
+        border
+        border-blue-100
+        bg-white
+        shadow-[0_20px_55px_rgba(15,23,42,.08)]
+      "
+    >
+
+      <!-- HEADER -->
+
+      <div
+        class="
+          relative
+          overflow-hidden
+          bg-gradient-to-br
+          from-[#063b82]
+          via-[#0754b8]
+          to-[#0b72df]
+          px-5
+          py-5
+          text-white
+        "
+      >
+
+        <!-- dekorasi -->
+
+        <div
+          class="
+            pointer-events-none
+            absolute
+            -right-12
+            -top-12
+            h-32
+            w-32
+            rounded-full
+            border-[25px]
+            border-white/10
+          "
+        ></div>
+
+        <div
+          class="
+            pointer-events-none
+            absolute
+            -bottom-14
+            -left-10
+            h-28
+            w-28
+            rounded-full
+            border-[20px]
+            border-yellow-400/20
+          "
+        ></div>
+
+
+        <div
+          class="
+            relative
+            z-10
+            flex
+            items-center
+            justify-between
+          "
+        >
+
+          <div class="flex items-center gap-3">
+
+            <div
+              class="
+                flex
+                h-11
+                w-11
+                items-center
+                justify-center
+                rounded-2xl
+                bg-white/15
+                text-yellow-300
+                shadow-inner
+                backdrop-blur
+              "
+            >
+              <i class="fas fa-newspaper"></i>
+            </div>
+
+            <div>
+
+              <span
+                class="
+                  block
+                  text-[8px]
+                  font-extrabold
+                  uppercase
+                  tracking-[.2em]
+                  text-blue-200
+                "
+              >
+                Informasi
+              </span>
+
+              <h2
+                class="
+                  mt-0.5
+                  font-display
+                  text-base
+                  font-extrabold
+                "
+              >
+                Media Terbaru
+              </h2>
+
+            </div>
+
+          </div>
+
+
+          <a
+            href="/berita"
+            class="
+              rounded-full
+              border
+              border-white/20
+              bg-white/10
+              px-3
+              py-2
+              text-[9px]
+              font-bold
+              text-white
+              backdrop-blur
+              transition
+              hover:bg-yellow-400
+              hover:text-blue-950
+            "
+          >
+            Semua
+          </a>
+
+        </div>
+
+
+        <!-- statistik -->
+
+        <div
+          class="
+            relative
+            z-10
+            mt-4
+            grid
+            grid-cols-2
+            gap-2
+          "
+        >
+
+          <div
+            class="
+              rounded-xl
+              border
+              border-white/10
+              bg-white/10
+              px-3
+              py-2.5
+              backdrop-blur
+            "
+          >
+
+            <span
+              class="
+                block
+                text-[8px]
+                font-bold
+                uppercase
+                tracking-wider
+                text-blue-200
+              "
+            >
+              Berita
+            </span>
+
+            <strong
+              class="
+                mt-0.5
+                block
+                text-lg
+                font-extrabold
+                text-white
+              "
+            >
+              10
+            </strong>
+
+          </div>
+
+
+          <div
+            class="
+              rounded-xl
+              border
+              border-white/10
+              bg-white/10
+              px-3
+              py-2.5
+              backdrop-blur
+            "
+          >
+
+            <span
+              class="
+                block
+                text-[8px]
+                font-bold
+                uppercase
+                tracking-wider
+                text-blue-200
+              "
+            >
+              Artikel
+            </span>
+
+            <strong
+              class="
+                mt-0.5
+                block
+                text-lg
+                font-extrabold
+                text-yellow-300
+              "
+            >
+              10
+            </strong>
+
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <!-- =================================================
+           FILTER
+      ================================================== -->
+
+      <div
+        class="
+          media-filter-sticky
+          border-b
+          border-slate-100
+          bg-white
+          px-4
+          pt-4
+        "
+      >
+
+        <!-- SEARCH -->
+
+        <div class="relative">
+
+          <i
+            class="
+              fas
+              fa-search
+              absolute
+              left-4
+              top-1/2
+              -translate-y-1/2
+              text-xs
+              text-slate-400
+            "
+          ></i>
+
+          <input
+            id="media-search"
+            type="search"
+            autocomplete="off"
+            placeholder="Cari berita atau artikel..."
+            class="
+              media-search
+              w-full
+              rounded-xl
+              border
+              border-slate-200
+              bg-slate-50
+              py-3
+              pl-10
+              pr-4
+              text-xs
+              font-medium
+              text-slate-700
+              outline-none
+              transition
+              focus:border-blue-400
+              focus:bg-white
+              focus:ring-4
+              focus:ring-blue-100
+            "
+          />
+
+        </div>
+
+
+        <!-- TABS -->
+
+        <div
+          class="
+            media-tabs
+            mt-3
+            flex
+            rounded-xl
+            bg-slate-100
+            p-1
+          "
+        >
+
+          <button
+            type="button"
+            class="
+              media-tab
+              active
+              flex-1
+              rounded-lg
+              px-2
+              py-2.5
+              text-[10px]
+              font-extrabold
+              text-blue-700
+              transition
+            "
+            data-category="semua"
+          >
+            Semua
+          </button>
+
+
+          <button
+            type="button"
+            class="
+              media-tab
+              flex-1
+              rounded-lg
+              px-2
+              py-2.5
+              text-[10px]
+              font-bold
+              text-slate-500
+              transition
+            "
+            data-category="berita"
+          >
+            <i class="fas fa-newspaper mr-1"></i>
+            Berita
+          </button>
+
+
+          <button
+            type="button"
+            class="
+              media-tab
+              flex-1
+              rounded-lg
+              px-2
+              py-2.5
+              text-[10px]
+              font-bold
+              text-slate-500
+              transition
+            "
+            data-category="artikel"
+          >
+            <i class="fas fa-book-open mr-1"></i>
+            Artikel
+          </button>
+
+        </div>
+
+      </div>
+
+
+      <!-- =================================================
+           LIST
+      ================================================== -->
+
+      <div
+        id="media-list"
+        class="
+          max-h-[570px]
+          overflow-y-auto
+          px-4
+          py-3
+          sidebar-scroll
+        "
+      >
+
+        {
+          mediaListDisplay.map((item) => {
+
+            const type =
+              getCategoryType(item);
+
+            return (
+
+              <a
+                href={`/media/${slugify(item.title)}`}
+                class="
+                  media-card
+                  media-item
+                  group
+                  mb-2
+                  flex
+                  gap-3
+                  rounded-2xl
+                  border
+                  border-transparent
+                  bg-slate-50
+                  p-2.5
+                  transition-all
+                  duration-200
+                  hover:-translate-y-0.5
+                  hover:border-blue-100
+                  hover:bg-blue-50/60
+                  hover:shadow-sm
+                "
+                data-type={type}
+                data-title={
+                  String(
+                    item.title || ""
+                  ).toLowerCase()
+                }
+              >
+
+                <!-- THUMB -->
+
+                <div
+                  class="
+                    relative
+                    h-[70px]
+                    w-[82px]
+                    shrink-0
+                    overflow-hidden
+                    rounded-xl
+                    bg-blue-100
+                  "
+                >
+
+                  {item.picture ? (
+
+                    <img
+                      src={imageUrl(item.picture)}
+                      alt={item.title}
+                      class="
+                        media-thumb
+                        h-full
+                        w-full
+                        object-cover
+                      "
+                      loading="lazy"
+                    />
+
+                  ) : (
+
+                    <div
+                      class="
+                        flex
+                        h-full
+                        w-full
+                        items-center
+                        justify-center
+                        bg-gradient-to-br
+                        from-blue-50
+                        to-blue-100
+                        text-blue-500
+                      "
+                    >
+                      <i
+                        class={
+                          `fas ${
+                            type === "artikel"
+                              ? "fa-book-open"
+                              : "fa-newspaper"
+                          }`
+                        }
+                      ></i>
+                    </div>
+
+                  )}
+
+
+                  <!-- TYPE BADGE -->
+
+                  <span
+                    class={
+                      type === "artikel"
+                        ? `
+                          absolute
+                          left-1.5
+                          top-1.5
+                          rounded-md
+                          bg-yellow-400
+                          px-1.5
+                          py-0.5
+                          text-[6px]
+                          font-black
+                          uppercase
+                          text-blue-950
+                          shadow-sm
+                        `
+                        : `
+                          absolute
+                          left-1.5
+                          top-1.5
+                          rounded-md
+                          bg-blue-600
+                          px-1.5
+                          py-0.5
+                          text-[6px]
+                          font-black
+                          uppercase
+                          text-white
+                          shadow-sm
+                        `
+                    }
+                  >
+                    {type === "artikel"
+                      ? "ARTIKEL"
+                      : "BERITA"}
+                  </span>
+
+                </div>
+
+
+                <!-- TEXT -->
+
+                <div
+                  class="
+                    min-w-0
+                    flex-1
+                  "
+                >
+
+                  <div
+                    class="
+                      mb-1
+                      flex
+                      items-center
+                      gap-1.5
+                      text-[8px]
+                      text-slate-400
+                    "
+                  >
+
+                    <i class="far fa-calendar"></i>
+
+                    {formatDate(item.date)}
+
+                  </div>
+
+
+                  <h3
+                    class="
+                      line-clamp-2
+                      text-[10px]
+                      font-extrabold
+                      leading-[1.45]
+                      text-[#123b78]
+                      transition
+                      group-hover:text-blue-600
+                    "
+                  >
+                    {item.title}
+                  </h3>
+
+                </div>
+
+
+                <!-- ARROW -->
+
+                <div
+                  class="
+                    flex
+                    items-center
+                    text-slate-300
+                    transition
+                    group-hover:translate-x-0.5
+                    group-hover:text-blue-500
+                  "
+                >
+
+                  <i
+                    class="
+                      fas
+                      fa-chevron-right
+                      text-[8px]
+                    "
+                  ></i>
+
+                </div>
+
+              </a>
+
+            );
+
+          })
+        }
+
+      </div>
+
+
+      <!-- EMPTY -->
+
+      <div
+        id="media-empty"
+        class="
+          hidden
+          px-5
+          py-8
+          text-center
+        "
+      >
+
+        <div
+          class="
+            mx-auto
+            flex
+            h-12
+            w-12
+            items-center
+            justify-center
+            rounded-2xl
+            bg-slate-100
+            text-slate-400
+          "
+        >
+          <i class="fas fa-search"></i>
+        </div>
+
+        <p
+          class="
+            mt-3
+            text-xs
+            font-bold
+            text-slate-500
+          "
+        >
+          Media tidak ditemukan.
+        </p>
+
+      </div>
+
+
+      <!-- FOOTER -->
+
+      <div
+        class="
+          border-t
+          border-slate-100
+          bg-slate-50
+          p-3
+        "
+      >
+
+        <a
+          href="/berita"
+          class="
+            flex
+            items-center
+            justify-center
+            gap-2
+            rounded-xl
+            bg-blue-600
+            px-4
+            py-3
+            text-[10px]
+            font-extrabold
+            text-white
+            shadow-sm
+            transition
+            hover:bg-blue-700
+            hover:shadow-md
+          "
+        >
+
+          Lihat Semua Media
+
+          <i class="fas fa-arrow-right"></i>
+
+        </a>
+
+      </div>
+
+    </section>
+
+
+    <!-- =================================================
+         LAYANAN CEPAT
+    ================================================== -->
+
+    <section
+      class="
+        quick-service
+        overflow-hidden
+        rounded-[26px]
+        p-6
+        text-white
+        shadow-[0_18px_45px_rgba(0,83,190,.18)]
+      "
+    >
+
+      <div class="relative z-10">
+
+        <span
+          class="
+            text-[8px]
+            font-extrabold
+            uppercase
+            tracking-[.2em]
+            text-blue-200
+          "
+        >
+          DPMPTSP SURABAYA
+        </span>
+
+
+        <div
+          class="
+            mt-1
+            flex
+            items-center
+            gap-2
+          "
+        >
+
+          <span
+            class="
+              flex
+              h-9
+              w-9
+              items-center
+              justify-center
+              rounded-xl
+              bg-yellow-400
+              text-blue-950
+            "
+          >
+            <i class="fas fa-bolt"></i>
+          </span>
+
+          <h2
+            class="
+              font-display
+              text-xl
+              font-extrabold
+            "
+          >
+            Layanan Cepat
+          </h2>
+
+        </div>
+
+
+        <p
+          class="
+            mt-3
+            text-[10px]
+            leading-5
+            text-blue-100
+          "
+        >
+          Akses layanan dan informasi
+          DPMPTSP secara mudah dan cepat.
+        </p>
+
+
+        <div class="mt-5 space-y-2">
+
+          {
+            [
+              [
+                "Call Center Surabaya",
+                "/Aplikasi#ijinusaha-sec",
+                "fa-phone"
+              ],
+              [
+                "TAKON SOBAT",
+                "/Aplikasi#ijinusaha-sec",
+                "fa-comments"
+              ],
+              [
+                "LAPIS LUPIS",
+                "/Aplikasi#ijinusaha-sec",
+                "fa-layer-group"
+              ],
+              [
+                "Perizinan Online",
+                "/Aplikasi#ijinusaha-sec",
+                "fa-file-signature"
+              ],
+              [
+                "Pengaduan Layanan",
+                "/Aplikasi#pengaduan-sec",
+                "fa-headset"
+              ]
+            ].map(
+              ([label, href, icon]) => (
+
+                <a
+                  href={href}
+                  class="
+                    quick-link
+                    flex
+                    items-center
+                    justify-between
+                    rounded-xl
+                    border
+                    border-white/15
+                    bg-white/10
+                    px-3
+                    py-3
+                    backdrop-blur
+                  "
+                >
+
+                  <span
+                    class="
+                      flex
+                      items-center
+                      gap-3
+                    "
+                  >
+
+                    <span
+                      class="
+                        flex
+                        h-8
+                        w-8
+                        items-center
+                        justify-center
+                        rounded-lg
+                        bg-white/10
+                        text-yellow-300
+                      "
+                    >
+                      <i
+                        class={`fas ${icon} text-xs`}
+                      ></i>
+                    </span>
+
+                    <span
+                      class="
+                        text-[10px]
+                        font-bold
+                      "
+                    >
+                      {label}
+                    </span>
+
+                  </span>
+
+                  <i
+                    class="
+                      fas
+                      fa-chevron-right
+                      text-[9px]
+                      text-yellow-300
+                    "
+                  ></i>
+
+                </a>
+
+              )
+            )
+          }
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- =================================================
+         SHARE
+    ================================================== -->
+
+    <section
+      class="
+        rounded-[26px]
+        border
+        border-blue-100
+        bg-white
+        p-6
+        shadow-[0_18px_50px_rgba(15,23,42,.07)]
+      "
+    >
+
+      <span
+        class="
+          text-[8px]
+          font-extrabold
+          uppercase
+          tracking-[.2em]
+          text-slate-400
+        "
+      >
+        Share
+      </span>
+
+      <h2
+        class="
+          font-display
+          mt-1
+          text-lg
+          font-extrabold
+          text-[#123b78]
+        "
+      >
+        Bagikan Artikel
+      </h2>
+
+      <p
+        class="
+          mt-1
+          text-[10px]
+          text-slate-500
+        "
+      >
+        Sebarkan informasi kepada rekan Anda.
+      </p>
+
+
+      <div
+        class="
+          mt-5
+          grid
+          grid-cols-4
+          gap-2
+        "
+      >
+
+        <a
+          id="share-facebook"
+          href="#"
+          target="_blank"
+          rel="noopener"
+          class="
+            share-button
+            flex
+            h-11
+            items-center
+            justify-center
+            rounded-xl
+            bg-[#1877F2]
+            text-white
+          "
+        >
+          <i class="fab fa-facebook-f"></i>
+        </a>
+
+
+        <a
+          id="share-twitter"
+          href="#"
+          target="_blank"
+          rel="noopener"
+          class="
+            share-button
+            flex
+            h-11
+            items-center
+            justify-center
+            rounded-xl
+            bg-slate-900
+            text-white
+          "
+        >
+          <i class="fab fa-x-twitter"></i>
+        </a>
+
+
+        <a
+          id="share-whatsapp"
+          href="#"
+          target="_blank"
+          rel="noopener"
+          class="
+            share-button
+            flex
+            h-11
+            items-center
+            justify-center
+            rounded-xl
+            bg-[#25D366]
+            text-white
+          "
+        >
+          <i class="fab fa-whatsapp"></i>
+        </a>
+
+
+        <button
+          id="copy-link"
+          type="button"
+          class="
+            share-button
+            flex
+            h-11
+            items-center
+            justify-center
+            rounded-xl
+            bg-blue-50
+            text-blue-700
+          "
+        >
+          <i class="fas fa-link"></i>
+        </button>
+
+      </div>
+
+
+      <input
+        id="article-link"
+        value=""
+        readonly
+        class="
+          mt-4
+          w-full
+          rounded-xl
+          border
+          border-slate-200
+          bg-slate-50
+          px-3
+          py-2.5
+          text-[10px]
+          text-slate-500
+          outline-none
+        "
+      />
+
+
+      <p
+        id="copy-message"
+        class="
+          mt-2
+          hidden
+          text-[10px]
+          font-bold
+          text-emerald-600
+        "
+      >
+        <i class="fas fa-check mr-1"></i>
+        Link berhasil disalin.
+      </p>
+
+    </section>
+
+  </div>
+
+</aside>
+
+
+  </div>
+
+</main>
+
+
+<!-- =====================================================
+     BACK TO TOP
+====================================================== -->
+
+<button
+  id="back-to-top"
+  type="button"
+  aria-label="Kembali ke atas"
+  class="
+    fixed
+    bottom-5
+    right-5
+    z-50
+    hidden
+    h-11
+    w-11
+    items-center
+    justify-center
+    rounded-xl
+    bg-blue-600
+    text-white
+    shadow-lg
+    transition
+    hover:bg-blue-700
+  "
+>
+
+  <i
+    class="
+      fas
+      fa-arrow-up
+      text-xs
+    "
+  ></i>
+
+</button>
+
+
+<!-- =====================================================
+     JAVASCRIPT
+====================================================== -->
+
+<script>
+
+  /* =====================================================
+     SEARCH
+  ===================================================== */
+
+  const mediaSearch =
+    document.getElementById(
+      "media-search"
+    );
+
+
+  /* =====================================================
+     TABS
+  ===================================================== */
+
+  const mediaTabs =
+    document.querySelectorAll(
+      ".media-tab"
+    );
+
+
+  /* =====================================================
+     MEDIA ITEMS
+  ===================================================== */
+
+  const mediaItems =
+    document.querySelectorAll(
+      ".media-item"
+    );
+
+
+  /* =====================================================
+     EMPTY
+  ===================================================== */
+
+  const mediaEmpty =
+    document.getElementById(
+      "media-empty"
+    );
+
+
+  /* =====================================================
+     ACTIVE CATEGORY
+  ===================================================== */
+
+  let activeCategory =
+    "semua";
+
+
+  /* =====================================================
+     FILTER
+  ===================================================== */
+
+  function filterMedia() {
+
+    const keyword =
+      String(
+        mediaSearch?.value || ""
+      )
+        .toLowerCase()
+        .trim();
+
+
+    let visible =
+      0;
+
+
+    mediaItems.forEach(
+      (item) => {
+
+        const type =
+          item.dataset.type ||
+          "";
+
+
+        const title =
+          item.dataset.title ||
+          "";
+
+
+        const categoryMatch =
+          activeCategory === "semua" ||
+          type === activeCategory;
+
+
+        const searchMatch =
+          !keyword ||
+          title.includes(
+            keyword
+          );
+
+
+        const shouldShow =
+          categoryMatch &&
+          searchMatch;
+
+
+        if (shouldShow) {
+
+          item.classList.remove(
+            "hidden"
+          );
+
+          visible++;
+
+        }
+
+        else {
+
+          item.classList.add(
+            "hidden"
+          );
+
+        }
+
+      }
+    );
+
+
+    if (mediaEmpty) {
+
+      mediaEmpty.classList.toggle(
+        "hidden",
+        visible > 0
+      );
+
+    }
+
+  }
+
+
+  /* =====================================================
+     TAB CLICK
+  ===================================================== */
+
+  mediaTabs.forEach(
+    (tab) => {
+
+      tab.addEventListener(
+        "click",
+        () => {
+
+          activeCategory =
+            tab.dataset.category ||
+            "semua";
+
+
+          mediaTabs.forEach(
+            (button) => {
+
+              button.classList.remove(
+                "active"
+              );
+
+              button.classList.remove(
+                "bg-white"
+              );
+
+              button.classList.remove(
+                "text-blue-700"
+              );
+
+              button.classList.remove(
+                "shadow-sm"
+              );
+
+              button.classList.add(
+                "text-slate-500"
+              );
+
+            }
+          );
+
+
+          tab.classList.add(
+            "active"
+          );
+
+          tab.classList.add(
+            "bg-white"
+          );
+
+          tab.classList.add(
+            "text-blue-700"
+          );
+
+          tab.classList.add(
+            "shadow-sm"
+          );
+
+          tab.classList.remove(
+            "text-slate-500"
+          );
+
+
+          filterMedia();
+
+        }
+      );
+
+    }
+  );
+
+
+  /* =====================================================
+     SEARCH INPUT
+  ===================================================== */
+
+  mediaSearch?.addEventListener(
+    "input",
+    filterMedia
+  );
+
+
+  /* =====================================================
+     INITIAL FILTER
+  ===================================================== */
+
+  filterMedia();
+
+
+  /* =====================================================
+     SHARE URL
+  ===================================================== */
+
+  const currentUrl =
+    window.location.href;
+
+
+  const pageTitle =
+    document.title;
+
+
+  const articleLink =
+    document.getElementById(
+      "article-link"
+    );
+
+
+  if (articleLink) {
+
+    articleLink.value =
+      currentUrl;
+
+  }
+
+
+  /* =====================================================
+     FACEBOOK
+  ===================================================== */
+
+  const facebook =
+    document.getElementById(
+      "share-facebook"
+    );
+
+
+  if (facebook) {
+
+    facebook.href =
+      `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(currentUrl)}`;
+
+  }
+
+
+  /* =====================================================
+     X
+  ===================================================== */
+
+  const twitter =
+    document.getElementById(
+      "share-twitter"
+    );
+
+
+  if (twitter) {
+
+    twitter.href =
+      `https://twitter.com/intent/tweet?url=${encodeURIComponent(currentUrl)}&text=${encodeURIComponent(pageTitle)}`;
+
+  }
+
+
+  /* =====================================================
+     WHATSAPP
+  ===================================================== */
+
+  const whatsapp =
+    document.getElementById(
+      "share-whatsapp"
+    );
+
+
+  if (whatsapp) {
+
+    whatsapp.href =
+      `https://wa.me/?text=${encodeURIComponent(
+        pageTitle + " " + currentUrl
+      )}`;
+
+  }
+
+
+  /* =====================================================
+     COPY LINK
+  ===================================================== */
+
+  const copyButton =
+    document.getElementById(
+      "copy-link"
+    );
+
+
+  const copyMessage =
+    document.getElementById(
+      "copy-message"
+    );
+
+
+  async function copyLink() {
+
+    try {
+
+      await navigator.clipboard.writeText(
+        currentUrl
+      );
+
+
+      if (copyMessage) {
+
+        copyMessage.classList.remove(
+          "hidden"
+        );
+
+
+        setTimeout(
+          () => {
+
+            copyMessage.classList.add(
+              "hidden"
+            );
+
+          },
+          2500
+        );
+
+      }
+
+    }
+
+    catch {
+
+      if (articleLink) {
+
+        articleLink.select();
+
+        document.execCommand(
+          "copy"
+        );
+
+      }
+
+    }
+
+  }
+
+
+  copyButton?.addEventListener(
+    "click",
+    copyLink
+  );
+
+
+  /* =====================================================
+     READING PROGRESS
+  ===================================================== */
+
+  const progress =
+    document.getElementById(
+      "reading-progress"
+    );
+
+
+  function updateProgress() {
+
+    if (!progress) {
+
+      return;
+
+    }
+
+
+    const scrollTop =
+      window.scrollY;
+
+
+    const height =
+      document.documentElement
+        .scrollHeight -
+      window.innerHeight;
+
+
+    const percent =
+      height > 0
+        ? (
+            scrollTop /
+            height
+          ) * 100
+        : 0;
+
+
+    progress.style.width =
+      `${Math.min(
+        100,
+        Math.max(
+          0,
+          percent
+        )
+      )}%`;
+
+  }
+
+
+  window.addEventListener(
+    "scroll",
+    updateProgress,
+    {
+      passive: true
+    }
+  );
+
+
+  updateProgress();
+
+
+  /* =====================================================
+     BACK TO TOP
+  ===================================================== */
+
+  const backTop =
+    document.getElementById(
+      "back-to-top"
+    );
+
+
+  function updateBackTop() {
+
+    if (!backTop) {
+
+      return;
+
+    }
+
+
+    if (
+      window.scrollY > 500
+    ) {
+
+      backTop.classList.remove(
+        "hidden"
+      );
+
+      backTop.classList.add(
+        "flex"
+      );
+
+    }
+
+    else {
+
+      backTop.classList.add(
+        "hidden"
+      );
+
+      backTop.classList.remove(
+        "flex"
+      );
+
+    }
+
+  }
+
+
+  window.addEventListener(
+    "scroll",
+    updateBackTop,
+    {
+      passive: true
+    }
+  );
+
+
+  backTop?.addEventListener(
+    "click",
+    () => {
+
+      window.scrollTo(
+        {
+          top: 0,
+          behavior: "smooth"
+        }
+      );
+
+    }
+  );
+
+
+  updateBackTop();
+
+</script>
+
+</MainLayout>
