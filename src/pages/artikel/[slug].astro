@@ -4,6 +4,10 @@ export const prerender = false;
 import MainLayout from "../../layouts/MainLayout.astro";
 import { slugify } from "../../utils/slugify";
 
+/* =========================================================
+   SLUG
+========================================================= */
+
 const rawSlug = Astro.params.slug || "";
 
 const slug = decodeURIComponent(rawSlug)
@@ -11,8 +15,9 @@ const slug = decodeURIComponent(rawSlug)
   .toLowerCase()
   .trim();
 
+
 /* =========================================================
-   TANGGAL API
+   API DATE
 ========================================================= */
 
 const awal = "2024-01-01";
@@ -26,10 +31,15 @@ const akhir =
 
 
 /* =========================================================
-   API BERITA / ARTIKEL
+   DATA
 ========================================================= */
 
 let rows = [];
+
+
+/* =========================================================
+   API BERITA + ARTIKEL
+========================================================= */
 
 try {
 
@@ -42,206 +52,224 @@ try {
   const password =
     import.meta.env.API_BERITA_PASSWORD;
 
+
   if (!username || !password) {
+
     throw new Error(
       "API_BERITA_USERNAME / API_BERITA_PASSWORD belum diset"
     );
+
   }
 
-  const form = new URLSearchParams();
 
-  form.append("awal", awal);
-  form.append("akhir", akhir);
+  const form =
+    new URLSearchParams();
 
-  const response = await fetch(
-    apiUrl,
-    {
-      method: "POST",
-
-      headers: {
-        username,
-        password,
-        Accept: "application/json",
-        "Content-Type":
-          "application/x-www-form-urlencoded"
-      },
-
-      body: form.toString()
-    }
+  form.append(
+    "awal",
+    awal
   );
+
+  form.append(
+    "akhir",
+    akhir
+  );
+
+
+  const response =
+    await fetch(
+      apiUrl,
+      {
+        method: "POST",
+
+        headers: {
+          username,
+          password,
+          Accept: "application/json",
+          "Content-Type":
+            "application/x-www-form-urlencoded"
+        },
+
+        body:
+          form.toString()
+      }
+    );
+
 
   const responseText =
     await response.text();
 
+
   if (!response.ok) {
+
     throw new Error(
       `API Berita HTTP ${response.status}: ${responseText}`
     );
+
   }
+
 
   let payload;
 
   try {
 
     payload =
-      JSON.parse(responseText);
+      JSON.parse(
+        responseText
+      );
 
   } catch {
 
     throw new Error(
-      `Response API bukan JSON: ${
-        responseText.substring(0, 500)
-      }`
+      `Response API bukan JSON: ${responseText.substring(0, 1000)}`
     );
 
   }
 
 
-  /* =====================================================
-     AMBIL ARRAY
-  ===================================================== */
+  /* =======================================================
+     AMBIL ARRAY RESPONSE
+  ======================================================= */
 
   let apiData = [];
+
 
   if (Array.isArray(payload)) {
 
     apiData = payload;
 
-  } else if (Array.isArray(payload?.data)) {
+  }
+
+  else if (Array.isArray(payload?.data)) {
 
     apiData = payload.data;
 
-  } else if (Array.isArray(payload?.results)) {
+  }
+
+  else if (Array.isArray(payload?.results)) {
 
     apiData = payload.results;
 
-  } else if (Array.isArray(payload?.result)) {
+  }
+
+  else if (Array.isArray(payload?.result)) {
 
     apiData = payload.result;
 
-  } else if (Array.isArray(payload?.items)) {
+  }
+
+  else if (Array.isArray(payload?.items)) {
 
     apiData = payload.items;
 
-  } else if (Array.isArray(payload?.rows)) {
+  }
+
+  else if (Array.isArray(payload?.rows)) {
 
     apiData = payload.rows;
 
   }
 
 
-  /* =====================================================
-     NORMALISASI
-  ===================================================== */
+  /* =======================================================
+     NORMALISASI DATA
+  ======================================================= */
 
   rows =
     apiData
+      .map(
+        (item) => ({
 
-      .map((item) => ({
+          id_post:
+            Number(
+              item?.id_post ??
+              item?.id ??
+              0
+            ),
 
-        id_post:
-          Number(
-            item?.id_post ??
-            item?.id ??
-            0
-          ),
+          id_category:
+            Number(
+              item?.id_category ??
+              0
+            ),
 
-        id_category:
-          Number(
-            item?.id_category ??
-            0
-          ),
+          title:
+            item?.title ??
+            item?.judul ??
+            "",
 
-        title:
-          item?.title ??
-          item?.judul ??
-          "",
+          content:
+            item?.content ??
+            item?.isi ??
+            item?.isi_konten ??
+            "",
 
-        content:
-          item?.content ??
-          item?.isi ??
-          item?.isi_konten ??
-          "",
+          ref_content:
+            item?.ref_content ??
+            item?.content ??
+            item?.isi ??
+            "",
 
-        ref_content:
-          item?.ref_content ??
-          "",
+          seotitle:
+            item?.seotitle ??
+            item?.seo_title ??
+            "",
 
-        seotitle:
-          item?.seotitle ??
-          item?.seo_title ??
-          "",
+          tag:
+            item?.tag ??
+            "",
 
-        tag:
-          item?.tag ??
-          "",
+          date:
+            item?.date ??
+            item?.tanggal ??
+            "",
 
-        date:
-          item?.date ??
-          item?.tanggal ??
-          "",
+          time:
+            item?.time ??
+            item?.jam ??
+            "",
 
-        time:
-          item?.time ??
-          item?.jam ??
-          "",
+          editor:
+            item?.editor ??
+            "",
 
-        editor:
-          item?.editor ??
-          "",
+          active:
+            item?.active ??
+            item?.aktif ??
+            "Y",
 
-        active:
-          item?.active ??
-          item?.aktif ??
-          "Y",
+          headline:
+            item?.headline ??
+            "N",
 
-        headline:
-          item?.headline ??
-          "N",
+          picture:
+            item?.picture ??
+            item?.gambar ??
+            item?.foto ??
+            "",
 
-        picture:
-          item?.picture ??
-          item?.gambar ??
-          item?.foto ??
-          "",
+          hits:
+            Number(
+              item?.hits ??
+              0
+            ),
 
-        hits:
-          Number(
-            item?.hits ??
-            0
-          ),
+          category_title:
+            item?.category_title ??
+            item?.category ??
+            item?.nama_category ??
+            "",
 
-        category_title:
-          item?.category_title ??
-          item?.category ??
-          item?.nama_category ??
-          "",
+          raw:
+            item
 
-        raw:
-          item
-
-      }))
-
-      /* =================================================
-         HANYA ARTIKEL
-         2 = PERIZINAN
-         3 = PENANAMAN MODAL
-      ================================================= */
-
-      .filter(
-        (item) =>
-          [2, 3].includes(
-            Number(item.id_category)
-          )
+        })
       )
-
-      /* =================================================
-         HANYA AKTIF
-      ================================================= */
-
       .filter(
         (item) =>
-          String(item.active)
+          String(
+            item.active
+          )
             .toUpperCase() === "Y"
       );
 
@@ -249,7 +277,7 @@ try {
 } catch (error) {
 
   console.error(
-    "[API ARTIKEL ERROR]",
+    "[API BERITA ERROR]",
     error
   );
 
@@ -259,1239 +287,3927 @@ try {
 
 
 /* =========================================================
-   CARI ARTIKEL BERDASARKAN SLUG
+   CATEGORY
+=========================================================
+
+   BERITA
+   ID 1 / 8
+
+   ARTIKEL
+   ID 2 / 3
 ========================================================= */
 
-const post =
-  rows.find((row) => {
+function getCategoryType(item) {
 
-    const rowSlug =
-      slugify(
-        row.title || ""
-      )
-        .toLowerCase()
-        .trim();
+  const id =
+    Number(
+      item?.id_category
+    );
 
-    return rowSlug === slug;
-
-  });
-
-
-/* =========================================================
-   KATEGORI ARTIKEL
-========================================================= */
-
-const categoryMap = {
-  2: "Artikel Perizinan",
-  3: "Artikel Penanaman Modal"
-};
-
-
-/* =========================================================
-   NAMA KATEGORI
-========================================================= */
-
-const namaKategori =
-  post
-    ? (
-        categoryMap[
-          Number(post.id_category)
-        ] ||
-        "Artikel"
-      )
-    : "Artikel";
-
-
-/* =========================================================
-   ARTIKEL PERIZINAN
-   CATEGORY 2
-========================================================= */
-
-const perizinanList =
-  [...rows]
-
-    .filter(
-      (item) =>
-        Number(item.id_category) === 2
+  const name =
+    String(
+      item?.category_title || ""
     )
-
-    .sort(
-      (a, b) => {
-
-        const dateA =
-          `${a.date || ""} ${a.time || ""}`;
-
-        const dateB =
-          `${b.date || ""} ${b.time || ""}`;
-
-        return dateB.localeCompare(
-          dateA
-        );
-
-      }
-    )
-
-    .slice(0, 5);
+      .toLowerCase()
+      .trim();
 
 
-/* =========================================================
-   ARTIKEL PENANAMAN MODAL
-   CATEGORY 3
-========================================================= */
+  if (
+    id === 1 ||
+    id === 8 ||
+    name === "berita" ||
+    name.includes("berita")
+  ) {
 
-const penanamanModalList =
-  [...rows]
+    return "berita";
 
-    .filter(
-      (item) =>
-        Number(item.id_category) === 3
-    )
+  }
 
-    .sort(
-      (a, b) => {
 
-        const dateA =
-          `${a.date || ""} ${a.time || ""}`;
+  if (
+    id === 2 ||
+    id === 3 ||
+    name === "artikel" ||
+    name.includes("artikel")
+  ) {
 
-        const dateB =
-          `${b.date || ""} ${b.time || ""}`;
+    return "artikel";
 
-        return dateB.localeCompare(
-          dateA
-        );
+  }
 
-      }
-    )
 
-    .slice(0, 5);
+  return "lainnya";
+
+}
 
 
 /* =========================================================
-   POST TIDAK DITEMUKAN
+   SUB KATEGORI ARTIKEL
 ========================================================= */
 
-if (!post) {
+function getArticleCategory(item) {
 
-  console.error(
-    "[ARTIKEL TIDAK DITEMUKAN]",
-    slug
-  );
+  const id = Number(item?.id_category || 0);
 
-  throw new Error(
-    "Artikel tidak ditemukan"
+  /*
+   * UTAMAKAN ID KATEGORI.
+   * 2 = Artikel Perizinan
+   * 3 = Artikel Penanaman Modal
+   *
+   * Ini sengaja diletakkan sebelum pencarian teks supaya
+   * judul artikel yang kebetulan mengandung kata "investasi"
+   * tidak salah masuk kategori Penanaman Modal.
+   */
+  if (id === 2) return "perizinan";
+  if (id === 3) return "penanaman-modal";
+
+  const source = [
+    item?.category_title,
+    item?.tag,
+    item?.raw?.category_title,
+    item?.raw?.category,
+    item?.raw?.nama_category,
+    item?.raw?.tag
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  if (
+    source.includes("perizin") ||
+    source.includes("perijinan") ||
+    source.includes("izin")
+  ) {
+    return "perizinan";
+  }
+
+  if (
+    source.includes("penanaman modal") ||
+    source.includes("penanaman") ||
+    source.includes("investasi") ||
+    source.includes("modal")
+  ) {
+    return "penanaman-modal";
+  }
+
+  return "lainnya";
+}
+
+/* =========================================================
+   SORT TERBARU
+========================================================= */
+
+function sortTerbaru(a, b) {
+
+  const dateA =
+    `${a.date || ""} ${a.time || ""}`;
+
+  const dateB =
+    `${b.date || ""} ${b.time || ""}`;
+
+
+  return dateB.localeCompare(
+    dateA
   );
 
 }
 
 
 /* =========================================================
+   MEDIA LIST
+========================================================= */
+
+const mediaList =
+  [...rows]
+    .filter(
+      (item) =>
+        [
+          "berita",
+          "artikel"
+        ].includes(
+          getCategoryType(item)
+        )
+    )
+    .sort(
+      sortTerbaru
+    );
+
+
+/* =========================================================
+   10 BERITA TERBARU
+========================================================= */
+
+const beritaMedia =
+  mediaList
+    .filter(
+      (item) =>
+        getCategoryType(item) === "berita"
+    )
+    .slice(0, 10);
+
+
+/* =========================================================
+   10 ARTIKEL TERBARU
+========================================================= */
+
+const artikelMedia =
+  mediaList
+    .filter(
+      (item) =>
+        getCategoryType(item) === "artikel"
+    );
+
+
+/* =========================================================
+   SEMUA ARTIKEL
+========================================================= */
+
+const mediaListDisplay = artikelMedia;
+
+const totalPerizinan = artikelMedia.filter(
+  (item) => getArticleCategory(item) === "perizinan"
+).length;
+
+const totalPenanamanModal = artikelMedia.filter(
+  (item) => getArticleCategory(item) === "penanaman-modal"
+).length;
+
+
+/* =========================================================
+   CARI POST DETAIL
+========================================================= */
+
+const post =
+  rows.find(
+    (row) => {
+
+      const rowSlug =
+        slugify(
+          row.title || ""
+        )
+          .toLowerCase()
+          .trim();
+
+
+      return (
+        rowSlug === slug
+      );
+
+    }
+  );
+
+
+/* =========================================================
+   KATEGORI POST
+========================================================= */
+
+let namaKategori = "Artikel";
+let kategoriKey = "lainnya";
+
+if (post) {
+
+  kategoriKey = getArticleCategory(post);
+
+  if (kategoriKey === "perizinan") {
+    namaKategori = "Artikel Perizinan";
+  }
+  else if (kategoriKey === "penanaman-modal") {
+    namaKategori = "Penanaman Modal";
+  }
+  else {
+    namaKategori = "Artikel";
+  }
+}
+
+/* =========================================================
    DEBUG
 ========================================================= */
 
 console.log(
-  "[ARTIKEL]",
+  "[MEDIA DETAIL]",
   {
-    id: post.id_post,
-    title: post.title,
-    category: namaKategori,
-    slug
+    slug,
+    post: post?.title,
+    kategori: namaKategori,
+    totalRows: rows.length,
+    totalMedia: mediaList.length,
+    totalBerita: beritaMedia.length,
+    totalArtikel: artikelMedia.length,
+    totalDisplay: mediaListDisplay.length
   }
 );
+
+
+/* =========================================================
+   404
+========================================================= */
+
+if (!post) {
+
+  throw new Error(
+    `Media tidak ditemukan: ${slug}`
+  );
+
+}
+
+
+/* =========================================================
+   FORMAT DATE
+========================================================= */
+
+function formatDate(date) {
+
+  if (!date) {
+
+    return "—";
+
+  }
+
+
+  const parsed =
+    new Date(date);
+
+
+  if (
+    Number.isNaN(
+      parsed.getTime()
+    )
+  ) {
+
+    return date;
+
+  }
+
+
+  return parsed.toLocaleDateString(
+    "id-ID",
+    {
+      day: "numeric",
+      month: "long",
+      year: "numeric"
+    }
+  );
+
+}
+
+
+/* =========================================================
+   IMAGE URL
+========================================================= */
+
+function imageUrl(picture) {
+
+  if (!picture) {
+
+    return "";
+
+  }
+
+
+  if (
+    String(picture)
+      .startsWith("http")
+  ) {
+
+    return picture;
+
+  }
+
+
+  return (
+    "https://dpm-ptsp.surabaya.go.id/fileberita/" +
+    picture
+  );
+
+}
 
 ---
 
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
 
-  body {
-    font-family: 'Poppins', sans-serif;
+@import url(
+  'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap'
+);
+
+
+/* =========================================================
+   GLOBAL
+========================================================= */
+
+:global(html) {
+  scroll-behavior: smooth;
+}
+
+
+:global(body) {
+
+  margin: 0;
+
+  font-family:
+    'Inter',
+    sans-serif;
+
+  background:
+    #f4f9ff;
+
+  color:
+    #0f172a;
+
+}
+
+
+.font-display {
+
+  font-family:
+    'Plus Jakarta Sans',
+    sans-serif;
+
+}
+
+
+/* =========================================================
+   READING PROGRESS
+========================================================= */
+
+.reading-progress {
+
+  position: fixed;
+
+  left: 0;
+  top: 0;
+
+  width: 0;
+
+  height: 4px;
+
+  z-index: 99999;
+
+  background:
+    linear-gradient(
+      90deg,
+      #facc15,
+      #38bdf8,
+      #0755bd
+    );
+
+}
+
+
+/* =========================================================
+   HERO
+========================================================= */
+
+.media-hero {
+
+  position: relative;
+
+  min-height: 540px;
+
+  overflow: hidden;
+
+  background:
+    linear-gradient(
+      110deg,
+      #062d70 0%,
+      #064b9d 48%,
+      #0756ad 100%
+    );
+
+  color: white;
+
+}
+
+
+/* =========================================================
+   TEMA HEADER BERDASARKAN KATEGORI ARTIKEL
+========================================================= */
+
+.media-hero.theme-perizinan {
+  background: linear-gradient(115deg, #062f78 0%, #0754b8 52%, #0b83d8 100%);
+}
+
+.media-hero.theme-modal {
+  background: linear-gradient(115deg, #064b45 0%, #08745f 48%, #0754b8 100%);
+}
+
+.media-hero.theme-artikel {
+  background: linear-gradient(115deg, #082f70 0%, #0754b8 55%, #0b72df 100%);
+}
+
+.media-hero.theme-perizinan .category-badge {
+  background: #ffd21c;
+  color: #082f70;
+}
+
+.media-hero.theme-modal .category-badge {
+  background: #34d399;
+  color: #064b45;
+}
+
+.media-hero.theme-modal .hero-date i,
+.media-hero.theme-modal .meta-icon i,
+.media-hero.theme-modal .meta-item-simple i {
+  color: #6ee7b7;
+}
+
+.media-hero.theme-perizinan .hero-date i,
+.media-hero.theme-perizinan .meta-icon i,
+.media-hero.theme-perizinan .meta-item-simple i {
+  color: #ffd21c;
+}
+
+.category-label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.58);
+}
+
+/* =========================================================
+   HERO BACKGROUND
+========================================================= */
+
+.hero-bg {
+
+  position: absolute;
+
+  inset: 0;
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(3,39,92,.97) 0%,
+      rgba(4,72,148,.91) 48%,
+      rgba(5,83,165,.75) 100%
+    );
+
+  z-index: 1;
+
+}
+
+
+/* =========================================================
+   FOTO SIOLA
+========================================================= */
+
+.hero-city {
+
+  position: absolute;
+
+  right: 0;
+  top: 0;
+
+  width: 58%;
+  height: 100%;
+
+  background-image:
+    linear-gradient(
+      90deg,
+      rgba(4,65,135,1) 0%,
+      rgba(4,65,135,.78) 22%,
+      rgba(4,65,135,.35) 60%,
+      rgba(4,65,135,.18) 100%
+    ),
+    url("/images/siola2.jpg");
+
+  background-size:
+    cover;
+
+  background-position:
+    center;
+
+  opacity:
+    .72;
+
+  z-index:
+    2;
+
+}
+
+
+/* =========================================================
+   GRID
+========================================================= */
+
+.hero-grid {
+
+  position: absolute;
+
+  inset: 0;
+
+  background-image:
+    linear-gradient(
+      rgba(255,255,255,.045) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      rgba(255,255,255,.045) 1px,
+      transparent 1px
+    );
+
+  background-size:
+    38px 38px;
+
+  opacity:
+    .55;
+
+  z-index:
+    3;
+
+  pointer-events:
+    none;
+
+}
+
+
+/* =========================================================
+   LINGKARAN BIRU
+========================================================= */
+
+.hero-blue-circle {
+
+  position: absolute;
+
+  width: 390px;
+  height: 390px;
+
+  left: -190px;
+  top: -160px;
+
+  border-radius:
+    50%;
+
+  border:
+    75px solid
+    rgba(30,112,208,.45);
+
+  z-index:
+    4;
+
+}
+
+
+.hero-blue-circle-2 {
+
+  position: absolute;
+
+  width: 300px;
+  height: 300px;
+
+  left: -170px;
+  bottom: -205px;
+
+  border-radius:
+    50%;
+
+  background:
+    rgba(5,47,111,.55);
+
+  z-index:
+    4;
+
+}
+
+
+/* =========================================================
+   KUNING
+========================================================= */
+
+.hero-yellow-left {
+
+  position: absolute;
+
+  width: 220px;
+  height: 72px;
+
+  left: -65px;
+  top: 125px;
+
+  background:
+    #ffd21c;
+
+  border-radius:
+    50px;
+
+  transform:
+    rotate(-32deg);
+
+  z-index:
+    5;
+
+}
+
+
+.hero-yellow-right {
+
+  position: absolute;
+
+  width: 310px;
+  height: 80px;
+
+  right: -75px;
+  bottom: 8px;
+
+  background:
+    #ffd21c;
+
+  border-radius:
+    60px;
+
+  transform:
+    rotate(-38deg);
+
+  z-index:
+    5;
+
+}
+
+
+/* =========================================================
+   CONTENT
+========================================================= */
+
+.hero-inner {
+
+  position: relative;
+
+  z-index:
+    10;
+
+  width:
+    min(
+      1180px,
+      calc(100% - 40px)
+    );
+
+  margin:
+    auto;
+
+  padding-top:
+    58px;
+
+  padding-bottom:
+    55px;
+
+}
+
+
+/* =========================================================
+   BREADCRUMB
+========================================================= */
+
+.hero-breadcrumb {
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  gap:
+    10px;
+
+  margin-bottom:
+    28px;
+
+  font-size:
+    13px;
+
+  color:
+    rgba(255,255,255,.72);
+
+}
+
+
+.hero-breadcrumb a {
+
+  color:
+    white;
+
+  text-decoration:
+    none;
+
+}
+
+
+.hero-breadcrumb a:hover {
+
+  color:
+    #ffd21c;
+
+}
+
+
+/* =========================================================
+   CATEGORY
+========================================================= */
+
+.hero-category {
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  flex-wrap:
+    wrap;
+
+  gap:
+    16px;
+
+  margin-bottom:
+    22px;
+
+}
+
+
+.category-badge {
+
+  display:
+    inline-flex;
+
+  align-items:
+    center;
+
+  gap:
+    9px;
+
+  padding:
+    10px 17px;
+
+  background:
+    #ffd21c;
+
+  color:
+    #082f70;
+
+  border-radius:
+    999px;
+
+  font-size:
+    11px;
+
+  font-weight:
+    900;
+
+  text-transform:
+    uppercase;
+
+  letter-spacing:
+    .12em;
+
+  box-shadow:
+    0 8px 20px
+    rgba(0,0,0,.12);
+
+}
+
+.category-badge-perizinan {
+  background: #facc15;
+  color: #082f70;
+}
+
+.category-badge-modal {
+  background: #34d399;
+  color: #064e3b;
+}
+
+
+.hero-date {
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  gap:
+    8px;
+
+  font-size:
+    14px;
+
+  color:
+    rgba(255,255,255,.9);
+
+}
+
+
+.hero-date i {
+
+  color:
+    #ffd21c;
+
+}
+
+
+/* =========================================================
+   TITLE
+========================================================= */
+
+.hero-inner h1 {
+
+  max-width:
+    900px;
+
+  margin:
+    0;
+
+  font-size:
+    clamp(
+      38px,
+      5vw,
+      67px
+    );
+
+  line-height:
+    1.04;
+
+  font-weight:
+    900;
+
+  letter-spacing:
+    -.045em;
+
+  text-shadow:
+    0 4px 25px
+    rgba(0,0,0,.12);
+
+}
+
+
+/* =========================================================
+   DESCRIPTION
+========================================================= */
+
+.hero-description {
+
+  max-width:
+    690px;
+
+  margin-top:
+    25px;
+
+  font-size:
+    16px;
+
+  line-height:
+    1.7;
+
+  color:
+    rgba(255,255,255,.84);
+
+}
+
+
+/* =========================================================
+   META
+========================================================= */
+
+.hero-meta {
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  flex-wrap:
+    wrap;
+
+  gap:
+    22px;
+
+  margin-top:
+    28px;
+
+}
+
+
+.meta-item {
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  gap:
+    10px;
+
+}
+
+
+.meta-icon {
+
+  width:
+    38px;
+
+  height:
+    38px;
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  border-radius:
+    50%;
+
+  background:
+    rgba(255,255,255,.12);
+
+  border:
+    1px solid
+    rgba(255,255,255,.12);
+
+}
+
+
+.meta-icon i {
+
+  color:
+    #ffd21c;
+
+}
+
+
+.meta-item small {
+
+  display:
+    block;
+
+  font-size:
+    9px;
+
+  color:
+    rgba(255,255,255,.62);
+
+}
+
+
+.meta-item strong {
+
+  display:
+    block;
+
+  font-size:
+    12px;
+
+  color:
+    white;
+
+}
+
+
+.meta-item-simple {
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  gap:
+    9px;
+
+  font-size:
+    12px;
+
+  color:
+    rgba(255,255,255,.9);
+
+}
+
+
+.meta-item-simple i {
+
+  color:
+    #ffd21c;
+
+  font-size:
+    15px;
+
+}
+
+
+.meta-line {
+
+  width:
+    1px;
+
+  height:
+    28px;
+
+  background:
+    rgba(255,255,255,.18);
+
+}
+
+
+/* =========================================================
+   BACK BUTTON
+========================================================= */
+
+.back-button {
+
+  display:
+    inline-flex;
+
+  align-items:
+    center;
+
+  gap:
+    10px;
+
+  margin-top:
+    30px;
+
+  padding:
+    13px 20px;
+
+  border-radius:
+    13px;
+
+  color:
+    white;
+
+  text-decoration:
+    none;
+
+  font-size:
+    12px;
+
+  font-weight:
+    800;
+
+  background:
+    rgba(255,255,255,.11);
+
+  border:
+    1px solid
+    rgba(255,255,255,.18);
+
+  backdrop-filter:
+    blur(10px);
+
+  transition:
+    .25s ease;
+
+}
+
+
+.back-button:hover {
+
+  background:
+    #ffd21c;
+
+  color:
+    #082f70;
+
+  transform:
+    translateY(-2px);
+
+}
+
+
+/* =========================================================
+   ANIMATION
+========================================================= */
+
+@keyframes fadeUp {
+
+  from {
+
+    opacity:
+      0;
+
+    transform:
+      translateY(18px);
+
   }
 
-  @keyframes fadeInUp {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
+  to {
 
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+    opacity:
+      1;
+
+    transform:
+      translateY(0);
+
   }
 
-  .animate-fadeInUp {
-    animation: fadeInUp .5s ease-out;
+}
+
+
+.animate-fade {
+
+  animation:
+    fadeUp
+    .7s
+    cubic-bezier(.22,1,.36,1)
+    both;
+
+}
+
+
+.delay-1 {
+
+  animation-delay:
+    .08s;
+
+}
+
+
+.delay-2 {
+
+  animation-delay:
+    .16s;
+
+}
+
+
+.delay-3 {
+
+  animation-delay:
+    .24s;
+
+}
+
+
+/* =========================================================
+   CARD
+========================================================= */
+
+.soft-card {
+
+  box-shadow:
+    0 18px 50px
+      rgba(15,23,42,.07),
+    0 3px 12px
+      rgba(15,23,42,.035);
+
+}
+
+
+/* =========================================================
+   ARTICLE
+========================================================= */
+
+.article-content {
+
+  color:
+    #355276;
+
+  font-size:
+    16px;
+
+}
+
+
+.article-content :global(p) {
+
+  margin:
+    0 0 1.45rem;
+
+  line-height:
+    1.9;
+
+}
+
+
+.article-content :global(h2) {
+
+  margin:
+    2.8rem 0 1rem;
+
+  color:
+    #0b3978;
+
+  font-family:
+    'Plus Jakarta Sans',
+    sans-serif;
+
+  font-size:
+    1.55rem;
+
+  line-height:
+    1.3;
+
+  font-weight:
+    800;
+
+}
+
+
+.article-content :global(h3) {
+
+  margin:
+    2rem 0 1rem;
+
+  color:
+    #0b3978;
+
+  font-weight:
+    800;
+
+}
+
+
+.article-content :global(img) {
+
+  display:
+    block;
+
+  max-width:
+    100%;
+
+  height:
+    auto;
+
+  margin:
+    2rem auto;
+
+  border-radius:
+    18px;
+
+  box-shadow:
+    0 15px 40px
+    rgba(15,23,42,.1);
+
+}
+
+
+.article-content :global(a) {
+
+  color:
+    #0754bd;
+
+  font-weight:
+    700;
+
+}
+
+
+.article-content :global(ul),
+.article-content :global(ol) {
+
+  margin:
+    1.4rem 0;
+
+  padding-left:
+    1.5rem;
+
+}
+
+
+.article-content :global(li) {
+
+  margin-bottom:
+    .6rem;
+
+  line-height:
+    1.8;
+
+}
+
+
+.article-content :global(blockquote) {
+
+  margin:
+    2rem 0;
+
+  padding:
+    1.2rem 1.5rem;
+
+  border-left:
+    4px solid #facc15;
+
+  border-radius:
+    0 16px 16px 0;
+
+  background:
+    #eff6ff;
+
+}
+
+
+/* =========================================================
+   MEDIA CARD
+========================================================= */
+
+.media-card {
+
+  min-height:
+    84px;
+
+  transition:
+    transform .25s ease,
+    box-shadow .25s ease,
+    border-color .25s ease;
+
+}
+
+
+.media-card:hover {
+
+  transform:
+    translateY(-2px);
+
+  box-shadow:
+    0 12px 28px
+    rgba(15,23,42,.08);
+
+  border-color:
+    #bfdbfe;
+
+}
+
+
+.media-thumb {
+
+  transition:
+    transform .4s ease;
+
+}
+
+
+.media-card:hover
+.media-thumb {
+
+  transform:
+    scale(1.06);
+
+}
+
+
+/* =========================================================
+   MEDIA / ARTICLE TABS — COMPACT
+========================================================= */
+
+.media-tab {
+  cursor: pointer;
+  transition: all .2s ease;
+}
+
+.media-tab.active {
+  background: #fff;
+  color: #0754bd;
+  box-shadow: 0 2px 8px rgba(15,23,42,.08);
+}
+
+.media-tab:hover {
+  color: #0754bd;
+  background: #fff;
+}
+
+.article-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2px;
+  padding: 3px;
+  border-radius: 12px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+}
+
+.article-tab {
+  min-width: 0;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: #64748b;
+  font-size: 7px;
+  line-height: 1;
+  font-weight: 800;
+  cursor: pointer;
+  transition: .2s ease;
+}
+
+.article-tab i {
+  font-size: 8px;
+}
+
+.article-tab:hover {
+  color: #0754bd;
+  background: rgba(255,255,255,.75);
+}
+
+.article-tab.active {
+  color: #0754bd;
+  background: #fff;
+  box-shadow: 0 3px 10px rgba(15,23,42,.08);
+}
+
+.article-tab[data-category="perizinan"].active {
+  color: #0754bd;
+}
+
+.article-tab[data-category="penanaman-modal"].active {
+  color: #047857;
+}
+
+.article-tab .tab-count {
+  opacity: .65;
+  font-size: 7px;
+  font-weight: 900;
+}
+
+/* =========================================================
+   SEARCH
+========================================================= */
+
+.media-search {
+
+  transition:
+    border-color .2s ease,
+    box-shadow .2s ease;
+
+}
+
+
+.media-search:focus {
+
+  border-color:
+    #3b82f6;
+
+  box-shadow:
+    0 0 0 4px
+    rgba(59,130,246,.10);
+
+}
+
+
+/* =========================================================
+   STICKY FILTER
+========================================================= */
+
+.media-filter-sticky {
+
+  position:
+    sticky;
+
+  top:
+    82px;
+
+  z-index:
+    50;
+
+  padding-top:
+    4px;
+
+  padding-bottom:
+    6px;
+
+  background:
+    rgba(255,255,255,.96);
+
+  backdrop-filter:
+    blur(14px);
+
+  -webkit-backdrop-filter:
+    blur(14px);
+
+}
+
+
+/* =========================================================
+   QUICK SERVICE
+========================================================= */
+
+.quick-service {
+
+  position:
+    relative;
+
+  overflow:
+    hidden;
+
+  background:
+    linear-gradient(
+      135deg,
+      #0751b3,
+      #0a68d2
+    );
+
+}
+
+
+.quick-service::after {
+
+  content:
+    "";
+
+  position:
+    absolute;
+
+  right:
+    -65px;
+
+  top:
+    -65px;
+
+  width:
+    170px;
+
+  height:
+    170px;
+
+  border-radius:
+    50%;
+
+  border:
+    35px solid
+    rgba(255,255,255,.08);
+
+}
+
+
+.quick-link {
+
+  transition:
+    transform .2s ease,
+    background .2s ease;
+
+}
+
+
+.quick-link:hover {
+
+  transform:
+    translateX(4px);
+
+  background:
+    rgba(255,255,255,.18);
+
+}
+
+
+/* =========================================================
+   SHARE
+========================================================= */
+
+.share-button {
+
+  transition:
+    transform .2s ease,
+    box-shadow .2s ease;
+
+}
+
+
+.share-button:hover {
+
+  transform:
+    translateY(-3px);
+
+  box-shadow:
+    0 10px 25px
+    rgba(15,23,42,.14);
+
+}
+
+
+/* =========================================================
+   FOOTER
+========================================================= */
+
+.footer-wave {
+
+  position:
+    relative;
+
+  overflow:
+    hidden;
+
+}
+
+
+.footer-wave::before {
+
+  content:
+    "";
+
+  position:
+    absolute;
+
+  left:
+    -5%;
+
+  top:
+    -95px;
+
+  width:
+    110%;
+
+  height:
+    150px;
+
+  border-radius:
+    50%;
+
+  background:
+    #f4f9ff;
+
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 900px) {
+
+  .media-hero {
+
+    min-height:
+      560px;
+
   }
 
-  .card-hover {
-    transition: all .3s ease;
+  .hero-city {
+
+    width:
+      72%;
+
   }
 
-  .card-hover:hover {
-    transform: translateY(-5px);
-    box-shadow:
-      0 20px 25px -5px rgba(0,0,0,.1),
-      0 10px 10px -5px rgba(0,0,0,.04);
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 768px) {
+
+  .media-hero {
+
+    min-height:
+      570px;
+
+    background:
+      linear-gradient(
+        180deg,
+        rgba(3,55,130,.97),
+        rgba(3,70,145,.92)
+      );
+
   }
 
-  .shadow-custom {
-    box-shadow:
-      0 10px 30px rgba(0,0,0,.08);
+
+  .hero-city {
+
+    width:
+      100%;
+
+    opacity:
+      .32;
+
   }
 
-  .line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+
+  .hero-inner {
+
+    width:
+      min(
+        100% - 30px,
+        1180px
+      );
+
+    padding-top:
+      38px;
+
+    padding-bottom:
+      45px;
+
   }
 
-  .first-letter::first-letter {
-    font-size: 3.5rem;
-    font-weight: 800;
-    float: left;
-    line-height: 1;
-    margin-right: .5rem;
-    color: #1d4ed8;
-    padding-top: .5rem;
+
+  .hero-inner h1 {
+
+    font-size:
+      38px;
+
   }
 
-  .article-content :global(img) {
-    max-width: 100%;
-    height: auto;
-    border-radius: 12px;
+
+  .hero-description {
+
+    font-size:
+      14px;
+
   }
+
+
+  .hero-meta {
+
+    gap:
+      15px;
+
+  }
+
+
+  .meta-line {
+
+    display:
+      none;
+
+  }
+
+
+  .hero-yellow-left {
+
+    width:
+      160px;
+
+    height:
+      55px;
+
+    left:
+      -60px;
+
+  }
+
+
+  .hero-yellow-right {
+
+    width:
+      190px;
+
+    height:
+      55px;
+
+  }
+
+
+  .article-content {
+
+    font-size:
+      15px;
+
+  }
+
 
   .article-content :global(p) {
-    margin-bottom: 1rem;
+
+    line-height:
+      1.85;
+
   }
 
-  .article-content :global(a) {
-    color: #1d4ed8;
-    text-decoration: underline;
+
+  .media-tab {
+
+    font-size:
+      10px;
+
+    padding-left:
+      8px;
+
+    padding-right:
+      8px;
+
   }
+
+
+  .media-filter-sticky {
+
+    top:
+      0;
+
+  }
+
+}
+/* =========================================================
+   DROP CAP REF CONTENT
+========================================================= */
+
+.article-content :global(p:first-of-type)::first-letter {
+  color: #0a55bd;
+
+  font-family:
+    'Plus Jakarta Sans',
+    sans-serif;
+
+  font-size: 66px;
+  font-weight: 900;
+
+  line-height: 1;
+
+  float: left;
+
+  margin:
+    4px
+    10px
+    0
+    0;
+}
 </style>
 
 
-<MainLayout title={post.title}>
+<!-- =====================================================
+     READING PROGRESS
+====================================================== -->
 
-  <!-- =====================================================
-       HERO
-  ====================================================== -->
+<div
+  id="reading-progress"
+  class="reading-progress"
+></div>
 
-  <section class="relative overflow-hidden bg-gradient-to-r from-blue-800 to-blue-900 py-14">
 
-    <div class="container mx-auto px-4 text-center text-white">
+<MainLayout
+  title={post.title}
+>
 
-      <div class="inline-flex items-center gap-2
-                  bg-yellow-400 text-blue-900
-                  px-4 py-2 rounded-full
-                  text-sm font-bold mb-4">
 
-        <i class="fas fa-book-open"></i>
+<!-- =====================================================
+     HERO
+====================================================== -->
 
-        {namaKategori}
+<section class={`media-hero ${kategoriKey === "perizinan" ? "theme-perizinan" : kategoriKey === "penanaman-modal" ? "theme-modal" : "theme-artikel"}`}>
+
+  <div class="hero-bg"></div>
+
+  <div class="hero-grid"></div>
+
+  <div class="hero-blue-circle"></div>
+
+  <div class="hero-blue-circle-2"></div>
+
+  <div class="hero-yellow-left"></div>
+
+  <div class="hero-yellow-right"></div>
+
+  <div class="hero-city"></div>
+
+
+  <div class="hero-inner">
+
+    <!-- BREADCRUMB -->
+
+    <div class="hero-breadcrumb">
+
+      <a href="/artikel">
+        Artikel
+      </a>
+
+      <span>
+        ›
+      </span>
+
+      <span>
+        Detail
+      </span>
+
+    </div>
+
+
+    <!-- CATEGORY -->
+
+    <div class="hero-category">
+
+      <div>
+
+        <span class="category-label">
+          Kategori Artikel
+        </span>
+
+        <span
+          class={`category-badge ${
+            kategoriKey === "perizinan"
+              ? "category-badge-perizinan"
+              : kategoriKey === "penanaman-modal"
+                ? "category-badge-modal"
+                : ""
+          }`}
+        >
+
+          <i
+            class={
+              kategoriKey === "perizinan"
+                ? "fas fa-file-signature"
+                : kategoriKey === "penanaman-modal"
+                  ? "fas fa-chart-line"
+                  : "fas fa-book-open"
+            }
+          ></i>
+
+          {namaKategori}
+
+        </span>
 
       </div>
 
-      <h1 class="text-3xl md:text-4xl font-bold mb-4 animate-fadeInUp">
-        Artikel DPMPTSP Surabaya
-      </h1>
+      <span class="hero-date">
 
-      <p class="text-lg opacity-90 max-w-3xl mx-auto">
-        Informasi dan wawasan seputar perizinan serta penanaman modal
-        di Kota Surabaya
-      </p>
+        <i class="far fa-calendar"></i>
 
-      <div class="mt-6">
+        {formatDate(post.date)}
 
-        <a
-          href="/artikel"
-          class="inline-flex items-center
-                 bg-yellow-400 text-blue-800
-                 font-bold px-6 py-3 rounded-lg
-                 hover:bg-yellow-300 transition"
-        >
+      </span>
 
-          <i class="fas fa-arrow-left mr-2"></i>
+    </div>
 
-          Kembali ke Artikel
 
-        </a>
+    <!-- TITLE -->
+
+    <h1>
+      {post.title}
+    </h1>
+
+
+    <!-- DESCRIPTION -->
+
+    <p class="hero-description">
+
+      {kategoriKey === "perizinan"
+        ? "Informasi, kebijakan, dan panduan seputar layanan perizinan DPMPTSP Kota Surabaya."
+        : kategoriKey === "penanaman-modal"
+          ? "Informasi, peluang, kebijakan, dan perkembangan penanaman modal di Kota Surabaya."
+          : "Informasi dan perkembangan terbaru seputar DPMPTSP Kota Surabaya."}
+
+    </p>
+
+
+    <!-- META -->
+
+    <div class="hero-meta">
+
+      <div class="meta-item">
+
+        <span class="meta-icon">
+
+          <i class="fas fa-user"></i>
+
+        </span>
+
+        <div>
+
+          <small>
+            Ditulis oleh
+          </small>
+
+          <strong>
+            {post.editor || "Admin DPMPTSP"}
+          </strong>
+
+        </div>
+
+      </div>
+
+
+      <div class="meta-line"></div>
+
+
+      <div class="meta-item-simple">
+
+        <i class="far fa-clock"></i>
+
+        <span>
+          {post.time || "—"}
+        </span>
+
+      </div>
+
+
+      <div class="meta-line"></div>
+
+
+      <div class="meta-item-simple">
+
+        <i class="far fa-eye"></i>
+
+        <span>
+          {post.hits || 0} views
+        </span>
 
       </div>
 
     </div>
 
-  </section>
+
+    <!-- BACK -->
+
+    <a
+      href="/artikel"
+      class="back-button"
+    >
+
+      <i class="fas fa-arrow-left"></i>
+
+      Kembali ke Artikel
+
+    </a>
+
+  </div>
+
+</section>
 
 
-  <!-- =====================================================
-       CONTENT
-  ====================================================== -->
+<!-- =====================================================
+     MAIN
+====================================================== -->
 
-  <section class="container mx-auto px-4 py-10">
+<main
+  class="
+    mx-auto
+    max-w-7xl
+    px-5
+    py-10
+    sm:px-6
+    md:py-14
+    lg:px-8
+  "
+>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-
-      <!-- =================================================
-           ARTIKEL
-      ================================================== -->
-
-      <article
-        class="lg:col-span-2
-               bg-white rounded-2xl
-               shadow-custom overflow-hidden
-               animate-fadeInUp"
-      >
-
-        <!-- HEADER -->
-
-        <div class="p-6 md:p-8 border-b">
-
-          <div class="flex flex-wrap
-                      justify-between items-center
-                      gap-3 mb-5">
-
-            <span
-              class="bg-blue-700 text-white
-                     px-4 py-2 rounded-full
-                     text-sm font-semibold"
-            >
-
-              <i class="fas fa-file-alt mr-1"></i>
-
-              {namaKategori}
-
-            </span>
+  <div
+    class="
+      grid
+      grid-cols-1
+      gap-8
+      lg:grid-cols-[minmax(0,1fr)_350px]
+      lg:gap-10
+    "
+  >
 
 
-            <span class="text-sm text-gray-500">
+    <!-- =================================================
+         LEFT CONTENT
+    ================================================== -->
 
-              <i class="far fa-calendar-alt mr-1"></i>
-
-              {
-                post.date
-                  ? new Date(post.date)
-                      .toLocaleDateString("id-ID")
-                  : "-"
-              }
-
-            </span>
-
-          </div>
+    <article
+      class="
+        min-w-0
+        animate-fade
+      "
+    >
 
 
-          <h1
-            class="text-2xl md:text-3xl
-                   font-bold text-gray-900
-                   leading-tight mb-5"
-          >
-            {post.title}
-          </h1>
+      <!-- IMAGE -->
 
+      {post.picture ? (
 
-          <div
-            class="flex flex-wrap items-center
-                   gap-5 text-gray-600 text-sm"
-          >
-
-            <div class="flex items-center gap-2">
-
-              <i class="fas fa-user text-blue-700"></i>
-
-              <span>
-                Admin DPMPTSP
-              </span>
-
-            </div>
-
-
-            <div class="flex items-center gap-2">
-
-              <i class="fas fa-eye text-blue-700"></i>
-
-              <span>
-                {post.hits || 0} views
-              </span>
-
-            </div>
-
-
-            <div class="flex items-center gap-2">
-
-              <i class="fas fa-clock text-blue-700"></i>
-
-              <span>
-                1 min read
-              </span>
-
-            </div>
-
-          </div>
-
-        </div>
-
-
-        <!-- GAMBAR -->
-
-        {
-          post.picture && (
-
-            <div class="px-6 md:px-8 mt-6">
-
-              <img
-                src={`https://dpm-ptsp.surabaya.go.id/fileberita/${post.picture}`}
-                alt={post.title}
-                class="w-full
-                       max-h-[500px]
-                       object-cover
-                       rounded-xl
-                       transition
-                       duration-500
-                       hover:scale-[1.02]"
-              />
-
-            </div>
-
-          )
-        }
-
-
-        <!-- ISI -->
-
-        <div
-          class="p-6 md:p-8
-                 prose prose-lg
-                 max-w-none
-                 first-letter
-                 text-justify
-                 text-gray-700
-                 article-content"
+        <figure
+          class="
+            group
+            relative
+            overflow-hidden
+            rounded-[22px]
+            border
+            border-white
+            bg-white
+            soft-card
+          "
         >
 
-          <div set:html={post.ref_content} />
-
-
-          <!-- TAG -->
-
-          <div
-            class="mt-8 pt-6
-                   border-t border-gray-100
-                   not-prose"
-          >
-
-            <div class="flex items-center gap-2 flex-wrap">
-
-              <span class="font-semibold text-gray-700">
-                Kategori:
-              </span>
-
-              <span
-                class="bg-blue-50
-                       text-blue-700
-                       px-3 py-1
-                       rounded-full
-                       text-sm font-medium"
-              >
-
-                <i class="fas fa-tag mr-1"></i>
-
-                {namaKategori}
-
-              </span>
-
-            </div>
-
-          </div>
-
-        </div>
-
-      </article>
-
-
-      <!-- =================================================
-           SIDEBAR
-      ================================================== -->
-
-      <aside class="space-y-6">
-
-
-        <!-- =================================================
-             ARTIKEL TERKAIT
-        ================================================== -->
-
-        <div
-          class="bg-white
-                 rounded-2xl
-                 shadow-custom
-                 p-6"
-        >
-
-          <h2
-            class="text-xl font-bold
-                   mb-4 border-b pb-3"
-          >
-            Artikel Terkait
-          </h2>
-
-
-          <!-- SEARCH -->
-
-          <input
-            type="text"
-            id="search-related"
-            placeholder="Cari judul artikel..."
-            class="w-full mb-4
-                   px-4 py-2
-                   text-sm
-                   border rounded-xl
-                   focus:outline-none
-                   focus:ring-2
-                   focus:ring-blue-600"
+          <img
+            src={imageUrl(post.picture)}
+            alt={post.title}
+            class="
+              aspect-[16/9]
+              w-full
+              object-cover
+              transition
+              duration-700
+              group-hover:scale-[1.02]
+            "
+            loading="eager"
           />
 
 
-          <!-- TABS -->
+          <div
+            class="
+              pointer-events-none
+              absolute
+              inset-0
+              bg-gradient-to-t
+              from-black/20
+              via-transparent
+              to-white/5
+            "
+          ></div>
+
 
           <div
-            class="flex gap-1
-                   mb-5
-                   bg-slate-100
-                   p-1
-                   rounded-xl"
+            class="
+              absolute
+              bottom-4
+              left-4
+              max-w-[80%]
+              rounded-full
+              bg-yellow-400
+              px-4
+              py-2
+              text-[10px]
+              font-extrabold
+              text-blue-950
+              shadow-lg
+            "
           >
-
-            <button
-              class="tab-btn
-                     flex-1
-                     px-3 py-2
-                     text-xs
-                     font-semibold
-                     rounded-lg
-                     bg-blue-600
-                     text-white
-                     shadow"
-              data-category="perizinan"
-            >
-
-              Perizinan
-
-            </button>
-
-
-            <button
-              class="tab-btn
-                     flex-1
-                     px-3 py-2
-                     text-xs
-                     font-semibold
-                     rounded-lg
-                     text-slate-600
-                     hover:text-slate-900"
-              data-category="penanaman"
-            >
-
-              Penanaman Modal
-
-            </button>
-
+            {namaKategori}
           </div>
 
+        </figure>
 
-          <!-- =================================================
-               LIST
-          ================================================== -->
-
-          <div id="related-list">
-
-
-            <!-- =============================================
-                 PERIZINAN
-            ============================================== -->
-
-            {
-              perizinanList.map((item) => (
-
-                <a
-                  href={`/artikel/${slugify(item.title)}`}
-                  class="related-item
-                         flex gap-4
-                         mb-4
-                         group"
-                  data-type="perizinan"
-                >
-
-                  {
-                    item.picture ? (
-
-                      <img
-                        src={`https://dpm-ptsp.surabaya.go.id/fileberita/${item.picture}`}
-                        alt={item.title}
-                        class="w-20 h-20
-                               rounded-xl
-                               object-cover
-                               shrink-0
-                               group-hover:scale-105
-                               transition"
-                      />
-
-                    ) : (
-
-                      <div
-                        class="w-20 h-20
-                               rounded-xl
-                               shrink-0
-                               bg-blue-50
-                               flex items-center
-                               justify-center"
-                      >
-
-                        <i
-                          class="fas fa-file-signature
-                                 text-blue-600
-                                 text-xl"
-                        ></i>
-
-                      </div>
-
-                    )
-                  }
-
-
-                  <div class="min-w-0">
-
-                    <span
-                      class="text-[10px]
-                             bg-blue-50
-                             text-blue-700
-                             px-2 py-1
-                             rounded"
-                    >
-                      Artikel Perizinan
-                    </span>
-
-                    <h3
-                      class="font-semibold
-                             text-sm
-                             line-clamp-2
-                             mt-1
-                             group-hover:text-blue-700"
-                    >
-                      {item.title}
-                    </h3>
-
-                    <p
-                      class="text-xs
-                             text-slate-500
-                             mt-1"
-                    >
-
-                      {
-                        item.date
-                          ? new Date(item.date)
-                              .toLocaleDateString("id-ID")
-                          : "-"
-                      }
-
-                    </p>
-
-                  </div>
-
-                </a>
-
-              ))
-            }
-
-
-            <!-- =============================================
-                 PENANAMAN MODAL
-            ============================================== -->
-
-            {
-              penanamanModalList.map((item) => (
-
-                <a
-                  href={`/artikel/${slugify(item.title)}`}
-                  class="related-item
-                         hidden
-                         flex gap-4
-                         mb-4
-                         group"
-                  data-type="penanaman"
-                >
-
-                  {
-                    item.picture ? (
-
-                      <img
-                        src={`https://dpm-ptsp.surabaya.go.id/fileberita/${item.picture}`}
-                        alt={item.title}
-                        class="w-20 h-20
-                               rounded-xl
-                               object-cover
-                               shrink-0
-                               group-hover:scale-105
-                               transition"
-                      />
-
-                    ) : (
-
-                      <div
-                        class="w-20 h-20
-                               rounded-xl
-                               shrink-0
-                               bg-emerald-50
-                               flex items-center
-                               justify-center"
-                      >
-
-                        <i
-                          class="fas fa-chart-line
-                                 text-emerald-600
-                                 text-xl"
-                        ></i>
-
-                      </div>
-
-                    )
-                  }
-
-
-                  <div class="min-w-0">
-
-                    <span
-                      class="text-[10px]
-                             bg-emerald-50
-                             text-emerald-700
-                             px-2 py-1
-                             rounded"
-                    >
-                      Artikel Penanaman Modal
-                    </span>
-
-                    <h3
-                      class="font-semibold
-                             text-sm
-                             line-clamp-2
-                             mt-1
-                             group-hover:text-emerald-700"
-                    >
-                      {item.title}
-                    </h3>
-
-                    <p
-                      class="text-xs
-                             text-slate-500
-                             mt-1"
-                    >
-
-                      {
-                        item.date
-                          ? new Date(item.date)
-                              .toLocaleDateString("id-ID")
-                          : "-"
-                      }
-
-                    </p>
-
-                  </div>
-
-                </a>
-
-              ))
-            }
-
-          </div>
-
-
-          <!-- SEMUA ARTIKEL -->
-
-          <a
-            href="/artikel"
-            class="block
-                   text-center
-                   bg-blue-700
-                   text-white
-                   py-3
-                   rounded-lg
-                   hover:bg-blue-800
-                   transition"
-          >
-
-            <i class="fas fa-book-open mr-2"></i>
-
-            Lihat Semua Artikel
-
-          </a>
-
-        </div>
-
-
-        <!-- =================================================
-             QUICK LINKS
-        ================================================== -->
+      ) : (
 
         <div
-          class="bg-gradient-to-r
-                 from-blue-700
-                 to-blue-900
-                 rounded-2xl
-                 shadow-custom
-                 p-6
-                 text-white
-                 card-hover"
+          class="
+            flex
+            aspect-[16/9]
+            items-center
+            justify-center
+            rounded-[22px]
+            bg-gradient-to-br
+            from-blue-100
+            to-blue-50
+            text-blue-500
+            soft-card
+          "
         >
 
-          <h2 class="text-xl font-bold mb-6">
-            Layanan Cepat
-          </h2>
-
-
-          <div class="space-y-3">
-
-            <a
-              href="/Aplikasi#ijinusaha-sec"
-              class="flex items-center
-                     justify-between
-                     p-3
-                     bg-white/10
-                     rounded-lg
-                     hover:bg-white/20
-                     transition"
-            >
-
-              <span class="font-medium">
-                Call Center Surabaya
-              </span>
-
-              <i class="fas fa-arrow-right text-yellow-300"></i>
-
-            </a>
-
-
-            <a
-              href="/Aplikasi#ijinusaha-sec"
-              class="flex items-center
-                     justify-between
-                     p-3
-                     bg-white/10
-                     rounded-lg
-                     hover:bg-white/20
-                     transition"
-            >
-
-              <span class="font-medium">
-                TAKON SOBAT
-              </span>
-
-              <i class="fas fa-arrow-right text-yellow-300"></i>
-
-            </a>
-
-
-            <a
-              href="/Aplikasi#ijinusaha-sec"
-              class="flex items-center
-                     justify-between
-                     p-3
-                     bg-white/10
-                     rounded-lg
-                     hover:bg-white/20
-                     transition"
-            >
-
-              <span class="font-medium">
-                LAPIS LUPIS
-              </span>
-
-              <i class="fas fa-arrow-right text-yellow-300"></i>
-
-            </a>
-
-
-            <a
-              href="/Aplikasi#ijinusaha-sec"
-              class="flex items-center
-                     justify-between
-                     p-3
-                     bg-white/10
-                     rounded-lg
-                     hover:bg-white/20
-                     transition"
-            >
-
-              <span class="font-medium">
-                Perizinan Online
-              </span>
-
-              <i class="fas fa-arrow-right text-yellow-300"></i>
-
-            </a>
-
-
-            <a
-              href="/Aplikasi#pengaduan-sec"
-              class="flex items-center
-                     justify-between
-                     p-3
-                     bg-white/10
-                     rounded-lg
-                     hover:bg-white/20
-                     transition"
-            >
-
-              <span class="font-medium">
-                Pengaduan Layanan
-              </span>
-
-              <i class="fas fa-arrow-right text-yellow-300"></i>
-
-            </a>
-
-          </div>
-
-        </div>
-
-
-        <!-- =================================================
-             SHARE
-        ================================================== -->
-
-        <div
-          class="bg-white
-                 rounded-2xl
-                 shadow-custom
-                 p-6"
-        >
-
-          <h2
-            class="text-xl font-bold
-                   mb-4 border-b pb-3"
-          >
-            Bagikan Artikel
-          </h2>
-
-
-          <div class="grid grid-cols-2 gap-3">
-
-            <a
-              href="#"
-              class="bg-blue-600
-                     hover:bg-blue-700
-                     text-white
-                     p-3
-                     rounded-lg
-                     flex flex-col
-                     items-center
-                     justify-center
-                     transition"
-            >
-
-              <i class="fab fa-facebook-f text-lg mb-2"></i>
-
-              <span class="text-xs font-medium">
-                Facebook
-              </span>
-
-            </a>
-
-
-            <a
-              href="#"
-              class="bg-blue-400
-                     hover:bg-blue-500
-                     text-white
-                     p-3
-                     rounded-lg
-                     flex flex-col
-                     items-center
-                     justify-center
-                     transition"
-            >
-
-              <i class="fab fa-twitter text-lg mb-2"></i>
-
-              <span class="text-xs font-medium">
-                Twitter
-              </span>
-
-            </a>
-
-
-            <a
-              href="#"
-              class="bg-green-500
-                     hover:bg-green-600
-                     text-white
-                     p-3
-                     rounded-lg
-                     flex flex-col
-                     items-center
-                     justify-center
-                     transition"
-            >
-
-              <i class="fab fa-whatsapp text-lg mb-2"></i>
-
-              <span class="text-xs font-medium">
-                WhatsApp
-              </span>
-
-            </a>
-
-
-            <a
-              href="#"
-              class="bg-red-500
-                     hover:bg-red-600
-                     text-white
-                     p-3
-                     rounded-lg
-                     flex flex-col
-                     items-center
-                     justify-center
-                     transition"
-            >
-
-              <i class="fas fa-envelope text-lg mb-2"></i>
-
-              <span class="text-xs font-medium">
-                Email
-              </span>
-
-            </a>
-
-          </div>
-
-
-          <!-- COPY -->
-
-          <div
-            class="mt-6 pt-4
-                   border-t border-gray-100"
-          >
-
-            <div class="flex">
-
-              <input
-                type="text"
-                id="article-link"
-                value={`/artikel/${slug}`}
-                readonly
-                class="flex-grow
-                       px-3 py-2
-                       text-sm
-                       border
-                       border-gray-300
-                       rounded-l-lg
-                       focus:outline-none"
-              />
-
-              <button
-                id="copy-link"
-                class="bg-blue-700
-                       hover:bg-blue-800
-                       text-white
-                       px-4 py-2
-                       rounded-r-lg"
-              >
-
-                <i class="fas fa-copy"></i>
-
-              </button>
-
-            </div>
-
+          <div class="text-center">
+
+            <i
+              class={
+                `fas ${
+                  namaKategori === "Artikel"
+                    ? "fa-book-open"
+                    : "fa-newspaper"
+                } mb-3 text-5xl`
+              }
+            ></i>
 
             <p
-              id="copy-message"
-              class="text-xs
-                     text-green-600
-                     mt-2
-                     hidden"
+              class="
+                text-sm
+                font-bold
+              "
             >
-              Link berhasil disalin!
+              DPMPTSP Kota Surabaya
             </p>
 
           </div>
 
         </div>
 
-      </aside>
-
-    </div>
-
-  </section>
+      )}
 
 
-  <!-- =====================================================
-       TAB + SEARCH
-  ====================================================== -->
+      <!-- META BAR -->
 
-  <script>
-    const tabs =
-      document.querySelectorAll(".tab-btn");
+      <div
+        class="
+          mt-4
+          flex
+          flex-wrap
+          items-center
+          justify-between
+          gap-4
+          rounded-2xl
+          border
+          border-blue-100
+          bg-white
+          px-5
+          py-4
+          soft-card
+        "
+      >
 
-    const items =
-      document.querySelectorAll(".related-item");
+        <div
+          class="
+            flex
+            flex-wrap
+            items-center
+            gap-x-6
+            gap-y-3
+            text-xs
+            text-slate-500
+          "
+        >
 
-    const searchInput =
-      document.getElementById(
-        "search-related"
-      );
+          <div
+            class="
+              flex
+              items-center
+              gap-2
+            "
+          >
 
-    let activeType =
-      "perizinan";
+            <span
+              class="
+                flex
+                h-8
+                w-8
+                items-center
+                justify-center
+                rounded-lg
+                bg-blue-50
+                text-blue-600
+              "
+            >
 
+              <i
+                class="
+                  fas
+                  fa-user
+                  text-xs
+                "
+              ></i>
 
-    function renderList() {
+            </span>
 
-      const keyword =
-        searchInput?.value
-          .toLowerCase()
-          .trim() || "";
+            <strong class="text-slate-700">
+              DPMPTSP Kota Surabaya
+            </strong>
 
-
-      items.forEach((item) => {
-
-        const title =
-          item.querySelector("h3")
-            ?.innerText
-            .toLowerCase() || "";
-
-
-        const matchType =
-          item.dataset.type ===
-          activeType;
-
-
-        const matchText =
-          title.includes(keyword);
-
-
-        item.classList.toggle(
-          "hidden",
-          !(matchType && matchText)
-        );
-
-      });
-
-    }
-
-
-    function setActive(type) {
-
-      activeType =
-        type;
-
-
-      tabs.forEach((tab) => {
-
-        const active =
-          tab.dataset.category ===
-          type;
-
-
-        tab.className =
-          "tab-btn flex-1 px-3 py-2 text-xs font-semibold rounded-lg transition " +
-          (
-            active
-              ? "bg-blue-600 text-white shadow"
-              : "text-slate-600 hover:text-slate-900"
-          );
-
-      });
+          </div>
 
 
-      renderList();
+          <span
+            class="
+              hidden
+              h-5
+              w-px
+              bg-slate-200
+              sm:block
+            "
+          ></span>
 
-    }
+
+          <span
+            class="
+              flex
+              items-center
+              gap-2
+            "
+          >
+
+            <i
+              class="
+                far
+                fa-calendar
+                text-blue-600
+              "
+            ></i>
+
+            {formatDate(post.date)}
+
+          </span>
 
 
-    setActive("perizinan");
+          <span
+            class="
+              hidden
+              h-5
+              w-px
+              bg-slate-200
+              sm:block
+            "
+          ></span>
 
 
-    tabs.forEach((tab) => {
+          <span
+            class="
+              flex
+              items-center
+              gap-2
+            "
+          >
 
-      tab.addEventListener(
-        "click",
-        () => {
+            <i
+              class="
+                far
+                fa-eye
+                text-blue-600
+              "
+            ></i>
 
-          setActive(
-            tab.dataset.category
-          );
+            {post.hits || 0}
 
+            <span>
+              views
+            </span>
+
+          </span>
+
+        </div>
+
+
+        <span
+          class="
+            inline-flex
+            items-center
+            gap-2
+            rounded-full
+            bg-emerald-50
+            px-3
+            py-1.5
+            text-[10px]
+            font-bold
+            text-emerald-700
+          "
+        >
+
+          <span
+            class="
+              h-1.5
+              w-1.5
+              rounded-full
+              bg-emerald-500
+            "
+          ></span>
+
+          Publikasi
+
+        </span>
+
+      </div>
+
+
+      <!-- CONTENT -->
+
+      <div
+        class="
+          article-content
+          mt-5
+          rounded-[22px]
+          border
+          border-blue-100
+          bg-white
+          px-5
+          py-7
+          sm:px-8
+          md:px-10
+          md:py-10
+          soft-card
+        "
+      >
+
+        <div
+          set:html={post.ref_content}
+        ></div>
+
+
+        <!-- TAG -->
+
+        <div
+          class="
+            mt-10
+            border-t
+            border-slate-200
+            pt-6
+          "
+        >
+
+          <div
+            class="
+              flex
+              flex-wrap
+              items-center
+              gap-2
+            "
+          >
+
+            <span
+              class="
+                mr-1
+                text-[9px]
+                font-extrabold
+                uppercase
+                tracking-[.18em]
+                text-slate-400
+              "
+            >
+              Tagar
+            </span>
+
+
+            <span
+              class="
+                rounded-full
+                bg-blue-50
+                px-3
+                py-1.5
+                text-[10px]
+                font-bold
+                text-blue-700
+              "
+            >
+              #{namaKategori}
+            </span>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </article>
+
+
+    <!-- =================================================
+         RIGHT SIDEBAR
+    ================================================== -->
+
+    <!-- =====================================================
+     RIGHT SIDEBAR / NAVBAR SAMPING
+====================================================== -->
+
+<aside
+  class="
+    sidebar-wrapper
+    self-start
+    lg:sticky
+    lg:top-24
+  "
+>
+
+  <div class="sidebar-stack">
+
+    <!-- =================================================
+         MEDIA TERBARU
+    ================================================== -->
+
+    <section
+      class="
+        media-sidebar
+        overflow-hidden
+        rounded-[26px]
+        border
+        border-blue-100
+        bg-white
+        shadow-[0_20px_55px_rgba(15,23,42,.08)]
+      "
+    >
+
+      <!-- HEADER ARTIKEL -->
+
+      <div
+        class="
+          relative
+          overflow-hidden
+          bg-gradient-to-br
+          from-[#062c68]
+          via-[#0754b8]
+          to-[#0878df]
+          px-5
+          py-5
+          text-white
+        "
+      >
+
+        <!-- dekorasi tema artikel -->
+        <div
+          class="
+            pointer-events-none
+            absolute
+            -right-10
+            -top-16
+            h-36
+            w-36
+            rounded-full
+            border-[28px]
+            border-yellow-300/15
+          "
+        ></div>
+
+        <div
+          class="
+            pointer-events-none
+            absolute
+            -bottom-20
+            -left-12
+            h-36
+            w-36
+            rounded-full
+            border-[22px]
+            border-white/10
+          "
+        ></div>
+
+        <div
+          class="
+            pointer-events-none
+            absolute
+            right-7
+            bottom-4
+            h-2
+            w-16
+            rounded-full
+            bg-yellow-300/70
+            rotate-[-8deg]
+          "
+        ></div>
+
+        <div
+          class="
+            relative
+            z-10
+            flex
+            items-center
+            justify-between
+            gap-3
+          "
+        >
+
+          <div class="flex min-w-0 items-center gap-3">
+
+            <div
+              class="
+                flex
+                h-11
+                w-11
+                shrink-0
+                items-center
+                justify-center
+                rounded-2xl
+                bg-yellow-400
+                text-blue-950
+                shadow-[0_8px_20px_rgba(0,0,0,.12)]
+              "
+            >
+              <i class="fas fa-book-open"></i>
+            </div>
+
+            <div class="min-w-0">
+
+              <span
+                class="
+                  block
+                  text-[7px]
+                  font-black
+                  uppercase
+                  tracking-[.22em]
+                  text-yellow-300
+                "
+              >
+                INFORMASI DPMPTSP
+              </span>
+
+              <h2
+                class="
+                  mt-0.5
+                  font-display
+                  text-[17px]
+                  font-extrabold
+                  leading-tight
+                "
+              >
+                Pusat Artikel
+              </h2>
+
+              <p class="mt-1 text-[8px] text-blue-100">
+                Perizinan &amp; Penanaman Modal
+              </p>
+
+            </div>
+
+          </div>
+
+          <a
+            href="/artikel"
+            class="
+              shrink-0
+              rounded-full
+              border
+              border-white/20
+              bg-white/10
+              px-3
+              py-2
+              text-[8px]
+              font-black
+              text-white
+              backdrop-blur
+              transition
+              hover:bg-yellow-400
+              hover:text-blue-950
+            "
+          >
+            Semua
+          </a>
+
+        </div>
+
+        <!-- statistik ringkas -->
+        <div
+          class="
+            relative
+            z-10
+            mt-4
+            grid
+            grid-cols-3
+            gap-2
+          "
+        >
+
+          <div
+            class="
+              rounded-xl
+              border
+              border-white/10
+              bg-white/10
+              px-2.5
+              py-2
+              backdrop-blur
+            "
+          >
+            <span class="block text-[7px] font-bold uppercase tracking-wider text-blue-200">
+              Artikel
+            </span>
+            <strong class="mt-0.5 block text-base font-extrabold text-white">
+              {artikelMedia.length}
+            </strong>
+          </div>
+
+          <div
+            class="
+              rounded-xl
+              border
+              border-white/10
+              bg-white/10
+              px-2.5
+              py-2
+              backdrop-blur
+            "
+          >
+            <span class="block text-[7px] font-bold uppercase tracking-wider text-blue-200">
+              Perizinan
+            </span>
+            <strong class="mt-0.5 block text-base font-extrabold text-yellow-300">
+              {totalPerizinan}
+            </strong>
+          </div>
+
+          <div
+            class="
+              rounded-xl
+              border
+              border-white/10
+              bg-white/10
+              px-2.5
+              py-2
+              backdrop-blur
+            "
+          >
+            <span class="block text-[7px] font-bold uppercase tracking-wider text-blue-200">
+              Modal
+            </span>
+            <strong class="mt-0.5 block text-base font-extrabold text-emerald-300">
+              {totalPenanamanModal}
+            </strong>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- =================================================
+           SEARCH + TABS KATEGORI
+      ================================================== -->
+
+      <div
+        class="
+          media-filter-sticky
+          border-b
+          border-slate-100
+          bg-white
+          px-4
+          pt-3
+          pb-3
+        "
+      >
+
+        <!-- SEARCH -->
+        <div class="relative">
+
+          <i
+            class="
+              fas fa-search
+              absolute left-3.5 top-1/2
+              -translate-y-1/2
+              text-[10px]
+              text-slate-400
+            "
+          ></i>
+
+          <input
+            id="media-search"
+            type="search"
+            autocomplete="off"
+            placeholder="Cari artikel..."
+            class="
+              media-search
+              w-full
+              rounded-xl
+              border
+              border-slate-200
+              bg-slate-50
+              py-2.5
+              pl-9
+              pr-3
+              text-[10px]
+              font-medium
+              text-slate-700
+              outline-none
+              transition
+              focus:border-blue-400
+              focus:bg-white
+              focus:ring-4
+              focus:ring-blue-100
+            "
+          />
+
+        </div>
+
+        <!-- TABS COMPACT -->
+        <div
+          id="article-tabs"
+          class="grid grid-cols-3 gap-1 rounded-xl bg-slate-100 p-1"
+        >
+
+          <button
+            type="button"
+            class="article-tab active"
+            data-category="semua"
+            aria-pressed="true"
+          >
+            <i class="fas fa-layer-group"></i>
+            <span>Semua</span>
+            <span class="tab-count">{artikelMedia.length}</span>
+          </button>
+
+          <button
+            type="button"
+            class="article-tab"
+            data-category="perizinan"
+            aria-pressed="false"
+          >
+            <i class="fas fa-file-signature"></i>
+            <span>Perizinan</span>
+            <span class="tab-count">{totalPerizinan}</span>
+          </button>
+
+          <button
+            type="button"
+            class="article-tab"
+            data-category="penanaman-modal"
+            aria-pressed="false"
+          >
+            <i class="fas fa-chart-line"></i>
+            <span>Modal</span>
+            <span class="tab-count">{totalPenanamanModal}</span>
+          </button>
+
+        </div>
+
+      </div>
+
+      <!-- =================================================
+           LIST
+      ================================================== -->
+
+      <div
+        id="media-list"
+        class="
+          max-h-[570px]
+          overflow-y-auto
+          px-4
+          py-3
+          sidebar-scroll
+        "
+      >
+
+        {
+          mediaListDisplay.map((item) => {
+
+            const type =
+              getCategoryType(item);
+
+            return (
+
+              <a
+                href={`/artikel/${slugify(item.title)}`}
+                class="
+                  media-card
+                  media-item
+                  group
+                  mb-2
+                  flex
+                  gap-3
+                  rounded-2xl
+                  border
+                  border-transparent
+                  bg-slate-50
+                  p-2.5
+                  transition-all
+                  duration-200
+                  hover:-translate-y-0.5
+                  hover:border-blue-100
+                  hover:bg-blue-50/60
+                  hover:shadow-sm
+                "
+                data-type={type}
+                data-title={
+                  String(
+                    item.title || ""
+                  ).toLowerCase()
+                }
+                data-category={
+                  getArticleCategory(item)
+                }
+              >
+
+                <!-- THUMB -->
+
+                <div
+                  class="
+                    relative
+                    h-[70px]
+                    w-[82px]
+                    shrink-0
+                    overflow-hidden
+                    rounded-xl
+                    bg-blue-100
+                  "
+                >
+
+                  {item.picture ? (
+
+                    <img
+                      src={imageUrl(item.picture)}
+                      alt={item.title}
+                      class="
+                        media-thumb
+                        h-full
+                        w-full
+                        object-cover
+                      "
+                      loading="lazy"
+                    />
+
+                  ) : (
+
+                    <div
+                      class="
+                        flex
+                        h-full
+                        w-full
+                        items-center
+                        justify-center
+                        bg-gradient-to-br
+                        from-blue-50
+                        to-blue-100
+                        text-blue-500
+                      "
+                    >
+                      <i
+                        class={
+                          `fas ${
+                            type === "artikel"
+                              ? "fa-book-open"
+                              : "fa-newspaper"
+                          }`
+                        }
+                      ></i>
+                    </div>
+
+                  )}
+
+
+                  <!-- TYPE BADGE -->
+
+                  <span
+                    class={
+                      type === "artikel"
+                        ? `
+                          absolute
+                          left-1.5
+                          top-1.5
+                          rounded-md
+                          bg-yellow-400
+                          px-1.5
+                          py-0.5
+                          text-[6px]
+                          font-black
+                          uppercase
+                          text-blue-950
+                          shadow-sm
+                        `
+                        : `
+                          absolute
+                          left-1.5
+                          top-1.5
+                          rounded-md
+                          bg-blue-600
+                          px-1.5
+                          py-0.5
+                          text-[6px]
+                          font-black
+                          uppercase
+                          text-white
+                          shadow-sm
+                        `
+                    }
+                  >
+                    {type === "artikel"
+                      ? "ARTIKEL"
+                      : "BERITA"}
+                  </span>
+
+                </div>
+
+
+                <!-- TEXT -->
+
+                <div
+                  class="
+                    min-w-0
+                    flex-1
+                  "
+                >
+
+                  <div
+                    class="
+                      mb-1
+                      flex
+                      items-center
+                      gap-1.5
+                      text-[8px]
+                      text-slate-400
+                    "
+                  >
+
+                    <i class="far fa-calendar"></i>
+
+                    {formatDate(item.date)}
+
+                  </div>
+
+
+                  <h3
+                    class="
+                      line-clamp-2
+                      text-[10px]
+                      font-extrabold
+                      leading-[1.45]
+                      text-[#123b78]
+                      transition
+                      group-hover:text-blue-600
+                    "
+                  >
+                    {item.title}
+                  </h3>
+
+                </div>
+
+
+                <!-- ARROW -->
+
+                <div
+                  class="
+                    flex
+                    items-center
+                    text-slate-300
+                    transition
+                    group-hover:translate-x-0.5
+                    group-hover:text-blue-500
+                  "
+                >
+
+                  <i
+                    class="
+                      fas
+                      fa-chevron-right
+                      text-[8px]
+                    "
+                  ></i>
+
+                </div>
+
+              </a>
+
+            );
+
+          })
         }
-      );
 
+      </div>
+
+
+      <!-- EMPTY -->
+
+      <div
+        id="media-empty"
+        class="
+          hidden
+          px-5
+          py-8
+          text-center
+        "
+      >
+
+        <div
+          class="
+            mx-auto
+            flex
+            h-12
+            w-12
+            items-center
+            justify-center
+            rounded-2xl
+            bg-slate-100
+            text-slate-400
+          "
+        >
+          <i class="fas fa-search"></i>
+        </div>
+
+        <p
+          class="
+            mt-3
+            text-xs
+            font-bold
+            text-slate-500
+          "
+        >
+          Artikel tidak ditemukan.
+        </p>
+
+      </div>
+
+
+      <!-- FOOTER -->
+
+      <div
+        class="
+          border-t
+          border-slate-100
+          bg-slate-50
+          p-3
+        "
+      >
+
+        <a
+          href="/artikel"
+          class="
+            flex
+            items-center
+            justify-center
+            gap-2
+            rounded-xl
+            bg-blue-600
+            px-4
+            py-3
+            text-[10px]
+            font-extrabold
+            text-white
+            shadow-sm
+            transition
+            hover:bg-blue-700
+            hover:shadow-md
+          "
+        >
+
+          Lihat Semua Artikel
+
+          <i class="fas fa-arrow-right"></i>
+
+        </a>
+
+      </div>
+
+    </section>
+
+
+    <!-- =================================================
+         LAYANAN CEPAT
+    ================================================== -->
+
+    <section
+      class="
+        quick-service
+        overflow-hidden
+        rounded-[26px]
+        p-6
+        text-white
+        shadow-[0_18px_45px_rgba(0,83,190,.18)]
+      "
+    >
+
+      <div class="relative z-10">
+
+        <span
+          class="
+            text-[8px]
+            font-extrabold
+            uppercase
+            tracking-[.2em]
+            text-blue-200
+          "
+        >
+          DPMPTSP SURABAYA
+        </span>
+
+
+        <div
+          class="
+            mt-1
+            flex
+            items-center
+            gap-2
+          "
+        >
+
+          <span
+            class="
+              flex
+              h-9
+              w-9
+              items-center
+              justify-center
+              rounded-xl
+              bg-yellow-400
+              text-blue-950
+            "
+          >
+            <i class="fas fa-bolt"></i>
+          </span>
+
+          <h2
+            class="
+              font-display
+              text-xl
+              font-extrabold
+            "
+          >
+            Layanan Cepat
+          </h2>
+
+        </div>
+
+
+        <p
+          class="
+            mt-3
+            text-[10px]
+            leading-5
+            text-blue-100
+          "
+        >
+          Akses layanan dan informasi
+          DPMPTSP secara mudah dan cepat.
+        </p>
+
+
+        <div class="mt-5 space-y-2">
+
+          {
+            [
+              [
+                "Call Center Surabaya",
+                "/Aplikasi#ijinusaha-sec",
+                "fa-phone"
+              ],
+              [
+                "TAKON SOBAT",
+                "/Aplikasi#ijinusaha-sec",
+                "fa-comments"
+              ],
+              [
+                "LAPIS LUPIS",
+                "/Aplikasi#ijinusaha-sec",
+                "fa-layer-group"
+              ],
+              [
+                "Perizinan Online",
+                "/Aplikasi#ijinusaha-sec",
+                "fa-file-signature"
+              ],
+              [
+                "Pengaduan Layanan",
+                "/Aplikasi#pengaduan-sec",
+                "fa-headset"
+              ]
+            ].map(
+              ([label, href, icon]) => (
+
+                <a
+                  href={href}
+                  class="
+                    quick-link
+                    flex
+                    items-center
+                    justify-between
+                    rounded-xl
+                    border
+                    border-white/15
+                    bg-white/10
+                    px-3
+                    py-3
+                    backdrop-blur
+                  "
+                >
+
+                  <span
+                    class="
+                      flex
+                      items-center
+                      gap-3
+                    "
+                  >
+
+                    <span
+                      class="
+                        flex
+                        h-8
+                        w-8
+                        items-center
+                        justify-center
+                        rounded-lg
+                        bg-white/10
+                        text-yellow-300
+                      "
+                    >
+                      <i
+                        class={`fas ${icon} text-xs`}
+                      ></i>
+                    </span>
+
+                    <span
+                      class="
+                        text-[10px]
+                        font-bold
+                      "
+                    >
+                      {label}
+                    </span>
+
+                  </span>
+
+                  <i
+                    class="
+                      fas
+                      fa-chevron-right
+                      text-[9px]
+                      text-yellow-300
+                    "
+                  ></i>
+
+                </a>
+
+              )
+            )
+          }
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- =================================================
+         SHARE
+    ================================================== -->
+
+    <section
+      class="
+        rounded-[26px]
+        border
+        border-blue-100
+        bg-white
+        p-6
+        shadow-[0_18px_50px_rgba(15,23,42,.07)]
+      "
+    >
+
+      <span
+        class="
+          text-[8px]
+          font-extrabold
+          uppercase
+          tracking-[.2em]
+          text-slate-400
+        "
+      >
+        Share
+      </span>
+
+      <h2
+        class="
+          font-display
+          mt-1
+          text-lg
+          font-extrabold
+          text-[#123b78]
+        "
+      >
+        Bagikan Artikel
+      </h2>
+
+      <p
+        class="
+          mt-1
+          text-[10px]
+          text-slate-500
+        "
+      >
+        Sebarkan informasi kepada rekan Anda.
+      </p>
+
+
+      <div
+        class="
+          mt-5
+          grid
+          grid-cols-4
+          gap-2
+        "
+      >
+
+        <a
+          id="share-facebook"
+          href="#"
+          target="_blank"
+          rel="noopener"
+          class="
+            share-button
+            flex
+            h-11
+            items-center
+            justify-center
+            rounded-xl
+            bg-[#1877F2]
+            text-white
+          "
+        >
+          <i class="fab fa-facebook-f"></i>
+        </a>
+
+
+        <a
+          id="share-twitter"
+          href="#"
+          target="_blank"
+          rel="noopener"
+          class="
+            share-button
+            flex
+            h-11
+            items-center
+            justify-center
+            rounded-xl
+            bg-slate-900
+            text-white
+          "
+        >
+          <i class="fab fa-x-twitter"></i>
+        </a>
+
+
+        <a
+          id="share-whatsapp"
+          href="#"
+          target="_blank"
+          rel="noopener"
+          class="
+            share-button
+            flex
+            h-11
+            items-center
+            justify-center
+            rounded-xl
+            bg-[#25D366]
+            text-white
+          "
+        >
+          <i class="fab fa-whatsapp"></i>
+        </a>
+
+
+        <button
+          id="copy-link"
+          type="button"
+          class="
+            share-button
+            flex
+            h-11
+            items-center
+            justify-center
+            rounded-xl
+            bg-blue-50
+            text-blue-700
+          "
+        >
+          <i class="fas fa-link"></i>
+        </button>
+
+      </div>
+
+
+      <input
+        id="article-link"
+        value=""
+        readonly
+        class="
+          mt-4
+          w-full
+          rounded-xl
+          border
+          border-slate-200
+          bg-slate-50
+          px-3
+          py-2.5
+          text-[10px]
+          text-slate-500
+          outline-none
+        "
+      />
+
+
+      <p
+        id="copy-message"
+        class="
+          mt-2
+          hidden
+          text-[10px]
+          font-bold
+          text-emerald-600
+        "
+      >
+        <i class="fas fa-check mr-1"></i>
+        Link berhasil disalin.
+      </p>
+
+    </section>
+
+  </div>
+
+</aside>
+
+
+  </div>
+
+</main>
+
+
+<!-- =====================================================
+     BACK TO TOP
+====================================================== -->
+
+<button
+  id="back-to-top"
+  type="button"
+  aria-label="Kembali ke atas"
+  class="
+    fixed
+    bottom-5
+    right-5
+    z-50
+    hidden
+    h-11
+    w-11
+    items-center
+    justify-center
+    rounded-xl
+    bg-blue-600
+    text-white
+    shadow-lg
+    transition
+    hover:bg-blue-700
+  "
+>
+
+  <i
+    class="
+      fas
+      fa-arrow-up
+      text-xs
+    "
+  ></i>
+
+</button>
+
+
+<!-- =====================================================
+     JAVASCRIPT
+====================================================== -->
+
+<script>
+
+  /* =====================================================
+     SEARCH + KATEGORI ARTIKEL
+  ===================================================== */
+
+  const mediaSearch = document.getElementById("media-search");
+  const mediaItems = Array.from(document.querySelectorAll(".media-item"));
+  const mediaEmpty = document.getElementById("media-empty");
+  const articleCategories = Array.from(document.querySelectorAll(".article-tab"));
+
+  let activeCategory = "semua";
+
+  function filterMedia() {
+
+    const keyword = String(mediaSearch?.value || "")
+      .toLowerCase()
+      .trim();
+
+    let visible = 0;
+
+    mediaItems.forEach((item) => {
+
+      const title = String(item.getAttribute("data-title") || "")
+        .toLowerCase();
+
+      const category = String(item.getAttribute("data-category") || "lainnya")
+        .toLowerCase();
+
+      const searchMatch =
+        !keyword ||
+        title.includes(keyword) ||
+        category.includes(keyword);
+
+      const categoryMatch =
+        activeCategory === "semua" ||
+        category === activeCategory;
+
+      const show = searchMatch && categoryMatch;
+
+      item.classList.toggle("hidden", !show);
+
+      if (show) visible++;
     });
 
+    mediaEmpty?.classList.toggle("hidden", visible !== 0);
+  }
 
-    searchInput?.addEventListener(
-      "input",
-      renderList
+  articleCategories.forEach((button) => {
+
+    button.addEventListener("click", (event) => {
+
+      event.preventDefault();
+
+      activeCategory = button.getAttribute("data-category") || "semua";
+
+      articleCategories.forEach((btn) => {
+        const active = btn === button;
+        btn.classList.toggle("active", active);
+        btn.setAttribute("aria-pressed", active ? "true" : "false");
+      });
+
+      filterMedia();
+    });
+
+  });
+
+  mediaSearch?.addEventListener("input", filterMedia);
+
+  filterMedia();
+
+  /* =====================================================
+     SHARE URL
+  ===================================================== */
+
+  const currentUrl =
+    window.location.href;
+
+
+  const pageTitle =
+    document.title;
+
+
+  const articleLink =
+    document.getElementById(
+      "article-link"
     );
 
 
-    /* =====================================================
-       COPY LINK
-    ====================================================== */
+  if (articleLink) {
 
-    const copyButton =
-      document.getElementById(
-        "copy-link"
+    articleLink.value =
+      currentUrl;
+
+  }
+
+
+  /* =====================================================
+     FACEBOOK
+  ===================================================== */
+
+  const facebook =
+    document.getElementById(
+      "share-facebook"
+    );
+
+
+  if (facebook) {
+
+    facebook.href =
+      `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(currentUrl)}`;
+
+  }
+
+
+  /* =====================================================
+     X
+  ===================================================== */
+
+  const twitter =
+    document.getElementById(
+      "share-twitter"
+    );
+
+
+  if (twitter) {
+
+    twitter.href =
+      `https://twitter.com/intent/tweet?url=${encodeURIComponent(currentUrl)}&text=${encodeURIComponent(pageTitle)}`;
+
+  }
+
+
+  /* =====================================================
+     WHATSAPP
+  ===================================================== */
+
+  const whatsapp =
+    document.getElementById(
+      "share-whatsapp"
+    );
+
+
+  if (whatsapp) {
+
+    whatsapp.href =
+      `https://wa.me/?text=${encodeURIComponent(
+        pageTitle + " " + currentUrl
+      )}`;
+
+  }
+
+
+  /* =====================================================
+     COPY LINK
+  ===================================================== */
+
+  const copyButton =
+    document.getElementById(
+      "copy-link"
+    );
+
+
+  const copyMessage =
+    document.getElementById(
+      "copy-message"
+    );
+
+
+  async function copyLink() {
+
+    try {
+
+      await navigator.clipboard.writeText(
+        currentUrl
       );
 
-    const articleLink =
-      document.getElementById(
-        "article-link"
-      );
 
-    const copyMessage =
-      document.getElementById(
-        "copy-message"
-      );
+      if (copyMessage) {
+
+        copyMessage.classList.remove(
+          "hidden"
+        );
 
 
-    copyButton?.addEventListener(
-      "click",
-      async () => {
+        setTimeout(
+          () => {
 
-        try {
-
-          await navigator.clipboard.writeText(
-            `${window.location.origin}${articleLink.value}`
-          );
-
-
-          copyMessage?.classList.remove(
-            "hidden"
-          );
-
-
-          setTimeout(() => {
-
-            copyMessage?.classList.add(
+            copyMessage.classList.add(
               "hidden"
             );
 
-          }, 2000);
-
-
-        } catch (error) {
-
-          console.error(
-            "Gagal copy link",
-            error
-          );
-
-        }
+          },
+          2500
+        );
 
       }
+
+    }
+
+    catch {
+
+      if (articleLink) {
+
+        articleLink.select();
+
+        document.execCommand(
+          "copy"
+        );
+
+      }
+
+    }
+
+  }
+
+
+  copyButton?.addEventListener(
+    "click",
+    copyLink
+  );
+
+
+  /* =====================================================
+     READING PROGRESS
+  ===================================================== */
+
+  const progress =
+    document.getElementById(
+      "reading-progress"
     );
 
-  </script>
+
+  function updateProgress() {
+
+    if (!progress) {
+
+      return;
+
+    }
+
+
+    const scrollTop =
+      window.scrollY;
+
+
+    const height =
+      document.documentElement
+        .scrollHeight -
+      window.innerHeight;
+
+
+    const percent =
+      height > 0
+        ? (
+            scrollTop /
+            height
+          ) * 100
+        : 0;
+
+
+    progress.style.width =
+      `${Math.min(
+        100,
+        Math.max(
+          0,
+          percent
+        )
+      )}%`;
+
+  }
+
+
+  window.addEventListener(
+    "scroll",
+    updateProgress,
+    {
+      passive: true
+    }
+  );
+
+
+  updateProgress();
+
+
+  /* =====================================================
+     BACK TO TOP
+  ===================================================== */
+
+  const backTop =
+    document.getElementById(
+      "back-to-top"
+    );
+
+
+  function updateBackTop() {
+
+    if (!backTop) {
+
+      return;
+
+    }
+
+
+    if (
+      window.scrollY > 500
+    ) {
+
+      backTop.classList.remove(
+        "hidden"
+      );
+
+      backTop.classList.add(
+        "flex"
+      );
+
+    }
+
+    else {
+
+      backTop.classList.add(
+        "hidden"
+      );
+
+      backTop.classList.remove(
+        "flex"
+      );
+
+    }
+
+  }
+
+
+  window.addEventListener(
+    "scroll",
+    updateBackTop,
+    {
+      passive: true
+    }
+  );
+
+
+  backTop?.addEventListener(
+    "click",
+    () => {
+
+      window.scrollTo(
+        {
+          top: 0,
+          behavior: "smooth"
+        }
+      );
+
+    }
+  );
+
+
+  updateBackTop();
+
+</script>
 
 </MainLayout>
