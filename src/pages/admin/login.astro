@@ -1,0 +1,3829 @@
+---
+export const prerender = false;
+
+import { db } from "../../lib/db.js";
+import { authenticateAdmin } from "../../lib/adminAuth.js";
+
+/* =========================================================
+   CEK SESSION
+========================================================= */
+
+const adminAuth = Astro.cookies.get("admin-auth")?.value;
+
+if (adminAuth === "true") {
+  return Astro.redirect("/admin/dashboard");
+}
+
+/* =========================================================
+   LOGIN
+========================================================= */
+
+let error = "";
+let isLoginAttempt = false;
+
+if (Astro.request.method === "POST") {
+  isLoginAttempt = true;
+
+  try {
+    const formData = await Astro.request.formData();
+
+    const username = String(
+      formData.get("username") || ""
+    ).trim();
+
+    const password = String(
+      formData.get("password") || ""
+    );
+
+    if (!username || !password) {
+      error = "Username dan kata sandi wajib diisi.";
+    } else {
+      const result = await authenticateAdmin({
+        username,
+        password,
+        db,
+      });
+
+      if (result.success) {
+        Astro.cookies.set("admin-auth", "true", {
+          httpOnly: true,
+          sameSite: "lax",
+          secure: import.meta.env.PROD,
+          path: "/",
+          maxAge: 60 * 60 * 8,
+        });
+
+        return Astro.redirect("/admin/dashboard");
+      }
+
+      error =
+        result.error ||
+        "Username atau kata sandi salah.";
+    }
+  } catch (e) {
+    console.error("LOGIN ERROR:", e);
+
+    error =
+      "Terjadi kesalahan pada server. Silakan coba lagi.";
+  }
+}
+
+/* =========================================================
+   ANTI CACHE
+========================================================= */
+
+Astro.response.headers.set(
+  "Cache-Control",
+  "no-store, no-cache, must-revalidate, proxy-revalidate"
+);
+
+Astro.response.headers.set(
+  "Pragma",
+  "no-cache"
+);
+
+Astro.response.headers.set(
+  "Expires",
+  "0"
+);
+
+Astro.response.headers.set(
+  "Surrogate-Control",
+  "no-store"
+);
+---
+
+<!doctype html>
+<html lang="id">
+
+<head>
+
+  <meta charset="UTF-8" />
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0"
+  />
+
+  <meta
+    name="robots"
+    content="noindex,nofollow"
+  />
+
+  <title>
+    Login Administrator | DPM-PTSP Kota Surabaya
+  </title>
+
+  <link
+    rel="preconnect"
+    href="https://fonts.googleapis.com"
+  />
+
+  <link
+    rel="preconnect"
+    href="https://fonts.gstatic.com"
+    crossorigin
+  />
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+    rel="stylesheet"
+  />
+
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+  />
+
+</head>
+
+
+<body>
+
+  <!-- =====================================================
+       LOADING SCREEN
+  ====================================================== -->
+
+  <section
+    id="loadingScreen"
+    class="loading-screen"
+  >
+
+    <!-- GRID -->
+    <div class="loading-grid"></div>
+
+    <!-- GLOW -->
+    <div class="loading-glow glow-one"></div>
+    <div class="loading-glow glow-two"></div>
+    <div class="loading-glow glow-three"></div>
+
+    <!-- ORBIT -->
+    <div class="orbit orbit-one"></div>
+    <div class="orbit orbit-two"></div>
+
+    <!-- STARS -->
+    <div class="stars stars-one"></div>
+    <div class="stars stars-two"></div>
+    <div class="stars stars-three"></div>
+
+
+    <div class="loading-content">
+
+      <!-- =================================================
+           LOGO
+      ================================================== -->
+
+      <div class="loading-logo-wrap">
+
+        <div class="logo-ring ring-one"></div>
+
+        <div class="logo-ring ring-two"></div>
+
+        <div class="loading-logo">
+
+          <img
+            src="https://github.com/arbagasdanangh/pps/blob/main/logo.png?raw=true"
+            alt="Logo DPM-PTSP Kota Surabaya"
+          />
+
+        </div>
+
+      </div>
+
+
+      <!-- =================================================
+           EPPORTAL
+      ================================================== -->
+
+      <div class="portal-title">
+        ePortal
+      </div>
+
+
+      <div class="maintenance-title">
+        Maintenance Profile
+      </div>
+
+
+      <div class="maintenance-description">
+        Menyiapkan halaman administrator...
+      </div>
+
+
+      <!-- =================================================
+           ROCKET
+      ================================================== -->
+
+      <div class="rocket-wrap">
+
+        <div class="rocket">
+
+          <div class="rocket-window"></div>
+
+          <div class="rocket-wing left"></div>
+
+          <div class="rocket-wing right"></div>
+
+          <div class="rocket-fire"></div>
+
+        </div>
+
+      </div>
+
+
+      <!-- =================================================
+           PROGRESS
+      ================================================== -->
+
+      <div class="progress-wrapper">
+
+        <div class="progress-track">
+
+          <div
+            id="progressBar"
+            class="progress-bar"
+          ></div>
+
+        </div>
+
+
+        <div class="progress-info">
+
+          <span id="loadingText">
+            Menyiapkan administrator...
+          </span>
+
+          <strong id="progressPercent">
+            0%
+          </strong>
+
+        </div>
+
+
+        <div
+          id="loadingStatus"
+          class="loading-status"
+        >
+
+          <span class="status-dot"></span>
+
+          Memuat sistem administrator
+
+        </div>
+
+      </div>
+
+
+    </div>
+
+
+    <!-- =================================================
+         LOADING FOOTER
+    ================================================== -->
+
+    <div class="loading-footer">
+
+      <i class="fa-solid fa-shield-halved"></i>
+
+      <span>
+        Sistem Administrator DPM-PTSP Kota Surabaya
+      </span>
+
+    </div>
+
+  </section>
+
+
+  <!-- =====================================================
+       LOGIN PAGE
+  ====================================================== -->
+
+  <main
+    id="loginPage"
+    class="admin-login"
+    data-login-attempt={isLoginAttempt ? "true" : "false"}
+    data-has-error={error ? "true" : "false"}
+  >
+
+
+    <!-- ===================================================
+         LEFT BRANDING
+    ==================================================== -->
+
+    <section class="brand-panel">
+
+      <div class="brand-background-grid"></div>
+
+      <div class="brand-glow brand-glow-one"></div>
+
+      <div class="brand-glow brand-glow-two"></div>
+
+      <div class="brand-orbit"></div>
+
+
+      <div class="brand-content">
+
+
+        <!-- LOGO -->
+        <div class="brand-top">
+
+          <div class="brand-logo">
+
+            <img
+              src="https://github.com/arbagasdanangh/pps/blob/main/logo.png?raw=true"
+              alt="Logo DPM-PTSP Kota Surabaya"
+            />
+
+          </div>
+
+
+          <div class="brand-logo-text">
+
+            <div class="brand-portal">
+              ePortal
+            </div>
+
+            <div class="brand-agency">
+              D P M - P T S P&nbsp;&nbsp; K O T A&nbsp;&nbsp; S U R A B A Y A
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <!-- LABEL -->
+
+        <div class="brand-label">
+
+          <i class="fa-solid fa-chart-line"></i>
+
+          PORTAL ADMINISTRATOR
+
+        </div>
+
+
+        <!-- TITLE -->
+
+        <h1>
+
+          Kelola dan Pantau
+
+          <span>
+            Aktivitas Data.
+          </span>
+
+        </h1>
+
+
+        <!-- DESCRIPTION -->
+
+        <p class="brand-description">
+
+          Kelola konten, layanan, informasi, inovasi,
+          pemberitaan dan berbagai aktivitas website
+          DPM-PTSP Kota Surabaya melalui satu platform administrator.
+
+        </p>
+
+
+        <!-- FEATURES -->
+
+        <div class="feature-list">
+
+
+          <div class="feature-item">
+
+            <div class="feature-icon">
+
+              <i class="fa-solid fa-check"></i>
+
+            </div>
+
+            <span>
+              Pengelolaan konten website secara terpusat
+            </span>
+
+          </div>
+
+
+          <div class="feature-item">
+
+            <div class="feature-icon">
+
+              <i class="fa-solid fa-check"></i>
+
+            </div>
+
+            <span>
+              Rekap layanan dan informasi lebih mudah
+            </span>
+
+          </div>
+
+
+          <div class="feature-item">
+
+            <div class="feature-icon">
+
+              <i class="fa-solid fa-check"></i>
+
+            </div>
+
+            <span>
+              Akses administrator sesuai kewenangan
+            </span>
+
+          </div>
+
+
+        </div>
+
+
+      </div>
+
+
+      <!-- BRAND FOOTER -->
+
+      <div class="brand-footer">
+
+        © {new Date().getFullYear()}
+        Dinas Penanaman Modal & PTSP Kota Surabaya
+
+      </div>
+
+
+    </section>
+
+
+    <!-- ===================================================
+         LOGIN PANEL
+    ==================================================== -->
+
+    <section class="login-panel">
+
+
+      <div class="login-container">
+
+
+        <!-- LOGIN HEADER -->
+
+        <div class="login-header">
+
+          <div class="login-icon">
+
+            <i class="fa-solid fa-lock"></i>
+
+          </div>
+
+
+          <div>
+
+            <h2>
+              Masuk ke akun Anda
+            </h2>
+
+            <p>
+              Gunakan username dan kata sandi yang terdaftar.
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <!-- =================================================
+             ERROR
+        ================================================== -->
+
+        {error && (
+
+          <div
+            class="error-message"
+            role="alert"
+          >
+
+            <div class="error-icon">
+
+              <i class="fa-solid fa-circle-exclamation"></i>
+
+            </div>
+
+
+            <div class="error-content">
+
+              <strong>
+                Login gagal
+              </strong>
+
+              <span>
+                {error}
+              </span>
+
+            </div>
+
+          </div>
+
+        )}
+
+
+        <!-- =================================================
+             FORM
+        ================================================== -->
+
+        <form
+          id="loginForm"
+          method="POST"
+          class="login-form"
+          autocomplete="on"
+        >
+
+
+          <!-- USERNAME -->
+
+          <div class="form-group">
+
+            <label for="username">
+              Username
+            </label>
+
+
+            <div class="input-container">
+
+              <input
+                id="username"
+                type="text"
+                name="username"
+                placeholder="Masukkan username"
+                autocomplete="username"
+                autocapitalize="none"
+                spellcheck="false"
+                required
+              />
+
+
+              <i class="fa-regular fa-user input-icon"></i>
+
+            </div>
+
+          </div>
+
+
+          <!-- PASSWORD -->
+
+          <div class="form-group">
+
+            <label for="password">
+              Kata Sandi
+            </label>
+
+
+            <div class="input-container password-container">
+
+
+              <input
+                id="password"
+                type="password"
+                name="password"
+                placeholder="Masukkan kata sandi"
+                autocomplete="current-password"
+                required
+              />
+
+
+              <i class="fa-solid fa-lock input-icon"></i>
+
+
+              <!-- PASSWORD TOGGLE -->
+
+              <button
+                type="button"
+                id="togglePassword"
+                class="password-toggle"
+                aria-label="Tampilkan kata sandi"
+                title="Tampilkan kata sandi"
+              >
+
+
+                <!-- OPEN -->
+
+                <svg
+                  id="eyeOpen"
+                  class="eye-icon"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+
+                  <path
+                    d="M2.5 12C2.5 12 6 5.5 12 5.5C18 5.5 21.5 12 21.5 12C21.5 12 18 18.5 12 18.5C6 18.5 2.5 12 2.5 12Z"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="3"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                  />
+
+                </svg>
+
+
+                <!-- CLOSED -->
+
+                <svg
+                  id="eyeClosed"
+                  class="eye-icon eye-hidden"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+
+                  <path
+                    d="M3 3L21 21"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                  />
+
+                  <path
+                    d="M10.6 5.7C11.05 5.57 11.51 5.5 12 5.5C18 5.5 21.5 12 21.5 12C21.5 12 20.25 14.3 18.2 16.2"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+
+                  <path
+                    d="M6.2 7.8C3.85 9.6 2.5 12 2.5 12C2.5 12 6 18.5 12 18.5C13.15 18.5 14.2 18.3 15.15 17.9"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+
+                </svg>
+
+
+              </button>
+
+
+            </div>
+
+          </div>
+
+
+          <!-- =================================================
+               OPTIONS
+          ================================================== -->
+
+          <div class="form-options">
+
+
+            <label class="remember">
+
+              <input
+                id="remember"
+                type="checkbox"
+                name="remember"
+              />
+
+              <span class="custom-checkbox"></span>
+
+              <span>
+                Ingat saya
+              </span>
+
+            </label>
+
+
+          </div>
+
+
+          <!-- =================================================
+               BUTTON
+          ================================================== -->
+
+          <button
+            id="loginButton"
+            type="submit"
+            class="login-button"
+          >
+
+
+            <span
+              id="buttonNormal"
+              class="button-normal"
+            >
+
+              Masuk
+
+              <i class="fa-solid fa-arrow-right"></i>
+
+            </span>
+
+
+            <span
+              id="buttonLoading"
+              class="button-loading"
+            >
+
+              <span class="button-spinner"></span>
+
+              Memproses...
+
+            </span>
+
+
+          </button>
+
+
+        </form>
+
+
+        <!-- =================================================
+             HELP
+        ================================================== -->
+
+        <div class="login-help">
+
+          Butuh bantuan akses?
+
+          <strong>
+            Hubungi administrator DPM-PTSP Kota Surabaya.
+          </strong>
+
+        </div>
+
+
+        <!-- =================================================
+             SECURITY
+        ================================================== -->
+
+        <div class="security-footer">
+
+          <i class="fa-solid fa-shield-halved"></i>
+
+          <span>
+            Akses khusus administrator
+          </span>
+
+        </div>
+
+
+      </div>
+
+
+    </section>
+
+
+  </main>
+
+
+  <!-- =====================================================
+       JAVASCRIPT
+  ====================================================== -->
+
+  <script is:inline>
+
+    document.addEventListener(
+      "DOMContentLoaded",
+      function () {
+
+
+        /* =================================================
+           ELEMENT LOADING
+        ================================================= */
+
+        const loadingScreen =
+          document.getElementById(
+            "loadingScreen"
+          );
+
+
+        const loginPage =
+          document.getElementById(
+            "loginPage"
+          );
+
+
+        const progressBar =
+          document.getElementById(
+            "progressBar"
+          );
+
+
+        const progressPercent =
+          document.getElementById(
+            "progressPercent"
+          );
+
+
+        const loadingText =
+          document.getElementById(
+            "loadingText"
+          );
+
+
+        const loadingStatus =
+          document.getElementById(
+            "loadingStatus"
+          );
+
+
+        /* =================================================
+           STATUS POST LOGIN
+        ================================================= */
+
+        const isLoginAttempt =
+          loginPage?.dataset.loginAttempt ===
+          "true";
+
+
+        const hasError =
+          loginPage?.dataset.hasError ===
+          "true";
+
+
+        /* =================================================
+           LOGIN GAGAL
+           
+           LANGSUNG TAMPIL LOGIN
+           
+           TIDAK ADA LOADING
+        ================================================= */
+
+        if (
+          isLoginAttempt ||
+          hasError
+        ) {
+
+
+          if (loadingScreen) {
+
+            loadingScreen.style.display =
+              "none";
+
+            loadingScreen.classList.add(
+              "loading-hide"
+            );
+
+          }
+
+
+          if (loginPage) {
+
+            loginPage.classList.add(
+              "login-show"
+            );
+
+          }
+
+
+        }
+
+
+        /* =================================================
+           FIRST LOAD
+           
+           JALANKAN PROGRESS
+        ================================================= */
+
+        else {
+
+
+          let progress = 0;
+
+          const duration = 3000;
+
+          const startTime =
+            performance.now();
+
+
+          function animateLoading(
+            currentTime
+          ) {
+
+
+            const elapsed =
+              currentTime -
+              startTime;
+
+
+            progress =
+              Math.min(
+                (elapsed / duration) * 100,
+                100
+              );
+
+
+            const value =
+              Math.round(progress);
+
+
+            /* =============================================
+               BAR
+            ============================================== */
+
+            if (progressBar) {
+
+              progressBar.style.width =
+                value + "%";
+
+            }
+
+
+            /* =============================================
+               PERCENT
+            ============================================== */
+
+            if (progressPercent) {
+
+              progressPercent.textContent =
+                value + "%";
+
+            }
+
+
+            /* =============================================
+               TEXT
+            ============================================== */
+
+            if (loadingText) {
+
+
+              if (value < 20) {
+
+                loadingText.textContent =
+                  "Menyiapkan administrator...";
+
+              }
+
+              else if (value < 40) {
+
+                loadingText.textContent =
+                  "Memuat sistem administrator...";
+
+              }
+
+              else if (value < 60) {
+
+                loadingText.textContent =
+                  "Menyiapkan keamanan...";
+
+              }
+
+              else if (value < 80) {
+
+                loadingText.textContent =
+                  "Menyiapkan akses administrator...";
+
+              }
+
+              else if (value < 100) {
+
+                loadingText.textContent =
+                  "Menyiapkan dashboard...";
+
+              }
+
+              else {
+
+                loadingText.textContent =
+                  "Selesai!";
+
+              }
+
+            }
+
+
+            /* =============================================
+               STATUS
+            ============================================== */
+
+            if (loadingStatus) {
+
+
+              let status =
+                "Memuat sistem administrator";
+
+
+              if (
+                value >= 20 &&
+                value < 40
+              ) {
+
+                status =
+                  "Menyiapkan konfigurasi";
+
+              }
+
+
+              else if (
+                value >= 40 &&
+                value < 60
+              ) {
+
+                status =
+                  "Memeriksa keamanan sistem";
+
+              }
+
+
+              else if (
+                value >= 60 &&
+                value < 80
+              ) {
+
+                status =
+                  "Menyiapkan akses administrator";
+
+              }
+
+
+              else if (
+                value >= 80 &&
+                value < 100
+              ) {
+
+                status =
+                  "Memuat dashboard";
+
+              }
+
+
+              else if (
+                value >= 100
+              ) {
+
+                status =
+                  "Sistem siap";
+
+              }
+
+
+              loadingStatus.innerHTML =
+                '<span class="status-dot"></span>' +
+                status;
+
+            }
+
+
+            /* =============================================
+               BELUM SELESAI
+            ============================================== */
+
+            if (
+              progress < 100
+            ) {
+
+              requestAnimationFrame(
+                animateLoading
+              );
+
+              return;
+
+            }
+
+
+            /* =============================================
+               SELESAI
+            ============================================== */
+
+            setTimeout(
+              function () {
+
+
+                if (loadingScreen) {
+
+                  loadingScreen.classList.add(
+                    "loading-hide"
+                  );
+
+                }
+
+
+                setTimeout(
+                  function () {
+
+
+                    if (loadingScreen) {
+
+                      loadingScreen.style.display =
+                        "none";
+
+                    }
+
+
+                    if (loginPage) {
+
+                      loginPage.classList.add(
+                        "login-show"
+                      );
+
+                    }
+
+
+                  },
+                  550
+                );
+
+
+              },
+              250
+            );
+
+          }
+
+
+          requestAnimationFrame(
+            animateLoading
+          );
+
+        }
+
+
+        /* =================================================
+           PASSWORD TOGGLE
+        ================================================= */
+
+        const password =
+          document.getElementById(
+            "password"
+          );
+
+
+        const togglePassword =
+          document.getElementById(
+            "togglePassword"
+          );
+
+
+        const eyeOpen =
+          document.getElementById(
+            "eyeOpen"
+          );
+
+
+        const eyeClosed =
+          document.getElementById(
+            "eyeClosed"
+          );
+
+
+        if (
+          password &&
+          togglePassword
+        ) {
+
+
+          togglePassword.addEventListener(
+            "click",
+            function () {
+
+
+              const show =
+                password.type ===
+                "password";
+
+
+              if (show) {
+
+
+                password.type =
+                  "text";
+
+
+                if (eyeOpen) {
+
+                  eyeOpen.style.display =
+                    "none";
+
+                }
+
+
+                if (eyeClosed) {
+
+                  eyeClosed.style.display =
+                    "block";
+
+                }
+
+
+                togglePassword.setAttribute(
+                  "aria-label",
+                  "Sembunyikan kata sandi"
+                );
+
+
+                togglePassword.setAttribute(
+                  "title",
+                  "Sembunyikan kata sandi"
+                );
+
+
+              }
+
+
+              else {
+
+
+                password.type =
+                  "password";
+
+
+                if (eyeOpen) {
+
+                  eyeOpen.style.display =
+                    "block";
+
+                }
+
+
+                if (eyeClosed) {
+
+                  eyeClosed.style.display =
+                    "none";
+
+                }
+
+
+                togglePassword.setAttribute(
+                  "aria-label",
+                  "Tampilkan kata sandi"
+                );
+
+
+                togglePassword.setAttribute(
+                  "title",
+                  "Tampilkan kata sandi"
+                );
+
+
+              }
+
+
+            }
+          );
+
+        }
+
+
+        /* =================================================
+           LOGIN BUTTON
+        ================================================= */
+
+        const loginForm =
+          document.getElementById(
+            "loginForm"
+          );
+
+
+        const loginButton =
+          document.getElementById(
+            "loginButton"
+          );
+
+
+        const buttonNormal =
+          document.getElementById(
+            "buttonNormal"
+          );
+
+
+        const buttonLoading =
+          document.getElementById(
+            "buttonLoading"
+          );
+
+
+        if (
+          loginForm &&
+          loginButton
+        ) {
+
+
+          loginForm.addEventListener(
+            "submit",
+            function () {
+
+
+              loginButton.disabled =
+                true;
+
+
+              if (buttonNormal) {
+
+                buttonNormal.style.display =
+                  "none";
+
+              }
+
+
+              if (buttonLoading) {
+
+                buttonLoading.style.display =
+                  "flex";
+
+              }
+
+
+            }
+          );
+
+        }
+
+
+        /* =================================================
+           REMEMBER USERNAME
+        ================================================= */
+
+        const username =
+          document.getElementById(
+            "username"
+          );
+
+
+        const remember =
+          document.getElementById(
+            "remember"
+          );
+
+
+        try {
+
+
+          const saved =
+            localStorage.getItem(
+              "admin-remember-username"
+            );
+
+
+          if (
+            saved &&
+            username
+          ) {
+
+            username.value =
+              saved;
+
+            if (remember) {
+
+              remember.checked =
+                true;
+
+            }
+
+          }
+
+
+          if (
+            loginForm &&
+            username &&
+            remember
+          ) {
+
+
+            loginForm.addEventListener(
+              "submit",
+              function () {
+
+
+                if (
+                  remember.checked
+                ) {
+
+
+                  localStorage.setItem(
+                    "admin-remember-username",
+                    username.value.trim()
+                  );
+
+
+                }
+
+                else {
+
+
+                  localStorage.removeItem(
+                    "admin-remember-username"
+                  );
+
+
+                }
+
+              }
+            );
+
+          }
+
+
+        }
+
+        catch (e) {
+
+          console.warn(
+            "LocalStorage tidak tersedia."
+          );
+
+        }
+
+
+        /* =================================================
+           BF CACHE / BACK BUTTON
+        ================================================= */
+
+        window.addEventListener(
+          "pageshow",
+          function (event) {
+
+
+            if (
+              event.persisted
+            ) {
+
+              window.location.reload();
+
+            }
+
+
+          }
+        );
+
+
+      }
+    );
+
+  </script>
+
+
+  <!-- =====================================================
+       CSS
+  ====================================================== -->
+
+  <style>
+
+    * {
+      box-sizing: border-box;
+    }
+
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      min-height: 100%;
+      font-family: "Inter", sans-serif;
+    }
+
+
+    body {
+      overflow-x: hidden;
+      background: #f7f9fc;
+    }
+
+
+    button,
+    input {
+      font-family: inherit;
+    }
+
+
+    /* =====================================================
+       LOADING
+    ====================================================== */
+
+    .loading-screen {
+
+      position: fixed;
+
+      inset: 0;
+
+      z-index: 99999;
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: center;
+
+      overflow: hidden;
+
+      color: white;
+
+      background:
+        radial-gradient(
+          circle at 50% 42%,
+          #0877e9 0%,
+          #075bb9 30%,
+          #06458e 62%,
+          #03346e 100%
+        );
+
+      opacity: 1;
+
+      visibility: visible;
+
+      transition:
+        opacity .55s ease,
+        visibility .55s ease;
+
+    }
+
+
+    .loading-screen.loading-hide {
+
+      opacity: 0;
+
+      visibility: hidden;
+
+      pointer-events: none;
+
+    }
+
+
+    .loading-grid {
+
+      position: absolute;
+
+      inset: 0;
+
+      opacity: .2;
+
+      background-image:
+        linear-gradient(
+          rgba(255,255,255,.16) 1px,
+          transparent 1px
+        ),
+        linear-gradient(
+          90deg,
+          rgba(255,255,255,.16) 1px,
+          transparent 1px
+        );
+
+      background-size: 72px 72px;
+
+    }
+
+
+    .loading-glow {
+
+      position: absolute;
+
+      border-radius: 50%;
+
+      pointer-events: none;
+
+      filter: blur(5px);
+
+    }
+
+
+    .glow-one {
+
+      width: 480px;
+
+      height: 480px;
+
+      top: 5%;
+
+      left: 50%;
+
+      transform: translateX(-50%);
+
+      background:
+        rgba(0,145,255,.13);
+
+    }
+
+
+    .glow-two {
+
+      width: 300px;
+
+      height: 300px;
+
+      left: -120px;
+
+      bottom: -100px;
+
+      background:
+        rgba(0,150,255,.08);
+
+    }
+
+
+    .glow-three {
+
+      width: 360px;
+
+      height: 360px;
+
+      right: -150px;
+
+      top: -120px;
+
+      background:
+        rgba(0,150,255,.08);
+
+    }
+
+
+    .orbit {
+
+      position: absolute;
+
+      border:
+        1px solid rgba(255,255,255,.13);
+
+      border-radius: 50%;
+
+      pointer-events: none;
+
+    }
+
+
+    .orbit-one {
+
+      width: 720px;
+
+      height: 720px;
+
+      right: -260px;
+
+      top: -270px;
+
+      transform: rotate(-20deg);
+
+    }
+
+
+    .orbit-two {
+
+      width: 530px;
+
+      height: 530px;
+
+      left: -320px;
+
+      bottom: -350px;
+
+    }
+
+
+    .stars {
+
+      position: absolute;
+
+      inset: 0;
+
+      opacity: .35;
+
+      background-image:
+        radial-gradient(
+          circle,
+          rgba(255,255,255,.8) 1px,
+          transparent 1px
+        );
+
+      background-size: 110px 110px;
+
+    }
+
+
+    .stars-one {
+      background-position: 20px 10px;
+    }
+
+
+    .stars-two {
+
+      background-size: 170px 170px;
+
+      background-position: 70px 50px;
+
+      opacity: .18;
+
+    }
+
+
+    .stars-three {
+
+      background-size: 250px 250px;
+
+      background-position: 100px 120px;
+
+      opacity: .12;
+
+    }
+
+
+    .loading-content {
+
+      position: relative;
+
+      z-index: 5;
+
+      width: min(90%, 520px);
+
+      text-align: center;
+
+      display: flex;
+
+      flex-direction: column;
+
+      align-items: center;
+
+    }
+
+
+    .loading-logo-wrap {
+
+      position: relative;
+
+      width: 178px;
+
+      height: 178px;
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: center;
+
+      margin-bottom: 25px;
+
+    }
+
+
+    .loading-logo {
+
+      width: 164px;
+
+      height: 164px;
+
+      padding: 8px;
+
+      border-radius: 50%;
+
+      background: rgba(255,255,255,.96);
+
+      box-shadow:
+        0 0 0 3px rgba(255,255,255,.25),
+        0 20px 55px rgba(0,0,0,.22);
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: center;
+
+      position: relative;
+
+      z-index: 3;
+
+    }
+
+
+    .loading-logo img {
+
+      width: 100%;
+
+      height: 100%;
+
+      object-fit: contain;
+
+      border-radius: 50%;
+
+    }
+
+
+    .logo-ring {
+
+      position: absolute;
+
+      border-radius: 50%;
+
+      border:
+        2px solid rgba(255,255,255,.3);
+
+    }
+
+
+    .ring-one {
+
+      inset: -6px;
+
+      animation:
+        rotateRing 10s linear infinite;
+
+    }
+
+
+    .ring-two {
+
+      inset: -14px;
+
+      border-style: dashed;
+
+      opacity: .4;
+
+      animation:
+        rotateRingReverse 15s linear infinite;
+
+    }
+
+
+    .portal-title {
+
+      font-size: 54px;
+
+      line-height: 1;
+
+      font-weight: 900;
+
+      letter-spacing: -3px;
+
+      margin-bottom: 12px;
+
+      text-shadow:
+        0 8px 25px rgba(0,0,0,.2);
+
+    }
+
+
+    .maintenance-title {
+
+      color: #ffd21c;
+
+      font-size: 25px;
+
+      font-weight: 800;
+
+      margin-bottom: 10px;
+
+    }
+
+
+    .maintenance-description {
+
+      font-size: 15px;
+
+      color:
+        rgba(255,255,255,.72);
+
+    }
+
+
+    /* ROCKET */
+
+    .rocket-wrap {
+
+      height: 80px;
+
+      margin-top: 18px;
+
+      margin-bottom: 3px;
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: center;
+
+    }
+
+
+    .rocket {
+
+      position: relative;
+
+      width: 30px;
+
+      height: 52px;
+
+      background:
+        linear-gradient(
+          90deg,
+          #d9e9f7,
+          #ffffff,
+          #c8ddec
+        );
+
+      border-radius:
+        50% 50% 42% 42%;
+
+      animation:
+        rocketFloat 1.5s ease-in-out infinite;
+
+      box-shadow:
+        0 10px 25px rgba(0,0,0,.16);
+
+    }
+
+
+    .rocket::before {
+
+      content: "";
+
+      position: absolute;
+
+      width: 16px;
+
+      height: 18px;
+
+      left: 7px;
+
+      top: 9px;
+
+      border-radius: 50%;
+
+      background: #2196e8;
+
+      border:
+        3px solid #b7d8ef;
+
+    }
+
+
+    .rocket-wing {
+
+      position: absolute;
+
+      width: 13px;
+
+      height: 21px;
+
+      bottom: 4px;
+
+      background: #e0b82d;
+
+    }
+
+
+    .rocket-wing.left {
+
+      left: -9px;
+
+      border-radius:
+        9px 0 0 4px;
+
+    }
+
+
+    .rocket-wing.right {
+
+      right: -9px;
+
+      border-radius:
+        0 9px 4px 0;
+
+    }
+
+
+    .rocket-fire {
+
+      position: absolute;
+
+      width: 13px;
+
+      height: 25px;
+
+      bottom: -22px;
+
+      left: 8px;
+
+      border-radius:
+        0 0 50% 50%;
+
+      background:
+        linear-gradient(
+          to bottom,
+          #ffd52a,
+          #f39b18,
+          transparent
+        );
+
+      animation:
+        fire .45s ease-in-out infinite alternate;
+
+    }
+
+
+    /* PROGRESS */
+
+    .progress-wrapper {
+
+      width: 100%;
+
+      margin-top: 2px;
+
+    }
+
+
+    .progress-track {
+
+      position: relative;
+
+      width: 100%;
+
+      height: 8px;
+
+      overflow: hidden;
+
+      border-radius: 100px;
+
+      background:
+        rgba(255,255,255,.23);
+
+      box-shadow:
+        inset 0 1px 3px rgba(0,0,0,.15);
+
+    }
+
+
+    .progress-bar {
+
+      width: 0%;
+
+      height: 100%;
+
+      border-radius: inherit;
+
+      background:
+        linear-gradient(
+          90deg,
+          #ffd41c,
+          #ffe76a,
+          #ffd41c
+        );
+
+      box-shadow:
+        0 0 14px rgba(255,212,28,.55);
+
+    }
+
+
+    .progress-info {
+
+      display: flex;
+
+      justify-content: space-between;
+
+      gap: 20px;
+
+      margin-top: 11px;
+
+      font-size: 12px;
+
+      color:
+        rgba(255,255,255,.72);
+
+      text-align: left;
+
+    }
+
+
+    .progress-info strong {
+
+      color: white;
+
+      font-size: 13px;
+
+      min-width: 34px;
+
+      text-align: right;
+
+    }
+
+
+    .loading-status {
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: center;
+
+      gap: 9px;
+
+      margin-top: 18px;
+
+      font-size: 12px;
+
+      color:
+        rgba(255,255,255,.58);
+
+    }
+
+
+    .status-dot {
+
+      width: 7px;
+
+      height: 7px;
+
+      border-radius: 50%;
+
+      background: #ffd41c;
+
+      box-shadow:
+        0 0 0 5px rgba(255,212,28,.1);
+
+      animation:
+        statusPulse 1.2s infinite;
+
+    }
+
+
+    .loading-footer {
+
+      position: fixed;
+
+      bottom: 28px;
+
+      left: 50%;
+
+      transform: translateX(-50%);
+
+      display: flex;
+
+      align-items: center;
+
+      gap: 9px;
+
+      white-space: nowrap;
+
+      font-size: 11px;
+
+      color:
+        rgba(255,255,255,.5);
+
+    }
+
+
+    .loading-footer i {
+      color: #d8e9ff;
+    }
+
+
+    /* =====================================================
+       LOGIN MAIN
+    ====================================================== */
+
+    .admin-login {
+
+      position: relative;
+
+      display: grid;
+
+      grid-template-columns:
+        54% 46%;
+
+      width: 100%;
+
+      min-height: 100vh;
+
+      background: #f7f9fc;
+
+      opacity: 0;
+
+      visibility: hidden;
+
+      transition:
+        opacity .45s ease,
+        visibility .45s ease;
+
+    }
+
+
+    .admin-login.login-show {
+
+      opacity: 1;
+
+      visibility: visible;
+
+    }
+
+
+    /* =====================================================
+       BRAND PANEL
+    ====================================================== */
+
+    .brand-panel {
+
+      position: relative;
+
+      min-height: 100vh;
+
+      overflow: hidden;
+
+      color: white;
+
+      background:
+        radial-gradient(
+          circle at 75% 25%,
+          #0878e8 0%,
+          #075dbb 35%,
+          #06468d 68%,
+          #03346b 100%
+        );
+
+      display: flex;
+
+      flex-direction: column;
+
+      justify-content: center;
+
+      padding:
+        65px
+        clamp(45px, 7vw, 100px);
+
+    }
+
+
+    .brand-background-grid {
+
+      position: absolute;
+
+      inset: 0;
+
+      opacity: .13;
+
+      background-image:
+        linear-gradient(
+          rgba(255,255,255,.25) 1px,
+          transparent 1px
+        ),
+        linear-gradient(
+          90deg,
+          rgba(255,255,255,.25) 1px,
+          transparent 1px
+        );
+
+      background-size: 55px 55px;
+
+    }
+
+
+    .brand-glow {
+
+      position: absolute;
+
+      border-radius: 50%;
+
+      filter: blur(5px);
+
+      pointer-events: none;
+
+    }
+
+
+    .brand-glow-one {
+
+      width: 420px;
+
+      height: 420px;
+
+      right: -200px;
+
+      top: -160px;
+
+      background:
+        rgba(0,150,255,.18);
+
+    }
+
+
+    .brand-glow-two {
+
+      width: 350px;
+
+      height: 350px;
+
+      left: -230px;
+
+      bottom: -200px;
+
+      background:
+        rgba(0,150,255,.1);
+
+    }
+
+
+    .brand-orbit {
+
+      position: absolute;
+
+      width: 600px;
+
+      height: 600px;
+
+      border:
+        1px solid rgba(255,255,255,.1);
+
+      border-radius: 50%;
+
+      right: -360px;
+
+      top: 10%;
+
+      transform: rotate(25deg);
+
+    }
+
+
+    .brand-content {
+
+      position: relative;
+
+      z-index: 2;
+
+      width: min(100%, 720px);
+
+    }
+
+
+    /* TOP LOGO */
+
+    .brand-top {
+
+      display: flex;
+
+      align-items: center;
+
+      gap: 16px;
+
+      margin-bottom: 68px;
+
+    }
+
+
+    .brand-logo {
+
+      width: 78px;
+
+      height: 78px;
+
+      padding: 7px;
+
+      border-radius: 16px;
+
+      background: white;
+
+      box-shadow:
+        0 15px 40px rgba(0,0,0,.16);
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: center;
+
+    }
+
+
+    .brand-logo img {
+
+      width: 100%;
+
+      height: 100%;
+
+      object-fit: contain;
+
+      border-radius: 10px;
+
+    }
+
+
+    .brand-logo-text {
+
+      display: flex;
+
+      flex-direction: column;
+
+    }
+
+
+    .brand-portal {
+
+      font-size: 30px;
+
+      line-height: 1;
+
+      font-weight: 900;
+
+      letter-spacing: -1.5px;
+
+    }
+
+
+    .brand-agency {
+
+      margin-top: 8px;
+
+      font-size: 7px;
+
+      letter-spacing: 2.5px;
+
+      font-weight: 700;
+
+      color:
+        rgba(255,255,255,.72);
+
+    }
+
+
+    /* LABEL */
+
+    .brand-label {
+
+      display: inline-flex;
+
+      align-items: center;
+
+      gap: 8px;
+
+      padding:
+        9px 14px;
+
+      border-radius: 8px;
+
+      background:
+        rgba(255,255,255,.09);
+
+      border:
+        1px solid rgba(255,255,255,.2);
+
+      color: white;
+
+      font-size: 10px;
+
+      font-weight: 800;
+
+      letter-spacing: .3px;
+
+    }
+
+
+    .brand-label i {
+
+      color: #ffd41c;
+
+    }
+
+
+    /* TITLE */
+
+    .brand-content h1 {
+
+      margin:
+        27px 0 18px;
+
+      max-width: 720px;
+
+      font-size:
+        clamp(48px, 5vw, 76px);
+
+      line-height: .98;
+
+      letter-spacing: -4px;
+
+      font-weight: 900;
+
+    }
+
+
+    .brand-content h1 span {
+
+      display: block;
+
+      color: #ffd21c;
+
+    }
+
+
+    .brand-description {
+
+      max-width: 720px;
+
+      margin: 0;
+
+      color:
+        rgba(255,255,255,.7);
+
+      font-size: 14px;
+
+      line-height: 1.7;
+
+    }
+
+
+    /* FEATURES */
+
+    .feature-list {
+
+      display: grid;
+
+      gap: 14px;
+
+      margin-top: 31px;
+
+    }
+
+
+    .feature-item {
+
+      display: flex;
+
+      align-items: center;
+
+      gap: 13px;
+
+      color:
+        rgba(255,255,255,.78);
+
+      font-size: 11px;
+
+    }
+
+
+    .feature-icon {
+
+      width: 26px;
+
+      height: 26px;
+
+      flex: 0 0 26px;
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: center;
+
+      border-radius: 50%;
+
+      background:
+        rgba(255,212,28,.18);
+
+      color: #ffd41c;
+
+      font-size: 10px;
+
+    }
+
+
+    .brand-footer {
+
+      position: absolute;
+
+      left:
+        clamp(45px, 7vw, 100px);
+
+      bottom: 52px;
+
+      z-index: 3;
+
+      color:
+        rgba(255,255,255,.42);
+
+      font-size: 9px;
+
+    }
+
+
+    /* =====================================================
+       LOGIN PANEL
+    ====================================================== */
+
+    .login-panel {
+
+      min-height: 100vh;
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: center;
+
+      padding:
+        60px
+        clamp(45px, 7vw, 95px);
+
+      background:
+        #f8fafc;
+
+    }
+
+
+    .login-container {
+
+      width: 100%;
+
+      max-width: 520px;
+
+    }
+
+
+    /* HEADER */
+
+    .login-header {
+
+      display: flex;
+
+      align-items: flex-start;
+
+      gap: 17px;
+
+      margin-bottom: 34px;
+
+    }
+
+
+    .login-icon {
+
+      width: 62px;
+
+      height: 62px;
+
+      flex: 0 0 62px;
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: center;
+
+      border-radius: 16px;
+
+      background:
+        #edf5ff;
+
+      color:
+        #076bc7;
+
+      font-size: 21px;
+
+      box-shadow:
+        0 12px 30px rgba(8,105,201,.08);
+
+    }
+
+
+    .login-header h2 {
+
+      margin: 0;
+
+      color: #182133;
+
+      font-size: 30px;
+
+      line-height: 1.15;
+
+      font-weight: 900;
+
+      letter-spacing: -1.5px;
+
+      text-transform: none;
+
+    }
+
+
+    .login-header p {
+
+      margin:
+        8px 0 0;
+
+      color: #8791a1;
+
+      font-size: 12px;
+
+    }
+
+
+    /* ERROR */
+
+    .error-message {
+
+      display: flex;
+
+      align-items: flex-start;
+
+      gap: 11px;
+
+      padding: 13px 14px;
+
+      margin-bottom: 21px;
+
+      border-radius: 10px;
+
+      background: #fff1f2;
+
+      border:
+        1px solid #fecdd3;
+
+      color: #be123c;
+
+    }
+
+
+    .error-icon {
+
+      font-size: 15px;
+
+      margin-top: 1px;
+
+    }
+
+
+    .error-content strong {
+
+      display: block;
+
+      font-size: 11px;
+
+      margin-bottom: 3px;
+
+    }
+
+
+    .error-content span {
+
+      display: block;
+
+      color: #be3655;
+
+      font-size: 10px;
+
+      line-height: 1.5;
+
+    }
+
+
+    /* FORM */
+
+    .form-group {
+
+      margin-bottom: 20px;
+
+    }
+
+
+    .form-group label {
+
+      display: block;
+
+      margin-bottom: 8px;
+
+      color: #596477;
+
+      font-size: 11px;
+
+      font-weight: 800;
+
+    }
+
+
+    .input-container {
+
+      position: relative;
+
+    }
+
+
+    .input-container input {
+
+      width: 100%;
+
+      height: 54px;
+
+      padding:
+        0 48px
+        0 16px;
+
+      border:
+        1px solid #d7dee8;
+
+      border-radius: 10px;
+
+      outline: none;
+
+      background: white;
+
+      color: #1c2533;
+
+      font-size: 12px;
+
+      transition:
+        border .2s ease,
+        box-shadow .2s ease;
+
+    }
+
+
+    .input-container input::placeholder {
+
+      color: #9da7b6;
+
+    }
+
+
+    .input-container input:focus {
+
+      border-color:
+        #1473d1;
+
+      box-shadow:
+        0 0 0 3px
+        rgba(20,115,209,.09);
+
+    }
+
+
+    .input-icon {
+
+      position: absolute;
+
+      right: 17px;
+
+      top: 50%;
+
+      transform:
+        translateY(-50%);
+
+      color: #8e9aaa;
+
+      font-size: 12px;
+
+      pointer-events: none;
+
+    }
+
+
+    /* PASSWORD */
+
+    .password-container input {
+
+      padding-right: 52px;
+
+    }
+
+
+    .password-container .input-icon {
+
+      right: 48px;
+
+    }
+
+
+    .password-toggle {
+
+      position: absolute;
+
+      right: 7px;
+
+      top: 50%;
+
+      transform:
+        translateY(-50%);
+
+      width: 35px;
+
+      height: 35px;
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: center;
+
+      border: 0;
+
+      border-radius: 7px;
+
+      background: transparent;
+
+      color: #8491a1;
+
+      cursor: pointer;
+
+      transition:
+        background .2s ease,
+        color .2s ease;
+
+    }
+
+
+    .password-toggle:hover {
+
+      background: #f1f5f9;
+
+      color: #076bc7;
+
+    }
+
+
+    .eye-icon {
+
+      width: 17px;
+
+      height: 17px;
+
+    }
+
+
+    .eye-hidden {
+
+      display: none;
+
+    }
+
+
+    /* OPTIONS */
+
+    .form-options {
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: space-between;
+
+      margin:
+        2px 0 26px;
+
+    }
+
+
+    .remember {
+
+      display: inline-flex;
+
+      align-items: center;
+
+      gap: 8px;
+
+      color: #7e8998;
+
+      font-size: 10px;
+
+      cursor: pointer;
+
+      user-select: none;
+
+    }
+
+
+    .remember input {
+
+      position: absolute;
+
+      opacity: 0;
+
+      pointer-events: none;
+
+    }
+
+
+    .custom-checkbox {
+
+      width: 18px;
+
+      height: 18px;
+
+      border:
+        1px solid #d1d9e3;
+
+      border-radius: 5px;
+
+      background: white;
+
+      position: relative;
+
+    }
+
+
+    .remember input:checked
+    + .custom-checkbox {
+
+      background: #076bc7;
+
+      border-color: #076bc7;
+
+    }
+
+
+    .remember input:checked
+    + .custom-checkbox::after {
+
+      content: "";
+
+      position: absolute;
+
+      left: 6px;
+
+      top: 2px;
+
+      width: 4px;
+
+      height: 8px;
+
+      border:
+        solid white;
+
+      border-width:
+        0 2px 2px 0;
+
+      transform:
+        rotate(45deg);
+
+    }
+
+
+    /* BUTTON */
+
+    .login-button {
+
+      width: 100%;
+
+      height: 54px;
+
+      border: 0;
+
+      border-radius: 9px;
+
+      background:
+        linear-gradient(
+          100deg,
+          #0759b6,
+          #098edc
+        );
+
+      color: white;
+
+      cursor: pointer;
+
+      font-size: 12px;
+
+      font-weight: 800;
+
+      box-shadow:
+        0 12px 25px
+        rgba(7,91,184,.18);
+
+      transition:
+        transform .2s ease,
+        box-shadow .2s ease,
+        opacity .2s ease;
+
+    }
+
+
+    .login-button:hover {
+
+      transform:
+        translateY(-1px);
+
+      box-shadow:
+        0 15px 30px
+        rgba(7,91,184,.25);
+
+    }
+
+
+    .login-button:disabled {
+
+      opacity: .82;
+
+      cursor: wait;
+
+    }
+
+
+    .button-normal,
+    .button-loading {
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: center;
+
+      gap: 10px;
+
+    }
+
+
+    .button-loading {
+
+      display: none;
+
+    }
+
+
+    .button-spinner {
+
+      width: 15px;
+
+      height: 15px;
+
+      border:
+        2px solid rgba(255,255,255,.4);
+
+      border-top-color: white;
+
+      border-radius: 50%;
+
+      animation:
+        spin .7s linear infinite;
+
+    }
+
+
+    /* HELP */
+
+    .login-help {
+
+      margin-top: 29px;
+
+      text-align: center;
+
+      color: #98a1ae;
+
+      font-size: 9px;
+
+    }
+
+
+    .login-help strong {
+
+      color: #687486;
+
+      font-weight: 800;
+
+    }
+
+
+    /* SECURITY */
+
+    .security-footer {
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: center;
+
+      gap: 7px;
+
+      margin-top: 22px;
+
+      color: #a4adb9;
+
+      font-size: 8px;
+
+    }
+
+
+    .security-footer i {
+
+      color: #337fc0;
+
+    }
+
+
+    /* =====================================================
+       ANIMATION
+    ====================================================== */
+
+    @keyframes rocketFloat {
+
+      0%,
+      100% {
+        transform:
+          translateY(0);
+      }
+
+      50% {
+        transform:
+          translateY(-8px);
+      }
+
+    }
+
+
+    @keyframes fire {
+
+      from {
+        transform:
+          scaleY(.8);
+
+        opacity: .65;
+      }
+
+      to {
+        transform:
+          scaleY(1.15);
+
+        opacity: 1;
+      }
+
+    }
+
+
+    @keyframes rotateRing {
+
+      from {
+        transform:
+          rotate(0deg);
+      }
+
+      to {
+        transform:
+          rotate(360deg);
+      }
+
+    }
+
+
+    @keyframes rotateRingReverse {
+
+      from {
+        transform:
+          rotate(360deg);
+      }
+
+      to {
+        transform:
+          rotate(0deg);
+      }
+
+    }
+
+
+    @keyframes statusPulse {
+
+      0%,
+      100% {
+
+        opacity: .45;
+
+        transform:
+          scale(.8);
+
+      }
+
+      50% {
+
+        opacity: 1;
+
+        transform:
+          scale(1);
+
+      }
+
+    }
+
+
+    @keyframes spin {
+
+      to {
+        transform:
+          rotate(360deg);
+      }
+
+    }
+
+
+    /* =====================================================
+       TABLET
+    ====================================================== */
+
+    @media (max-width: 1000px) {
+
+
+      .admin-login {
+
+        grid-template-columns:
+          1fr;
+
+      }
+
+
+      .brand-panel {
+
+        min-height: 430px;
+
+        padding:
+          45px
+          60px
+          60px;
+
+      }
+
+
+      .brand-top {
+
+        margin-bottom: 38px;
+
+      }
+
+
+      .brand-content h1 {
+
+        font-size: 48px;
+
+      }
+
+
+      .feature-list {
+
+        grid-template-columns:
+          repeat(3, 1fr);
+
+      }
+
+
+      .brand-footer {
+
+        left: 60px;
+
+      }
+
+
+      .login-panel {
+
+        min-height: auto;
+
+        padding:
+          55px
+          45px
+          70px;
+
+      }
+
+
+      .login-container {
+
+        max-width: 500px;
+
+      }
+
+    }
+
+
+    /* =====================================================
+       MOBILE
+    ====================================================== */
+
+    @media (max-width: 600px) {
+
+
+      /* LOADING */
+
+      .loading-content {
+
+        width: 84%;
+
+      }
+
+
+      .loading-logo-wrap {
+
+        width: 135px;
+
+        height: 135px;
+
+        margin-bottom: 19px;
+
+      }
+
+
+      .loading-logo {
+
+        width: 123px;
+
+        height: 123px;
+
+      }
+
+
+      .portal-title {
+
+        font-size: 43px;
+
+      }
+
+
+      .maintenance-title {
+
+        font-size: 20px;
+
+      }
+
+
+      .maintenance-description {
+
+        font-size: 12px;
+
+      }
+
+
+      .loading-status {
+
+        font-size: 10px;
+
+      }
+
+
+      .loading-footer {
+
+        bottom: 18px;
+
+        font-size: 8px;
+
+      }
+
+
+      /* BRAND */
+
+      .brand-panel {
+
+        min-height: 340px;
+
+        padding:
+          34px
+          25px
+          55px;
+
+      }
+
+
+      .brand-top {
+
+        margin-bottom: 27px;
+
+        gap: 12px;
+
+      }
+
+
+      .brand-logo {
+
+        width: 63px;
+
+        height: 63px;
+
+        border-radius: 13px;
+
+      }
+
+
+      .brand-portal {
+
+        font-size: 27px;
+
+      }
+
+
+      .brand-agency {
+
+        font-size: 5px;
+
+        letter-spacing: 1.7px;
+
+      }
+
+
+      .brand-label {
+
+        padding:
+          7px 10px;
+
+        font-size: 8px;
+
+      }
+
+
+      .brand-content h1 {
+
+        margin:
+          17px 0 11px;
+
+        font-size: 31px;
+
+        letter-spacing: -1.7px;
+
+      }
+
+
+      .brand-description {
+
+        font-size: 10px;
+
+        line-height: 1.6;
+
+      }
+
+
+      .feature-list {
+
+        display: none;
+
+      }
+
+
+      .brand-footer {
+
+        left: 25px;
+
+        bottom: 18px;
+
+        font-size: 7px;
+
+      }
+
+
+      /* LOGIN */
+
+      .login-panel {
+
+        min-height:
+          calc(100vh - 340px);
+
+        align-items:
+          flex-start;
+
+        padding:
+          38px
+          24px
+          50px;
+
+      }
+
+
+      .login-header {
+
+        gap: 11px;
+
+        margin-bottom: 26px;
+
+      }
+
+
+      .login-icon {
+
+        width: 44px;
+
+        height: 44px;
+
+        flex-basis: 44px;
+
+        border-radius: 11px;
+
+        font-size: 15px;
+
+      }
+
+
+      .login-header h2 {
+
+        font-size: 23px;
+
+        letter-spacing: -.8px;
+
+      }
+
+
+      .login-header p {
+
+        font-size: 9px;
+
+        line-height: 1.5;
+
+      }
+
+
+      .error-message {
+
+        padding: 11px;
+
+        margin-bottom: 17px;
+
+      }
+
+
+      .input-container input {
+
+        height: 46px;
+
+        font-size: 11px;
+
+      }
+
+
+      .form-group label {
+
+        font-size: 10px;
+
+      }
+
+
+      .login-button {
+
+        height: 47px;
+
+        font-size: 10px;
+
+      }
+
+
+      .login-help {
+
+        margin-top: 21px;
+
+        line-height: 1.6;
+
+      }
+
+    }
+
+
+    /* =====================================================
+       SMALL MOBILE
+    ====================================================== */
+
+    @media (max-width: 380px) {
+
+
+      .brand-panel {
+
+        min-height: 315px;
+
+      }
+
+
+      .brand-content h1 {
+
+        font-size: 27px;
+
+      }
+
+
+      .brand-description {
+
+        font-size: 9px;
+
+      }
+
+
+      .login-panel {
+
+        min-height:
+          calc(100vh - 315px);
+
+        padding:
+          30px
+          19px
+          40px;
+
+      }
+
+
+      .login-header h2 {
+
+        font-size: 21px;
+
+      }
+
+
+      .input-container input {
+
+        height: 44px;
+
+        font-size: 10.5px;
+
+      }
+
+
+      .login-button {
+
+        height: 45px;
+
+      }
+
+    }
+
+
+    /* =====================================================
+       LANDSCAPE
+    ====================================================== */
+
+    @media (
+      max-height: 600px
+    ) and (
+      orientation: landscape
+    ) {
+
+
+      .loading-logo-wrap {
+
+        width: 95px;
+
+        height: 95px;
+
+        margin-bottom: 8px;
+
+      }
+
+
+      .loading-logo {
+
+        width: 86px;
+
+        height: 86px;
+
+      }
+
+
+      .portal-title {
+
+        font-size: 30px;
+
+      }
+
+
+      .maintenance-title {
+
+        font-size: 15px;
+
+      }
+
+
+      .maintenance-description {
+
+        font-size: 9px;
+
+      }
+
+
+      .rocket-wrap {
+
+        height: 45px;
+
+      }
+
+
+      .progress-wrapper {
+
+        width: 75%;
+
+      }
+
+
+      .loading-footer {
+
+        bottom: 8px;
+
+      }
+
+    }
+
+
+    /* =====================================================
+       REDUCED MOTION
+    ====================================================== */
+
+    @media (
+      prefers-reduced-motion: reduce
+    ) {
+
+      *,
+      *::before,
+      *::after {
+
+        animation-duration:
+          .01ms !important;
+
+        animation-iteration-count:
+          1 !important;
+
+        scroll-behavior:
+          auto !important;
+
+      }
+
+    }
+
+  </style>
+
+</body>
+
+</html>
