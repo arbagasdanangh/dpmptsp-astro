@@ -1668,6 +1668,87 @@ function imageUrl(picture) {
 
 
 /* =========================================================
+   SIDEBAR STICKY PREMIUM
+========================================================= */
+
+.sidebar-wrapper {
+  min-width: 0;
+}
+
+.sidebar-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.media-sidebar {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 120px);
+  min-height: 520px;
+  max-height: calc(100vh - 120px);
+}
+
+.media-sidebar > .media-filter-sticky {
+  flex: 0 0 auto;
+}
+
+#media-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #93c5fd transparent;
+}
+
+.sidebar-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #93c5fd, #2563eb);
+  border-radius: 999px;
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb:hover {
+  background: #1d4ed8;
+}
+
+.media-card {
+  position: relative;
+  isolation: isolate;
+  border-color: transparent;
+}
+
+.media-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 3px;
+  border-radius: 0 999px 999px 0;
+  background: #2563eb;
+  opacity: 0;
+  transform: scaleY(.5);
+  transition: opacity .25s ease, transform .25s ease;
+}
+
+.media-card:hover::before {
+  opacity: 1;
+  transform: scaleY(1);
+}
+
+.media-sidebar .media-filter-sticky {
+  box-shadow: 0 8px 18px rgba(15,23,42,.035);
+}
+
+/* =========================================================
    STICKY FILTER
 ========================================================= */
 
@@ -1867,6 +1948,19 @@ function imageUrl(picture) {
 /* =========================================================
    MOBILE
 ========================================================= */
+
+@media (max-width: 1023px) {
+  .media-sidebar {
+    height: auto;
+    min-height: 0;
+    max-height: none;
+  }
+
+  #media-list {
+    max-height: 570px;
+    flex: none;
+  }
+}
 
 @media (max-width: 768px) {
 
@@ -3026,7 +3120,6 @@ function imageUrl(picture) {
       <div
         id="media-list"
         class="
-          max-h-[570px]
           overflow-y-auto
           px-4
           py-3
