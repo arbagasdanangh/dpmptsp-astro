@@ -1,0 +1,1624 @@
+---
+const now = new Date();
+
+const formattedDate = now.toLocaleDateString("id-ID", {
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+});
+---
+
+<header class="navbar">
+
+  <!-- =====================================================
+       LEFT
+  ====================================================== -->
+
+  <div class="navbar-left">
+
+    <!-- MOBILE MENU -->
+    <button
+      type="button"
+      class="mobile-menu-button"
+      id="admin-mobile-menu"
+      aria-label="Buka menu admin"
+      aria-controls="admin-sidebar"
+      aria-expanded="false"
+      title="Menu"
+    >
+      <svg
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M4 6h16M4 12h16M4 18h16"
+        />
+      </svg>
+    </button>
+
+    <div class="welcome-group">
+      <p class="welcome">
+        Selamat datang
+      </p>
+
+      <h3>
+        Admin DPMPTSP
+      </h3>
+    </div>
+
+  </div>
+
+
+  <!-- =====================================================
+       RIGHT
+  ====================================================== -->
+
+  <div class="nav-right">
+
+    <!-- TANGGAL -->
+    <div class="nav-date">
+
+      <svg
+        class="nav-icon"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+        />
+      </svg>
+
+      <span>
+        {formattedDate}
+      </span>
+
+    </div>
+
+
+    <!-- =================================================
+         NOTIFICATION
+    ================================================== -->
+
+    <div class="notification-wrapper">
+
+      <button
+        type="button"
+        class="notification-btn"
+        id="admin-notification-btn"
+        title="Pemberitahuan"
+        aria-label="Pemberitahuan"
+        aria-expanded="false"
+        aria-controls="admin-notification-panel"
+      >
+
+        <svg
+          class="nav-icon"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+          />
+        </svg>
+
+        <span
+          id="admin-notification-badge"
+          class="notification-badge"
+          hidden
+        >
+          0
+        </span>
+
+      </button>
+
+
+      <!-- =================================================
+           NOTIFICATION PANEL
+      ================================================== -->
+
+      <div
+        id="admin-notification-panel"
+        class="notification-panel"
+        hidden
+      >
+
+        <!-- HEADER -->
+
+        <div class="notification-header">
+
+          <div class="notification-title">
+
+            <strong>
+              Pemberitahuan
+            </strong>
+
+            <span id="notification-count-text">
+              Memuat...
+            </span>
+
+          </div>
+
+          <button
+            type="button"
+            id="notification-read-all"
+          >
+            Tandai dibaca
+          </button>
+
+        </div>
+
+
+        <!-- LIST -->
+
+        <div
+          id="admin-notification-list"
+          class="notification-list"
+        >
+          <div class="notification-empty">
+            Memuat pemberitahuan...
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</header>
+
+
+<style is:global>
+
+/* =========================================================
+   NAVBAR
+========================================================= */
+
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 1100;
+
+  width: 100%;
+  min-height: 74px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  box-sizing: border-box;
+
+  padding: 0 26px;
+
+  background: var(--surface, #ffffff);
+
+  border-bottom:
+    1px solid
+    var(--border, #e4e9f1);
+
+  isolation: isolate;
+}
+
+
+/* =========================================================
+   LEFT
+========================================================= */
+
+.navbar-left {
+  min-width: 0;
+
+  display: flex;
+  align-items: center;
+
+  gap: 12px;
+}
+
+.welcome-group {
+  min-width: 0;
+}
+
+.welcome {
+  margin: 0 0 2px;
+
+  font-size: .76rem;
+  font-weight: 800;
+
+  letter-spacing: .16em;
+
+  text-transform: uppercase;
+
+  color: var(--text-muted, #748198);
+}
+
+.navbar h3 {
+  margin: 0;
+
+  font-size: 1rem;
+  font-weight: 800;
+
+  color: var(--text, #18243a);
+
+  white-space: nowrap;
+}
+
+
+/* =========================================================
+   MOBILE MENU
+========================================================= */
+
+.mobile-menu-button {
+  display: none;
+
+  width: 42px;
+  height: 42px;
+
+  flex: 0 0 42px;
+
+  align-items: center;
+  justify-content: center;
+
+  padding: 0;
+
+  border:
+    1px solid
+    var(--border, #e4e9f1);
+
+  border-radius: 12px;
+
+  background:
+    var(--surface-muted, #f7f9fc);
+
+  color:
+    var(--accent, #315eea);
+
+  cursor: pointer;
+
+  transition: .2s ease;
+}
+
+.mobile-menu-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+.mobile-menu-button:hover {
+  background:
+    var(--accent, #315eea);
+
+  border-color:
+    var(--accent, #315eea);
+
+  color: #ffffff;
+
+  transform:
+    translateY(-1px);
+
+  box-shadow:
+    0 7px 18px
+    var(--accent-soft, rgba(49,94,234,.15));
+}
+
+
+/* =========================================================
+   RIGHT
+========================================================= */
+
+.nav-right {
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+}
+
+
+/* =========================================================
+   DATE
+========================================================= */
+
+.nav-date {
+  display: flex;
+  align-items: center;
+
+  gap: 8px;
+
+  padding: 8px 13px;
+
+  border-radius: 999px;
+
+  background:
+    var(--surface-muted, #f7f9fc);
+
+  border:
+    1px solid
+    var(--border, #e4e9f1);
+
+  color:
+    var(--text, #18243a);
+
+  font-size: 13px;
+  font-weight: 650;
+
+  white-space: nowrap;
+}
+
+.nav-icon {
+  width: 18px;
+  height: 18px;
+
+  flex-shrink: 0;
+}
+
+.nav-date .nav-icon {
+  color:
+    var(--accent, #ffd21f);
+}
+
+
+/* =========================================================
+   NOTIFICATION BUTTON
+========================================================= */
+
+.notification-wrapper {
+  position: relative;
+}
+
+.notification-btn {
+  position: relative;
+
+  width: 42px;
+  height: 42px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0;
+
+  border:
+    1px solid
+    var(--border, #e4e9f1);
+
+  border-radius: 50%;
+
+  background:
+    var(--surface-muted, #f7f9fc);
+
+  color:
+    var(--accent, #315eea);
+
+  cursor: pointer;
+
+  transition: .2s ease;
+}
+
+.notification-btn:hover {
+  background:
+    var(--accent, #315eea);
+
+  border-color:
+    var(--accent, #315eea);
+
+  color: #ffffff;
+
+  transform:
+    translateY(-1px);
+
+  box-shadow:
+    0 7px 18px
+    var(--accent-soft, rgba(49,94,234,.15));
+}
+
+
+/* =========================================================
+   BADGE
+========================================================= */
+
+.notification-badge {
+  position: absolute;
+
+  top: 1px;
+  right: 1px;
+
+  min-width: 18px;
+  height: 18px;
+
+  padding: 0 4px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  box-sizing: border-box;
+
+  background: #ef4444;
+
+  border:
+    2px solid
+    var(--surface, #ffffff);
+
+  border-radius: 999px;
+
+  color: #ffffff;
+
+  font-size: 8px;
+  font-weight: 900;
+
+  line-height: 1;
+}
+
+.notification-badge[hidden] {
+  display: none;
+}
+
+
+/* =========================================================
+   PANEL
+========================================================= */
+
+.notification-panel {
+  position: absolute;
+
+  top: calc(100% + 12px);
+  right: 0;
+
+  width: 380px;
+
+  max-width:
+    calc(100vw - 28px);
+
+  overflow: hidden;
+
+  background:
+    var(--surface, #ffffff);
+
+  border:
+    1px solid
+    var(--border, #e4e9f1);
+
+  border-radius: 17px;
+
+  box-shadow:
+    0 20px 50px
+    rgba(15, 23, 42, .16);
+
+  z-index: 2000;
+
+  animation:
+    notification-show .18s ease;
+}
+
+.notification-panel[hidden] {
+  display: none;
+}
+
+@keyframes notification-show {
+
+  from {
+    opacity: 0;
+
+    transform:
+      translateY(-7px);
+  }
+
+  to {
+    opacity: 1;
+
+    transform:
+      translateY(0);
+  }
+
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.notification-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 15px;
+
+  padding: 16px 17px;
+
+  border-bottom:
+    1px solid
+    var(--border, #e4e9f1);
+}
+
+.notification-title {
+  min-width: 0;
+}
+
+.notification-title strong {
+  display: block;
+
+  font-size: 14px;
+  font-weight: 850;
+
+  color:
+    var(--text, #18243a);
+}
+
+.notification-title span {
+  display: block;
+
+  margin-top: 3px;
+
+  font-size: 11px;
+  font-weight: 600;
+
+  color:
+    var(--text-muted, #748198);
+}
+
+#notification-read-all {
+  flex-shrink: 0;
+
+  padding: 5px;
+
+  border: 0;
+
+  background: transparent;
+
+  color:
+    var(--accent, #315eea);
+
+  font-size: 11px;
+  font-weight: 800;
+
+  cursor: pointer;
+}
+
+#notification-read-all:hover {
+  text-decoration: underline;
+}
+
+
+/* =========================================================
+   LIST
+========================================================= */
+
+.notification-list {
+  max-height: 400px;
+
+  overflow-y: auto;
+}
+
+.notification-item {
+  display: flex;
+  align-items: flex-start;
+
+  gap: 12px;
+
+  width: 100%;
+
+  box-sizing: border-box;
+
+  padding: 14px 16px;
+
+  text-decoration: none;
+
+  border-bottom:
+    1px solid
+    var(--border, #eef1f5);
+
+  transition:
+    background .18s ease;
+}
+
+.notification-item:hover {
+  background:
+    var(--surface-muted, #f7f9fc);
+}
+
+.notification-item:last-child {
+  border-bottom: 0;
+}
+
+
+/* =========================================================
+   ICON
+========================================================= */
+
+.notification-item-icon {
+  width: 38px;
+  height: 38px;
+
+  flex: 0 0 38px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 11px;
+
+  background:
+    var(--accent-soft, rgba(49,94,234,.10));
+
+  font-size: 17px;
+}
+
+
+/* =========================================================
+   CONTENT
+========================================================= */
+
+.notification-item-content {
+  min-width: 0;
+
+  flex: 1;
+}
+
+.notification-item-label {
+  display: block;
+
+  margin-bottom: 3px;
+
+  font-size: 10px;
+  font-weight: 850;
+
+  letter-spacing: .07em;
+
+  text-transform: uppercase;
+
+  color:
+    var(--accent, #315eea);
+}
+
+.notification-item-title {
+  display: -webkit-box;
+
+  overflow: hidden;
+
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+
+  font-size: 13px;
+  line-height: 1.45;
+
+  font-weight: 700;
+
+  color:
+    var(--text, #18243a);
+}
+
+.notification-item-message {
+  display: block;
+
+  margin-top: 3px;
+
+  font-size: 11px;
+  line-height: 1.4;
+
+  color:
+    var(--text-muted, #748198);
+}
+
+.notification-item-date {
+  display: block;
+
+  margin-top: 4px;
+
+  font-size: 10px;
+  font-weight: 600;
+
+  color:
+    var(--text-muted, #8a96a8);
+}
+
+
+/* =========================================================
+   NEW
+========================================================= */
+
+.notification-new {
+  width: 8px;
+  height: 8px;
+
+  flex: 0 0 8px;
+
+  margin-top: 7px;
+
+  border-radius: 50%;
+
+  background: #ef4444;
+
+  box-shadow:
+    0 0 0 3px
+    rgba(239,68,68,.10);
+}
+
+
+/* =========================================================
+   EMPTY
+========================================================= */
+
+.notification-empty {
+  padding: 36px 20px;
+
+  text-align: center;
+
+  font-size: 12px;
+  font-weight: 650;
+
+  color:
+    var(--text-muted, #748198);
+}
+
+
+/* =========================================================
+   THEME
+========================================================= */
+
+.navbar::after {
+  content: "";
+
+  position: absolute;
+
+  left: 0;
+  bottom: -1px;
+
+  width: 100%;
+  height: 1px;
+
+  background:
+    var(--accent, transparent);
+
+  opacity: .18;
+
+  pointer-events: none;
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 900px) {
+
+  .navbar {
+    min-height: 68px;
+
+    padding:
+      12px 18px;
+  }
+
+  .mobile-menu-button {
+    display: inline-flex;
+  }
+
+  .nav-right {
+    gap: 8px;
+  }
+
+  .nav-date {
+    padding:
+      7px 10px;
+
+    font-size: 12px;
+  }
+
+  .notification-btn {
+    width: 40px;
+    height: 40px;
+  }
+
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 600px) {
+
+  .navbar {
+    min-height: 64px;
+
+    padding:
+      10px 14px;
+  }
+
+  .navbar-left {
+    gap: 9px;
+  }
+
+  .mobile-menu-button {
+    width: 40px;
+    height: 40px;
+
+    flex-basis: 40px;
+  }
+
+  .mobile-menu-button svg {
+    width: 19px;
+    height: 19px;
+  }
+
+  .welcome {
+    font-size: .61rem;
+
+    letter-spacing: .09em;
+  }
+
+  .navbar h3 {
+    font-size: .9rem;
+  }
+
+  .nav-date {
+    display: none;
+  }
+
+  .nav-right {
+    margin-left: auto;
+  }
+
+  .notification-btn {
+    width: 38px;
+    height: 38px;
+  }
+
+  .notification-btn .nav-icon {
+    width: 17px;
+    height: 17px;
+  }
+
+  .notification-panel {
+    position: fixed;
+
+    top: 70px;
+    right: 12px;
+
+    width:
+      calc(100vw - 24px);
+
+    max-width: 380px;
+  }
+
+}
+
+
+/* =========================================================
+   EXTRA SMALL
+========================================================= */
+
+@media (max-width: 380px) {
+
+  .navbar {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .mobile-menu-button {
+    width: 38px;
+    height: 38px;
+
+    flex-basis: 38px;
+  }
+
+  .navbar h3 {
+    font-size: .84rem;
+  }
+
+  .notification-btn {
+    width: 36px;
+    height: 36px;
+  }
+
+}
+
+
+/* =========================================================
+   REDUCED MOTION
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+  .navbar,
+  .mobile-menu-button,
+  .notification-btn,
+  .notification-panel {
+
+    transition: none !important;
+    animation: none !important;
+  }
+
+}
+
+</style>
+
+
+<script is:inline>
+(() => {
+
+  /* =====================================================
+     SIDEBAR
+  ===================================================== */
+
+  const menuButton =
+    document.getElementById(
+      "admin-mobile-menu"
+    );
+
+  const sidebar =
+    document.getElementById(
+      "admin-sidebar"
+    );
+
+
+  if (menuButton) {
+
+    menuButton.addEventListener(
+      "click",
+      () => {
+
+        window.dispatchEvent(
+          new CustomEvent(
+            "admin-sidebar-open"
+          )
+        );
+
+        menuButton.setAttribute(
+          "aria-expanded",
+          "true"
+        );
+
+      }
+    );
+
+
+    window.addEventListener(
+      "admin-sidebar-closed",
+      () => {
+
+        menuButton.setAttribute(
+          "aria-expanded",
+          "false"
+        );
+
+      }
+    );
+
+
+    if (sidebar) {
+
+      window.addEventListener(
+        "admin-sidebar-open",
+        () => {
+
+          if (
+            window.innerWidth <= 900
+          ) {
+
+            sidebar.classList.add(
+              "open"
+            );
+
+          }
+
+        }
+      );
+
+    }
+
+  }
+
+
+  /* =====================================================
+     NOTIFICATION
+  ===================================================== */
+
+  const notificationButton =
+    document.getElementById(
+      "admin-notification-btn"
+    );
+
+  const notificationPanel =
+    document.getElementById(
+      "admin-notification-panel"
+    );
+
+  const notificationList =
+    document.getElementById(
+      "admin-notification-list"
+    );
+
+  const notificationBadge =
+    document.getElementById(
+      "admin-notification-badge"
+    );
+
+  const notificationCount =
+    document.getElementById(
+      "notification-count-text"
+    );
+
+  const readAllButton =
+    document.getElementById(
+      "notification-read-all"
+    );
+
+
+  if (
+    !notificationButton ||
+    !notificationPanel ||
+    !notificationList ||
+    !notificationBadge
+  ) {
+    return;
+  }
+
+
+  /* =====================================================
+     STORAGE
+  ===================================================== */
+
+  const STORAGE_KEY =
+    "dpmptsp-admin-notification-seen-v2";
+
+  let lastSeenId = 0;
+
+  let notificationItems = [];
+
+
+  function loadSeen() {
+
+    try {
+
+      const saved =
+        localStorage.getItem(
+          STORAGE_KEY
+        );
+
+      if (saved) {
+
+        lastSeenId =
+          Number(saved) || 0;
+
+      }
+
+    } catch {
+
+      lastSeenId = 0;
+
+    }
+
+  }
+
+
+  function saveSeen(id) {
+
+    try {
+
+      localStorage.setItem(
+        STORAGE_KEY,
+        String(id)
+      );
+
+    } catch {}
+
+  }
+
+
+  /* =====================================================
+     ESCAPE
+  ===================================================== */
+
+  function escapeHtml(value) {
+
+    return String(value ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+
+  }
+
+
+  /* =====================================================
+     DATE
+  ===================================================== */
+
+  function formatDate(value) {
+
+    if (!value) {
+      return "";
+    }
+
+    const date =
+      new Date(value);
+
+    if (
+      Number.isNaN(
+        date.getTime()
+      )
+    ) {
+      return "";
+    }
+
+    return new Intl.DateTimeFormat(
+      "id-ID",
+      {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      }
+    ).format(date);
+
+  }
+
+
+  /* =====================================================
+     RENDER
+  ===================================================== */
+
+  function renderNotifications(
+    items
+  ) {
+
+    notificationItems =
+      Array.isArray(items)
+        ? items
+        : [];
+
+
+    /*
+     * API mengembalikan:
+     *
+     * id
+     * type
+     * title
+     * message
+     * icon
+     * url
+     * created_at
+     */
+
+    const newItems =
+      notificationItems.filter(
+        (item) =>
+          Number(item.id) >
+          lastSeenId
+      );
+
+
+    /* BADGE */
+
+    if (
+      newItems.length > 0
+    ) {
+
+      notificationBadge.hidden =
+        false;
+
+      notificationBadge.textContent =
+        newItems.length > 9
+          ? "9+"
+          : String(
+              newItems.length
+            );
+
+      notificationButton.setAttribute(
+        "aria-label",
+        `Pemberitahuan, ${newItems.length} baru`
+      );
+
+    } else {
+
+      notificationBadge.hidden =
+        true;
+
+      notificationButton.setAttribute(
+        "aria-label",
+        "Pemberitahuan"
+      );
+
+    }
+
+
+    /* HEADER */
+
+    if (notificationCount) {
+
+      notificationCount.textContent =
+        newItems.length > 0
+          ? `${newItems.length} pemberitahuan baru`
+          : notificationItems.length > 0
+            ? `${notificationItems.length} pemberitahuan`
+            : "Belum ada pemberitahuan";
+
+    }
+
+
+    /* EMPTY */
+
+    if (
+      notificationItems.length === 0
+    ) {
+
+      notificationList.innerHTML = `
+        <div class="notification-empty">
+          Belum ada data pemberitahuan.
+        </div>
+      `;
+
+      return;
+
+    }
+
+
+    /* ITEMS */
+
+    notificationList.innerHTML =
+      notificationItems
+        .slice(0, 10)
+        .map(
+          (item) => {
+
+            const isNew =
+              Number(item.id) >
+              lastSeenId;
+
+
+            return `
+              <a
+                class="notification-item"
+                href="${escapeHtml(
+                  item.url || "#"
+                )}"
+              >
+
+                <span class="notification-item-icon">
+                  ${escapeHtml(
+                    item.icon || "🔔"
+                  )}
+                </span>
+
+                <span class="notification-item-content">
+
+                  <span class="notification-item-label">
+                    ${escapeHtml(
+                      item.type || "Pemberitahuan"
+                    )}
+                  </span>
+
+                  <span class="notification-item-title">
+                    ${escapeHtml(
+                      item.title ||
+                      "Pemberitahuan baru"
+                    )}
+                  </span>
+
+                  <span class="notification-item-message">
+                    ${escapeHtml(
+                      item.message || ""
+                    )}
+                  </span>
+
+                  <span class="notification-item-date">
+                    ${formatDate(
+                      item.created_at
+                    )}
+                  </span>
+
+                </span>
+
+                ${
+                  isNew
+                    ? `
+                      <span
+                        class="notification-new"
+                        title="Baru"
+                      ></span>
+                    `
+                    : ""
+                }
+
+              </a>
+            `;
+
+          }
+        )
+        .join("");
+
+  }
+
+
+  /* =====================================================
+     AMBIL DATA API
+  ===================================================== */
+
+  async function checkNotifications() {
+
+    try {
+
+      const response =
+        await fetch(
+          "/api/notifications",
+          {
+            method: "GET",
+
+            credentials:
+              "same-origin",
+
+            cache:
+              "no-store",
+
+            headers: {
+              Accept:
+                "application/json",
+            },
+          }
+        );
+
+
+      if (!response.ok) {
+
+        console.error(
+          "Notifications API:",
+          response.status
+        );
+
+        return;
+
+      }
+
+
+      const data =
+        await response.json();
+
+
+      /*
+       * PENTING:
+       *
+       * API kamu memakai:
+       *
+       * data.notifications
+       *
+       * BUKAN:
+       *
+       * data.items
+       */
+
+      if (
+        !data.success ||
+        !Array.isArray(
+          data.notifications
+        )
+      ) {
+
+        console.error(
+          "Format notification API tidak sesuai:",
+          data
+        );
+
+        return;
+
+      }
+
+
+      const items =
+        data.notifications;
+
+
+      renderNotifications(
+        items
+      );
+
+    } catch (error) {
+
+      console.error(
+        "Gagal mengambil notification:",
+        error
+      );
+
+    }
+
+  }
+
+
+  /* =====================================================
+     BUKA / TUTUP PANEL
+  ===================================================== */
+
+  notificationButton.addEventListener(
+    "click",
+    (event) => {
+
+      event.stopPropagation();
+
+
+      const isOpen =
+        !notificationPanel.hidden;
+
+
+      notificationPanel.hidden =
+        isOpen;
+
+
+      notificationButton.setAttribute(
+        "aria-expanded",
+        String(!isOpen)
+      );
+
+
+      /*
+       * Saat panel dibuka,
+       * semua yang tampil dianggap dibaca.
+       */
+
+      if (!isOpen) {
+
+        if (
+          notificationItems.length > 0
+        ) {
+
+          const newestId =
+            Math.max(
+              ...notificationItems.map(
+                (item) =>
+                  Number(item.id) || 0
+              )
+            );
+
+
+          if (
+            newestId > lastSeenId
+          ) {
+
+            lastSeenId =
+              newestId;
+
+            saveSeen(
+              lastSeenId
+            );
+
+            renderNotifications(
+              notificationItems
+            );
+
+          }
+
+        }
+
+      }
+
+    }
+  );
+
+
+  /* =====================================================
+     TANDAI SEMUA
+  ===================================================== */
+
+  if (readAllButton) {
+
+    readAllButton.addEventListener(
+      "click",
+      (event) => {
+
+        event.stopPropagation();
+
+
+        if (
+          notificationItems.length === 0
+        ) {
+          return;
+        }
+
+
+        const newestId =
+          Math.max(
+            ...notificationItems.map(
+              (item) =>
+                Number(item.id) || 0
+            )
+          );
+
+
+        lastSeenId =
+          newestId;
+
+
+        saveSeen(
+          lastSeenId
+        );
+
+
+        renderNotifications(
+          notificationItems
+        );
+
+      }
+    );
+
+  }
+
+
+  /* =====================================================
+     CLICK OUTSIDE
+  ===================================================== */
+
+  document.addEventListener(
+    "click",
+    (event) => {
+
+      if (
+        notificationPanel.hidden
+      ) {
+        return;
+      }
+
+
+      if (
+        !notificationButton.contains(
+          event.target
+        ) &&
+        !notificationPanel.contains(
+          event.target
+        )
+      ) {
+
+        notificationPanel.hidden =
+          true;
+
+        notificationButton.setAttribute(
+          "aria-expanded",
+          "false"
+        );
+
+      }
+
+    }
+  );
+
+
+  /* =====================================================
+     INIT
+  ===================================================== */
+
+  loadSeen();
+
+
+  /*
+   * LANGSUNG CEK API
+   */
+
+  checkNotifications();
+
+
+  /*
+   * Cek setiap 10 detik.
+   * Jadi kalau ada entry baru,
+   * badge akan muncul tanpa refresh.
+   */
+
+  setInterval(
+    checkNotifications,
+    10000
+  );
+
+})();
+</script>

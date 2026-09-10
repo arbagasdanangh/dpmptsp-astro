@@ -1,0 +1,1743 @@
+---
+export const prerender = false;
+
+import { db } from "../../lib/db";
+
+// =========================================================
+// AMBIL SEMUA DATA POST
+// Search dilakukan di browser agar langsung muncul
+// tanpa reload halaman.
+// =========================================================
+
+let dataArtikel = [];
+
+try {
+    const [rows] = await db.query(`
+        SELECT
+            post.*,
+            category_berita.title AS kategori
+        FROM post
+        LEFT JOIN category_berita
+            ON post.id_category = category_berita.id_category
+        ORDER BY post.id_post DESC
+    `);
+
+    dataArtikel = Array.isArray(rows) ? rows : [];
+} catch (error) {
+    console.error("Gagal mengambil data artikel:", error);
+    dataArtikel = [];
+}
+
+// =========================================================
+// URL GAMBAR
+// =========================================================
+
+function getImageUrl(picture) {
+    if (!picture) {
+        return "";
+    }
+
+    const value = String(picture).trim();
+
+    if (
+        value.startsWith("http://") ||
+        value.startsWith("https://") ||
+        value.startsWith("//")
+    ) {
+        return value;
+    }
+
+    return `/uploads/${value}`;
+}
+---
+
+<style>
+.box {
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid #e5eaf2;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.05);
+    box-sizing: border-box;
+    height: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* =========================================================
+   CONTROL BAR
+========================================================= */
+
+.table-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    padding: 18px 20px;
+    flex-shrink: 0;
+}
+
+.entries {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.entries select {
+    height: 38px;
+    padding: 0 32px 0 11px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    background: #f8fafc;
+    color: #334155;
+    font-size: 13px;
+    font-weight: 600;
+    outline: none;
+    cursor: pointer;
+}
+
+.entries select:focus {
+    border-color: #2563eb;
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* =========================================================
+   LIVE SEARCH
+========================================================= */
+
+.search-box {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.search-input-wrap {
+    position: relative;
+}
+
+.search-input-wrap > svg {
+    position: absolute;
+    left: 13px;
+    top: 50%;
+    width: 17px;
+    height: 17px;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    pointer-events: none;
+}
+
+.search-box input {
+    width: 270px;
+    height: 40px;
+    box-sizing: border-box;
+    padding: 0 38px 0 39px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 11px;
+    background: #f8fafc;
+    color: #0f172a;
+    font-size: 13px;
+    outline: none;
+    transition:
+        border-color 0.15s ease,
+        background 0.15s ease,
+        box-shadow 0.15s ease;
+}
+
+.search-box input::placeholder {
+    color: #94a3b8;
+}
+
+.search-box input:focus {
+    border-color: #2563eb;
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.clear-search {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    width: 25px;
+    height: 25px;
+    transform: translateY(-50%);
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    color: #94a3b8;
+    font-size: 19px;
+    line-height: 1;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+
+.clear-search:hover {
+    background: #e2e8f0;
+    color: #334155;
+}
+
+.search-box.has-value .clear-search {
+    display: flex;
+}
+
+/* =========================================================
+   RESULT INFO
+========================================================= */
+
+.result-info {
+    display: none;
+    align-items: center;
+    gap: 7px;
+    margin: -5px 20px 13px;
+    color: #64748b;
+    font-size: 12px;
+}
+
+.result-info.show {
+    display: flex;
+}
+
+.result-count {
+    color: #2563eb;
+    font-weight: 800;
+}
+
+.search-keyword {
+    color: #0f172a;
+    font-weight: 700;
+}
+
+/* =========================================================
+   TABLE
+========================================================= */
+
+.table-wrap {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    border-top: 1px solid #e5eaf2;
+    border-bottom: 1px solid #e5eaf2;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 900px;
+}
+
+th {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: #f8fafc;
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.045em;
+    white-space: nowrap;
+    box-shadow: inset 0 -1px 0 #e5eaf2;
+}
+
+th,
+td {
+    padding: 13px 12px;
+    border-bottom: 1px solid #f1f5f9;
+    text-align: left;
+    font-size: 13px;
+    color: #334155;
+    vertical-align: top;
+}
+
+tbody tr {
+    transition: background 0.15s ease;
+}
+
+tbody tr:hover {
+    background: #f8fbff;
+}
+
+tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* =========================================================
+   CELLS
+========================================================= */
+
+.id-cell {
+    color: #64748b;
+    font-weight: 700;
+}
+
+.judul-cell {
+    max-width: 290px;
+    color: #0f172a;
+    font-weight: 750;
+    line-height: 1.45;
+    margin-bottom: 4px;
+}
+
+.status-text {
+    color: #64748b;
+    font-size: 11.5px;
+}
+
+.status-active {
+    color: #16a34a;
+    font-weight: 700;
+}
+
+.status-inactive {
+    color: #dc2626;
+    font-weight: 700;
+}
+
+.isi-preview {
+    max-width: 270px;
+    color: #64748b;
+    line-height: 1.45;
+}
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    max-width: 180px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    background: #eaf2ff;
+    color: #1d4ed8;
+    font-size: 11px;
+    font-weight: 750;
+    line-height: 1.2;
+}
+
+.badge::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    flex: 0 0 6px;
+    border-radius: 50%;
+    background: #2563eb;
+}
+
+.date-cell {
+    white-space: nowrap;
+    color: #64748b;
+    font-size: 12px;
+}
+
+.thumbnail {
+    display: block;
+    width: 120px;
+    height: 70px;
+    object-fit: cover;
+    border-radius: 9px;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+}
+
+.no-image {
+    width: 120px;
+    height: 70px;
+    box-sizing: border-box;
+    border-radius: 9px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+}
+
+/* =========================================================
+   ACTION
+========================================================= */
+
+.aksi {
+    white-space: nowrap;
+    display: flex;
+    gap: 7px;
+    align-items: center;
+}
+
+.aksi button {
+    width: 37px;
+    height: 37px;
+    border: 0;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition:
+        transform 0.15s ease,
+        background 0.15s ease;
+}
+
+.aksi button:hover {
+    transform: translateY(-1px);
+}
+
+.aksi .edit {
+    background: #eaf2ff;
+    color: #2563eb;
+}
+
+.aksi .edit:hover {
+    background: #dbeafe;
+}
+
+.aksi .hapus {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.aksi .hapus:hover {
+    background: #fecaca;
+}
+
+.aksi svg {
+    width: 17px;
+    height: 17px;
+}
+
+/* =========================================================
+   EMPTY
+========================================================= */
+
+.empty-row {
+    display: none;
+}
+
+.empty-row.show {
+    display: table-row;
+}
+
+.empty-content {
+    text-align: center;
+    padding: 65px 20px !important;
+}
+
+.empty-icon {
+    width: 56px;
+    height: 56px;
+    margin: 0 auto 13px;
+    border-radius: 16px;
+    background: #f1f5f9;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.empty-icon svg {
+    width: 25px;
+    height: 25px;
+}
+
+.empty-title {
+    color: #334155;
+    font-size: 14px;
+    font-weight: 800;
+    margin-bottom: 4px;
+}
+
+.empty-description {
+    color: #94a3b8;
+    font-size: 12px;
+}
+
+/* =========================================================
+   PAGINATION
+========================================================= */
+
+.pagination-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    padding: 14px 20px 18px;
+    color: #64748b;
+    font-size: 12.5px;
+    flex-shrink: 0;
+}
+
+.pages {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.page-btn {
+    min-width: 36px;
+    height: 36px;
+    padding: 0 9px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 9px;
+    background: #ffffff;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.15s ease;
+}
+
+.page-btn:hover:not(:disabled) {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+}
+
+.page-btn.active {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    border-color: transparent;
+    color: #ffffff;
+    box-shadow: 0 6px 15px rgba(37, 99, 235, 0.2);
+}
+
+.page-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* =========================================================
+   DELETE / EDIT MODAL
+========================================================= */
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    box-sizing: border-box;
+    background: rgba(15, 23, 42, 0.52);
+    backdrop-filter: blur(4px);
+}
+
+.modal-overlay.show {
+    display: flex;
+}
+
+.modal-box {
+    width: 540px;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding: 38px 30px 30px;
+    border-radius: 26px;
+    background: #ffffff;
+    text-align: center;
+    box-shadow: 0 30px 70px rgba(15, 23, 42, 0.25);
+}
+
+.modal-icon {
+    width: 76px;
+    height: 76px;
+    margin: 0 auto 21px;
+    border-radius: 50%;
+    background: #fee2e2;
+    box-shadow: 0 0 0 9px #fef2f2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ef4444;
+}
+
+.modal-icon svg {
+    width: 36px;
+    height: 36px;
+}
+
+.modal-box h2 {
+    margin: 0 0 12px;
+    color: #0f172a;
+    font-size: 25px;
+    font-weight: 850;
+}
+
+.modal-box p {
+    margin: 0;
+    color: #64748b;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.modal-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 27px;
+}
+
+.btn-modal {
+    min-width: 120px;
+    padding: 12px 22px;
+    border: 0;
+    border-radius: 11px;
+    font-size: 14px;
+    font-weight: 750;
+    cursor: pointer;
+    transition: 0.15s ease;
+}
+
+.btn-modal:hover {
+    transform: translateY(-1px);
+}
+
+.btn-modal-batal {
+    background: #f1f5f9;
+    color: #334155;
+}
+
+.btn-modal-batal:hover {
+    background: #e2e8f0;
+}
+
+.btn-modal-hapus {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: #ffffff;
+    box-shadow: 0 8px 18px rgba(239, 68, 68, 0.2);
+}
+
+.btn-modal-edit {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: #ffffff;
+    box-shadow: 0 8px 18px rgba(37, 99, 235, 0.2);
+}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 800px) {
+    .table-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .search-box {
+        justify-content: space-between;
+    }
+
+    .search-input-wrap {
+        flex: 1;
+    }
+
+    .search-box input {
+        width: 100%;
+    }
+
+    .pagination-footer {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .pages {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+}
+
+@media (max-width: 520px) {
+    .table-controls {
+        padding: 14px 12px;
+    }
+
+    .search-box {
+        display: block;
+    }
+
+    .search-box > label {
+        display: block;
+        margin-bottom: 7px;
+    }
+
+    .result-info {
+        margin-left: 12px;
+        margin-right: 12px;
+    }
+
+    .pagination-footer {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    .modal-box {
+        padding: 32px 20px 25px;
+        border-radius: 21px;
+    }
+
+    .modal-buttons {
+        flex-direction: column-reverse;
+    }
+
+    .btn-modal {
+        width: 100%;
+    }
+}
+</style>
+
+<div class="box">
+
+    <!-- =====================================================
+         CONTROL
+    ====================================================== -->
+
+    <div class="table-controls">
+
+        <div class="entries">
+
+            <span>Tampilkan</span>
+
+            <select id="limitSelect">
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+            </select>
+
+            <span>entri</span>
+
+        </div>
+
+        <div class="search-box" id="searchBox">
+
+            <label for="searchInput">Cari:</label>
+
+            <div class="search-input-wrap">
+
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.3-4.3"></path>
+                </svg>
+
+                <input
+                    type="text"
+                    id="searchInput"
+                    placeholder="Cari judul, isi, kategori..."
+                    autocomplete="off"
+                />
+
+                <button
+                    type="button"
+                    class="clear-search"
+                    id="clearSearch"
+                    aria-label="Hapus pencarian"
+                    title="Hapus pencarian"
+                >
+                    ×
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- =====================================================
+         INFO HASIL SEARCH
+    ====================================================== -->
+
+    <div class="result-info" id="resultInfo">
+
+        <span>Ditemukan</span>
+
+        <span
+            class="result-count"
+            id="resultCount"
+        >
+            0
+        </span>
+
+        <span>data untuk</span>
+
+        <span
+            class="search-keyword"
+            id="searchKeyword"
+        >
+            ""
+        </span>
+
+    </div>
+
+    <!-- =====================================================
+         TABLE
+    ====================================================== -->
+
+    <div class="table-wrap">
+
+        <table>
+
+            <thead>
+
+                <tr>
+                    <th>ID</th>
+                    <th>Judul</th>
+                    <th>Isi</th>
+                    <th>Kategori</th>
+                    <th>Tanggal</th>
+                    <th>Gambar</th>
+                    <th>Aksi</th>
+                </tr>
+
+            </thead>
+
+            <tbody id="artikelBody">
+
+                {dataArtikel.map((item) => (
+
+                    <tr
+                        class="artikel-row"
+                        data-search={`
+                            ${item.id_post || ""}
+                            ${item.title || ""}
+                            ${item.content || ""}
+                            ${item.kategori || ""}
+                            ${item.date || ""}
+                            ${item.active || ""}
+                        `.replace(/\s+/g, " ").trim().toLowerCase()}
+                    >
+
+                        <td class="id-cell">
+                            {item.id_post}
+                        </td>
+
+                        <td>
+
+                            <div class="judul-cell">
+                                {item.title || "-"}
+                            </div>
+
+                            <div class="status-text">
+
+                                Status Berita :
+
+                                {item.active === "Y" ||
+                                item.active === "1" ||
+                                item.active === 1 ? (
+
+                                    <span class="status-active">
+                                        Aktif
+                                    </span>
+
+                                ) : (
+
+                                    <span class="status-inactive">
+                                        Nonaktif
+                                    </span>
+
+                                )}
+
+                            </div>
+
+                        </td>
+
+                        <td>
+
+                            <div class="isi-preview">
+
+                                {item.ref_content
+                                    ? String(item.ref_content)
+                                        .replace(/<[^>]*>/g, "")
+                                        .replace(/\s+/g, " ")
+                                        .trim()
+                                        .substring(0, 100)
+                                    : "-"}
+
+                                {item.ref_content ? "..." : ""}
+
+                            </div>
+
+                        </td>
+
+                        <td>
+
+                            <span class="badge">
+                                {item.kategori || "Tanpa Kategori"}
+                            </span>
+
+                        </td>
+
+                        <td class="date-cell">
+                            {item.date || "-"}
+                        </td>
+
+                        <td>
+
+                            {item.picture ? (
+
+                                <img
+                                    src={getImageUrl(item.picture)}
+                                    class="thumbnail"
+                                    alt={item.title || "Gambar artikel"}
+                                    loading="lazy"
+                                    onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                                />
+
+                                <div
+                                    class="no-image"
+                                    style="display:none;"
+                                >
+                                    Gagal
+                                </div>
+
+                            ) : (
+
+                                <div class="no-image">
+                                    Tidak ada
+                                </div>
+
+                            )}
+
+                        </td>
+
+                        <td class="aksi">
+
+                            <button
+                                type="button"
+                                class="edit"
+                                data-id={item.id_post}
+                                title="Edit"
+                            >
+
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                >
+                                    <path d="M12 20h9"></path>
+                                    <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
+                                </svg>
+
+                            </button>
+
+                            <button
+                                type="button"
+                                class="hapus"
+                                data-id={item.id_post}
+                                data-title={item.title || ""}
+                                title="Hapus"
+                            >
+
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                >
+                                    <path d="M3 6h18"></path>
+                                    <path d="M8 6V4h8v2"></path>
+                                    <path d="M19 6l-1 14H6L5 6"></path>
+                                    <path d="M10 11v5"></path>
+                                    <path d="M14 11v5"></path>
+                                </svg>
+
+                            </button>
+
+                        </td>
+
+                    </tr>
+
+                ))}
+
+                <!-- EMPTY STATE -->
+
+                <tr
+                    id="emptyRow"
+                    class="empty-row"
+                >
+
+                    <td
+                        colspan="7"
+                        class="empty-content"
+                    >
+
+                        <div class="empty-icon">
+
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            >
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <path d="m21 21-4.3-4.3"></path>
+                            </svg>
+
+                        </div>
+
+                        <div
+                            class="empty-title"
+                            id="emptyTitle"
+                        >
+                            Data tidak ditemukan
+                        </div>
+
+                        <div
+                            class="empty-description"
+                            id="emptyDescription"
+                        >
+                            Coba gunakan kata pencarian yang lain.
+                        </div>
+
+                    </td>
+
+                </tr>
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+    <!-- =====================================================
+         PAGINATION
+    ====================================================== -->
+
+    <div class="pagination-footer">
+
+        <div id="showingText">
+            Showing 0 to 0 of 0 entries
+        </div>
+
+        <div
+            class="pages"
+            id="pagination"
+        ></div>
+
+    </div>
+
+</div>
+
+<!-- =========================================================
+     MODAL HAPUS
+========================================================= -->
+
+<div
+    class="modal-overlay"
+    id="hapusModal"
+>
+
+    <div class="modal-box">
+
+        <div class="modal-icon">
+
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            >
+                <line
+                    x1="12"
+                    y1="8"
+                    x2="12"
+                    y2="12"
+                ></line>
+
+                <line
+                    x1="12"
+                    y1="16"
+                    x2="12.01"
+                    y2="16"
+                ></line>
+            </svg>
+
+        </div>
+
+        <h2>Hapus Artikel?</h2>
+
+        <p id="hapusText">
+            Apakah Anda yakin ingin menghapus artikel ini?
+        </p>
+
+        <div class="modal-buttons">
+
+            <button
+                type="button"
+                class="btn-modal btn-modal-batal"
+                id="btnBatal"
+            >
+                Batal
+            </button>
+
+            <button
+                type="button"
+                class="btn-modal btn-modal-hapus"
+                id="btnKonfirmasiHapus"
+            >
+                Hapus
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- =========================================================
+     MODAL EDIT
+========================================================= -->
+
+<div
+    class="modal-overlay"
+    id="editModal"
+>
+
+    <div class="modal-box">
+
+        <div class="modal-icon">
+
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            >
+                <line
+                    x1="12"
+                    y1="8"
+                    x2="12"
+                    y2="12"
+                ></line>
+
+                <line
+                    x1="12"
+                    y1="16"
+                    x2="12.01"
+                    y2="16"
+                ></line>
+            </svg>
+
+        </div>
+
+        <h2>Edit Artikel?</h2>
+
+        <p>
+            Apakah Anda yakin ingin mengedit artikel ini?
+        </p>
+
+        <div class="modal-buttons">
+
+            <button
+                type="button"
+                class="btn-modal btn-modal-batal"
+                id="btnBatalEdit"
+            >
+                Batal
+            </button>
+
+            <button
+                type="button"
+                class="btn-modal btn-modal-edit"
+                id="btnKonfirmasiEdit"
+            >
+                Ya, Edit
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+    // =========================================================
+    // DATA / STATE
+    // =========================================================
+
+    const rows = Array.from(
+        document.querySelectorAll(".artikel-row")
+    );
+
+    const searchInput =
+        document.getElementById("searchInput");
+
+    const searchBox =
+        document.getElementById("searchBox");
+
+    const clearSearch =
+        document.getElementById("clearSearch");
+
+    const limitSelect =
+        document.getElementById("limitSelect");
+
+    const artikelBody =
+        document.getElementById("artikelBody");
+
+    const emptyRow =
+        document.getElementById("emptyRow");
+
+    const emptyTitle =
+        document.getElementById("emptyTitle");
+
+    const emptyDescription =
+        document.getElementById("emptyDescription");
+
+    const resultInfo =
+        document.getElementById("resultInfo");
+
+    const resultCount =
+        document.getElementById("resultCount");
+
+    const searchKeyword =
+        document.getElementById("searchKeyword");
+
+    const showingText =
+        document.getElementById("showingText");
+
+    const pagination =
+        document.getElementById("pagination");
+
+    let currentPage = 1;
+
+    let pageLimit = 10;
+
+    let filteredRows = [...rows];
+
+    // =========================================================
+    // LIVE SEARCH
+    // =========================================================
+
+    function filterRows() {
+
+        const keyword =
+            searchInput.value
+                .trim()
+                .toLowerCase();
+
+        filteredRows = rows.filter((row) => {
+
+            const searchData =
+                row.dataset.search || "";
+
+            return searchData.includes(keyword);
+
+        });
+
+        currentPage = 1;
+
+        searchBox.classList.toggle(
+            "has-value",
+            keyword.length > 0
+        );
+
+        if (keyword) {
+
+            resultInfo.classList.add("show");
+
+            resultCount.textContent =
+                filteredRows.length;
+
+            searchKeyword.textContent =
+                `"${keyword}"`;
+
+        } else {
+
+            resultInfo.classList.remove("show");
+
+        }
+
+        renderTable();
+
+    }
+
+    // =========================================================
+    // RENDER TABLE
+    // =========================================================
+
+    function renderTable() {
+
+        const total =
+            filteredRows.length;
+
+        const totalPages =
+            Math.max(
+                1,
+                Math.ceil(total / pageLimit)
+            );
+
+        if (currentPage > totalPages) {
+            currentPage = totalPages;
+        }
+
+        rows.forEach((row) => {
+
+            row.style.display = "none";
+
+        });
+
+        const start =
+            (currentPage - 1) * pageLimit;
+
+        const end =
+            Math.min(
+                start + pageLimit,
+                total
+            );
+
+        const visibleRows =
+            filteredRows.slice(start, end);
+
+        visibleRows.forEach((row) => {
+
+            row.style.display = "table-row";
+
+        });
+
+        // =====================================================
+        // EMPTY
+        // =====================================================
+
+        if (total === 0) {
+
+            emptyRow.classList.add("show");
+
+            if (searchInput.value.trim()) {
+
+                emptyTitle.textContent =
+                    "Data tidak ditemukan";
+
+                emptyDescription.textContent =
+                    `Tidak ada artikel yang cocok dengan "${searchInput.value.trim()}".`;
+
+            } else {
+
+                emptyTitle.textContent =
+                    "Belum ada data artikel";
+
+                emptyDescription.textContent =
+                    "Data artikel belum tersedia.";
+
+            }
+
+        } else {
+
+            emptyRow.classList.remove("show");
+
+        }
+
+        // =====================================================
+        // SHOWING
+        // =====================================================
+
+        const showingStart =
+            total === 0
+                ? 0
+                : start + 1;
+
+        const showingEnd =
+            end;
+
+        showingText.textContent =
+            `Showing ${showingStart} to ${showingEnd} of ${total} entries`;
+
+        renderPagination(totalPages);
+
+    }
+
+    // =========================================================
+    // PAGINATION
+    // =========================================================
+
+    function renderPagination(totalPages) {
+
+        pagination.innerHTML = "";
+
+        if (filteredRows.length === 0) {
+            return;
+        }
+
+        // Previous
+        const previous =
+            document.createElement("button");
+
+        previous.type = "button";
+        previous.className = "page-btn";
+        previous.innerHTML = "&lt;";
+        previous.disabled =
+            currentPage === 1;
+
+        previous.addEventListener(
+            "click",
+            () => {
+
+                if (currentPage > 1) {
+
+                    currentPage--;
+
+                    renderTable();
+
+                }
+
+            }
+        );
+
+        pagination.appendChild(previous);
+
+        // =====================================================
+        // NOMOR HALAMAN
+        // =====================================================
+
+        let startPage =
+            Math.max(
+                1,
+                currentPage - 2
+            );
+
+        let endPage =
+            Math.min(
+                totalPages,
+                startPage + 4
+            );
+
+        if (endPage - startPage < 4) {
+
+            startPage =
+                Math.max(
+                    1,
+                    endPage - 4
+                );
+
+        }
+
+        for (
+            let page = startPage;
+            page <= endPage;
+            page++
+        ) {
+
+            const button =
+                document.createElement("button");
+
+            button.type = "button";
+
+            button.className =
+                `page-btn ${
+                    page === currentPage
+                        ? "active"
+                        : ""
+                }`;
+
+            button.textContent =
+                String(page);
+
+            button.addEventListener(
+                "click",
+                () => {
+
+                    currentPage = page;
+
+                    renderTable();
+
+                }
+            );
+
+            pagination.appendChild(button);
+
+        }
+
+        // Next
+        const next =
+            document.createElement("button");
+
+        next.type = "button";
+        next.className = "page-btn";
+        next.innerHTML = "&gt;";
+        next.disabled =
+            currentPage === totalPages;
+
+        next.addEventListener(
+            "click",
+            () => {
+
+                if (currentPage < totalPages) {
+
+                    currentPage++;
+
+                    renderTable();
+
+                }
+
+            }
+        );
+
+        pagination.appendChild(next);
+
+    }
+
+    // =========================================================
+    // EVENT SEARCH
+    // =========================================================
+
+    searchInput?.addEventListener(
+        "input",
+        filterRows
+    );
+
+    // =========================================================
+    // CLEAR SEARCH
+    // =========================================================
+
+    clearSearch?.addEventListener(
+        "click",
+        () => {
+
+            searchInput.value = "";
+
+            searchInput.focus();
+
+            filterRows();
+
+        }
+    );
+
+    // =========================================================
+    // LIMIT
+    // =========================================================
+
+    limitSelect?.addEventListener(
+        "change",
+        () => {
+
+            pageLimit =
+                Number(limitSelect.value) || 10;
+
+            currentPage = 1;
+
+            renderTable();
+
+        }
+    );
+
+    // =========================================================
+    // MODAL HAPUS
+    // =========================================================
+
+    const modalHapus =
+        document.getElementById("hapusModal");
+
+    const btnBatal =
+        document.getElementById("btnBatal");
+
+    const btnKonfirmasiHapus =
+        document.getElementById(
+            "btnKonfirmasiHapus"
+        );
+
+    const hapusText =
+        document.getElementById("hapusText");
+
+    const btnHapus =
+        document.querySelectorAll(".hapus");
+
+    let idArtikelHapus = null;
+
+    btnHapus.forEach((button) => {
+
+        button.addEventListener(
+            "click",
+            () => {
+
+                idArtikelHapus =
+                    button.getAttribute("data-id");
+
+                const title =
+                    button.getAttribute("data-title");
+
+                if (title) {
+
+                    hapusText.textContent =
+                        `Apakah Anda yakin ingin menghapus artikel "${title}"?`;
+
+                }
+
+                modalHapus?.classList.add("show");
+
+            }
+        );
+
+    });
+
+    btnBatal?.addEventListener(
+        "click",
+        () => {
+
+            modalHapus?.classList.remove("show");
+
+            idArtikelHapus = null;
+
+        }
+    );
+
+    btnKonfirmasiHapus?.addEventListener(
+        "click",
+        () => {
+
+            if (!idArtikelHapus) {
+                return;
+            }
+
+            window.location.href =
+                `/admin/hapus-artikel?id=${encodeURIComponent(idArtikelHapus)}`;
+
+        }
+    );
+
+    modalHapus?.addEventListener(
+        "click",
+        (event) => {
+
+            if (event.target === modalHapus) {
+
+                modalHapus.classList.remove("show");
+
+                idArtikelHapus = null;
+
+            }
+
+        }
+    );
+
+    // =========================================================
+    // MODAL EDIT
+    // =========================================================
+
+    const modalEdit =
+        document.getElementById("editModal");
+
+    const btnBatalEdit =
+        document.getElementById(
+            "btnBatalEdit"
+        );
+
+    const btnKonfirmasiEdit =
+        document.getElementById(
+            "btnKonfirmasiEdit"
+        );
+
+    const btnEdit =
+        document.querySelectorAll(".edit");
+
+    let idArtikelEdit = null;
+
+    btnEdit.forEach((button) => {
+
+        button.addEventListener(
+            "click",
+            () => {
+
+                idArtikelEdit =
+                    button.getAttribute("data-id");
+
+                modalEdit?.classList.add("show");
+
+            }
+        );
+
+    });
+
+    btnBatalEdit?.addEventListener(
+        "click",
+        () => {
+
+            modalEdit?.classList.remove("show");
+
+            idArtikelEdit = null;
+
+        }
+    );
+
+    btnKonfirmasiEdit?.addEventListener(
+        "click",
+        () => {
+
+            if (!idArtikelEdit) {
+                return;
+            }
+
+            window.location.href =
+                `/admin/edit-artikel?id=${encodeURIComponent(idArtikelEdit)}`;
+
+        }
+    );
+
+    modalEdit?.addEventListener(
+        "click",
+        (event) => {
+
+            if (event.target === modalEdit) {
+
+                modalEdit.classList.remove("show");
+
+                idArtikelEdit = null;
+
+            }
+
+        }
+    );
+
+    // =========================================================
+    // ESC
+    // =========================================================
+
+    document.addEventListener(
+        "keydown",
+        (event) => {
+
+            if (event.key !== "Escape") {
+                return;
+            }
+
+            modalHapus?.classList.remove("show");
+            modalEdit?.classList.remove("show");
+
+            idArtikelHapus = null;
+            idArtikelEdit = null;
+
+        }
+    );
+
+    // =========================================================
+    // INITIAL RENDER
+    // =========================================================
+
+    renderTable();
+</script>

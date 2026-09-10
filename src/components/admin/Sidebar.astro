@@ -1,0 +1,3074 @@
+---
+export const prerender = false;
+
+/* =========================================================
+   CURRENT PATH
+========================================================= */
+
+const pathname =
+  Astro.url.pathname.replace(/\/$/, "");
+
+/* =========================================================
+   API
+========================================================= */
+
+const API_URL =
+  "https://dpm-ptsp.surabaya.go.id/sso/apisidebar.php";
+
+const API_USERNAME =
+  import.meta.env.API_BERITA_USERNAME;
+
+const API_PASSWORD =
+  import.meta.env.API_BERITA_PASSWORD;
+
+/* =========================================================
+   TYPE SESUAI API
+========================================================= */
+
+interface ApiMenu {
+  id: number | string;
+  name?: string;
+  nama?: string;
+  title?: string;
+
+  slug?: string;
+  url?: string;
+  icon?: string;
+
+  parent_id?: number | string | null;
+
+  urutan?: number | string;
+}
+
+interface MenuItem {
+  id: string;
+  name: string;
+  slug: string;
+  url: string;
+  icon: string;
+  parent_id: string | null;
+  order: number;
+  children: MenuItem[];
+}
+
+/* =========================================================
+   ICON FALLBACK
+   HANYA FALLBACK ICON, BUKAN FALLBACK MENU
+========================================================= */
+
+const defaultIcon = `
+  <svg
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+    aria-hidden="true"
+  >
+    <path
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="2"
+      d="M4 6h16M4 12h16M4 18h16"
+    />
+  </svg>
+`;
+
+const iconMap: Record<string, string> = {
+
+  dashboard: `
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a4 4 0 018 0v1H7v-1a4 4 0 018 0"
+      />
+    </svg>
+  `,
+
+  artikel: `
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"
+      />
+    </svg>
+  `,
+
+  berita: `
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2M7 8h6M7 12h6M7 16h4"
+      />
+    </svg>
+  `,
+
+  kinerja: `
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+      />
+    </svg>
+  `,
+
+  layanan: `
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+      />
+    </svg>
+  `,
+
+  konten: `
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+      />
+    </svg>
+  `,
+
+  inovasi: `
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+      />
+    </svg>
+  `,
+
+  carousel: `
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+      />
+    </svg>
+  `,
+
+  ppid: `
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+      />
+    </svg>
+  `,
+
+  pemberitahuan: `
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+      />
+    </svg>
+  `
+};
+
+/* =========================================================
+   GET ICON
+========================================================= */
+
+function getIcon(
+  icon?: string,
+  slug?: string
+): string {
+
+  const key =
+    String(icon || slug || "")
+      .toLowerCase()
+      .trim()
+      .replace(/^fa[srlb]?\s+fa-/, "")
+      .replace(/^fa-/, "");
+
+  return (
+    iconMap[key] ||
+    defaultIcon
+  );
+}
+
+/* =========================================================
+   NORMALIZE MENU
+========================================================= */
+
+function normalizeMenu(
+  item: ApiMenu,
+  index: number
+): MenuItem {
+
+  const id =
+    String(item.id);
+
+  const name =
+    String(
+      item.name ??
+      item.nama ??
+      item.title ??
+      "Menu"
+    ).trim();
+
+  const slug =
+    String(
+      item.slug ?? ""
+    ).trim();
+
+  let url =
+    String(
+      item.url ?? ""
+    ).trim();
+
+  /*
+   * Kalau API tidak mengirim URL,
+   * tetapi mengirim slug,
+   * otomatis membuat URL admin.
+   */
+
+  if (!url && slug) {
+    url =
+      `/admin/${slug.replace(/^\/+/, "")}`;
+  }
+
+  /*
+   * Pastikan URL relatif diawali /
+   */
+
+  if (
+    url &&
+    !url.startsWith("/") &&
+    !url.startsWith("http://") &&
+    !url.startsWith("https://")
+  ) {
+    url = `/${url}`;
+  }
+
+  /*
+   * Parent
+   */
+
+  const rawParent =
+    item.parent_id;
+
+  const parent_id =
+    rawParent === null ||
+    rawParent === undefined ||
+    rawParent === "" ||
+    rawParent === 0 ||
+    rawParent === "0"
+      ? null
+      : String(rawParent);
+
+  /*
+   * Urutan
+   */
+
+  const order =
+    Number(
+      item.urutan
+    ) || index;
+
+  return {
+    id,
+    name,
+    slug,
+    url: url || "#",
+    icon: getIcon(
+      item.icon,
+      slug
+    ),
+    parent_id,
+    order,
+    children: []
+  };
+}
+
+/* =========================================================
+   FETCH MENU API
+========================================================= */
+
+let menus: MenuItem[] = [];
+let menuError = false;
+let menuErrorMessage = "";
+
+try {
+
+  /*
+   * Credential wajib tersedia.
+   */
+
+  if (
+    !API_USERNAME ||
+    !API_PASSWORD
+  ) {
+    throw new Error(
+      "API_BERITA_USERNAME atau API_BERITA_PASSWORD belum tersedia."
+    );
+  }
+
+  /*
+   * REQUEST API
+   */
+
+  const response =
+    await fetch(
+      API_URL,
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type":
+            "application/json",
+
+          Accept:
+            "application/json",
+
+          username:
+            API_USERNAME,
+
+          password:
+            API_PASSWORD
+        },
+
+        body:
+          JSON.stringify({
+            username:
+              API_USERNAME,
+
+            password:
+              API_PASSWORD
+          }),
+
+        signal:
+          AbortSignal.timeout(10000)
+      }
+    );
+
+  /*
+   * HTTP ERROR
+   */
+
+  if (!response.ok) {
+    throw new Error(
+      `HTTP ${response.status}`
+    );
+  }
+
+  /*
+   * PARSE JSON
+   */
+
+  const result =
+    await response.json();
+
+  /*
+   * API harus mengembalikan
+   * status true.
+   */
+
+  if (
+    result?.status === false
+  ) {
+    throw new Error(
+      result?.message ||
+      "API mengembalikan status false."
+    );
+  }
+
+  /*
+   * DATA MENU
+   *
+   * Sumber utama menu:
+   * result.data
+   */
+
+  const rawData =
+    Array.isArray(
+      result?.data
+    )
+      ? result.data
+      : Array.isArray(result)
+        ? result
+        : [];
+
+  /*
+   * Jika API berhasil tetapi
+   * data kosong, jangan membuat
+   * menu manual.
+   */
+
+  if (!rawData.length) {
+    throw new Error(
+      "API berhasil tetapi data menu kosong."
+    );
+  }
+
+  /* =======================================================
+     NORMALIZE
+  ======================================================== */
+
+  const normalizedMenus =
+    rawData.map(
+      (
+        item: ApiMenu,
+        index: number
+      ) =>
+        normalizeMenu(
+          item,
+          index
+        )
+    );
+
+  /* =======================================================
+     MAP MENU
+  ======================================================== */
+
+  const menuMap =
+    new Map<
+      string,
+      MenuItem
+    >();
+
+  normalizedMenus.forEach(
+    (menu) => {
+      menuMap.set(
+        menu.id,
+        menu
+      );
+    }
+  );
+
+  /* =======================================================
+     BUILD TREE
+  ======================================================== */
+
+  const rootMenus:
+    MenuItem[] = [];
+
+  normalizedMenus.forEach(
+    (menu) => {
+
+      /*
+       * Punya parent
+       */
+
+      if (
+        menu.parent_id &&
+        menuMap.has(
+          menu.parent_id
+        )
+      ) {
+
+        const parent =
+          menuMap.get(
+            menu.parent_id
+          );
+
+        parent?.children.push(
+          menu
+        );
+
+      }
+
+      /*
+       * Root menu
+       */
+
+      else {
+
+        rootMenus.push(
+          menu
+        );
+
+      }
+
+    }
+  );
+
+  /* =======================================================
+     SORT
+  ======================================================== */
+
+  function sortMenus(
+    list: MenuItem[]
+  ): void {
+
+    list.sort(
+      (a, b) =>
+        a.order - b.order
+    );
+
+    list.forEach(
+      (item) => {
+
+        if (
+          item.children.length
+        ) {
+          sortMenus(
+            item.children
+          );
+        }
+
+      }
+    );
+  }
+
+  sortMenus(
+    rootMenus
+  );
+
+  /*
+   * HASIL AKHIR
+   */
+
+  menus =
+    rootMenus;
+
+} catch (error) {
+
+  console.error(
+    "[ADMIN SIDEBAR]",
+    error
+  );
+
+  menuError = true;
+
+  menuErrorMessage =
+    error instanceof Error
+      ? error.message
+      : "Menu API tidak tersedia.";
+
+  /*
+   * PENTING:
+   *
+   * TIDAK ADA FALLBACK MENU.
+   *
+   * Tidak ada Dashboard manual.
+   * Tidak ada Artikel manual.
+   * Tidak ada Kinerja manual.
+   */
+
+  menus = [];
+}
+
+/* =========================================================
+   ACTIVE MENU
+========================================================= */
+
+function isActive(
+  menu: MenuItem
+): boolean {
+
+  /*
+   * URL menu sendiri
+   */
+
+  if (
+    menu.url !== "#" &&
+    (
+      pathname === menu.url ||
+      pathname.startsWith(
+        `${menu.url}/`
+      )
+    )
+  ) {
+    return true;
+  }
+
+  /*
+   * Child
+   */
+
+  return menu.children.some(
+    (child) =>
+      isActive(child)
+  );
+}
+---
+
+<!-- =========================================================
+     MOBILE TRIGGER
+========================================================= -->
+
+<button
+  type="button"
+  class="mobile-sidebar-trigger"
+  id="mobile-sidebar-trigger"
+  aria-label="Buka menu"
+  aria-controls="admin-sidebar"
+  aria-expanded="false"
+>
+  <svg
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+    aria-hidden="true"
+  >
+    <path
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="2"
+      d="M4 6h16M4 12h16M4 18h16"
+    />
+  </svg>
+</button>
+
+<!-- =========================================================
+     MOBILE OVERLAY
+========================================================= -->
+
+<div
+  class="sidebar-overlay"
+  id="sidebar-overlay"
+  aria-hidden="true"
+></div>
+
+<!-- =========================================================
+     SIDEBAR
+========================================================= -->
+
+<aside
+  class="sidebar-wrapper"
+  id="admin-sidebar"
+  data-theme="blue"
+  aria-label="Menu Admin"
+>
+
+  <nav class="sidebar">
+
+    <!-- =====================================================
+         BRAND
+    ====================================================== -->
+
+    <div class="brand">
+
+      <a
+        href="/admin/dashboard"
+        class="brand-link"
+        aria-label="Dashboard Admin DPMPTSP"
+      >
+
+        <div class="brand-logo">
+
+          <img
+            src="https://github.com/arbagasdanangh/pps/blob/main/logo.png?raw=true"
+            alt="Logo DPMPTSP"
+          />
+
+        </div>
+
+        <div class="brand-text">
+
+          <strong>
+            DPMPTSP
+          </strong>
+
+          <span>
+            ADMIN PANEL
+          </span>
+
+        </div>
+
+      </a>
+
+      <!-- DESKTOP COLLAPSE -->
+
+      <button
+        type="button"
+        class="collapse-button"
+        id="sidebar-collapse"
+        aria-label="Ciutkan sidebar"
+        title="Ciutkan sidebar"
+        aria-expanded="true"
+      >
+
+        <svg
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M15 19l-7-7 7-7"
+          />
+        </svg>
+
+      </button>
+
+      <!-- MOBILE CLOSE -->
+
+      <button
+        type="button"
+        class="mobile-close"
+        id="sidebar-close"
+        aria-label="Tutup menu"
+        title="Tutup menu"
+      >
+
+        <svg
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M6 18L18 6M6 6l12 12"
+          />
+        </svg>
+
+      </button>
+
+    </div>
+
+    <!-- =====================================================
+         API ERROR
+    ====================================================== -->
+
+    {menuError && (
+      <div
+        class="api-warning"
+        title={menuErrorMessage}
+      >
+
+        <span>
+          !
+        </span>
+
+        <span>
+          Menu API tidak tersedia
+        </span>
+
+      </div>
+    )}
+
+    <!-- =====================================================
+         MENU DARI API
+    ====================================================== -->
+
+    <ul class="menu">
+
+      {menus.map(
+        (menu) => (
+
+          <li>
+
+            <!-- =================================================
+                 PARENT MENU
+            ================================================== -->
+
+            <a
+              href={menu.url}
+              class:list={{
+                active:
+                  isActive(menu)
+              }}
+              aria-label={menu.name}
+              title={menu.name}
+              data-label={menu.name}
+            >
+
+              <span
+                class="icon"
+                set:html={menu.icon}
+              />
+
+              <span class="label">
+                {menu.name}
+              </span>
+
+              {menu.children.length > 0 && (
+
+                <span class="submenu-arrow">
+
+                  <svg
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+
+                </span>
+
+              )}
+
+            </a>
+
+            <!-- =================================================
+                 CHILDREN
+            ================================================== -->
+
+            {menu.children.length > 0 && (
+
+              <ul class="submenu">
+
+                {menu.children.map(
+                  (child) => (
+
+                    <li>
+
+                      <a
+                        href={child.url}
+                        class:list={{
+                          active:
+                            isActive(child)
+                        }}
+                        title={child.name}
+                        data-label={child.name}
+                      >
+
+                        <span
+                          class="icon"
+                          set:html={child.icon}
+                        />
+
+                        <span class="label">
+                          {child.name}
+                        </span>
+
+                      </a>
+
+                    </li>
+
+                  )
+                )}
+
+              </ul>
+
+            )}
+
+          </li>
+
+        )
+      )}
+
+      <!-- API KOSONG -->
+
+      {menus.length === 0 &&
+        !menuError && (
+
+          <li class="menu-empty">
+
+            <span>
+              Tidak ada menu
+            </span>
+
+          </li>
+
+        )
+      }
+
+    </ul>
+
+    <!-- =====================================================
+         FOOTER
+    ====================================================== -->
+
+    <div class="sidebar-footer">
+
+      <!-- THEME -->
+
+      <div class="theme-section">
+
+        <div class="theme-header">
+
+          <span>
+            WARNA TEMA
+          </span>
+
+        </div>
+
+        <div class="theme-colors">
+
+          <button
+            type="button"
+            class="theme-color theme-blue"
+            data-theme="blue"
+            aria-label="Tema Biru"
+            title="Biru"
+          ></button>
+
+          <button
+            type="button"
+            class="theme-color theme-black"
+            data-theme="black"
+            aria-label="Tema Hitam"
+            title="Hitam"
+          ></button>
+
+          <button
+            type="button"
+            class="theme-color theme-purple"
+            data-theme="purple"
+            aria-label="Tema Ungu"
+            title="Ungu"
+          ></button>
+
+          <button
+            type="button"
+            class="theme-color theme-green"
+            data-theme="green"
+            aria-label="Tema Hijau"
+            title="Hijau"
+          ></button>
+
+          <button
+            type="button"
+            class="theme-color theme-red"
+            data-theme="red"
+            aria-label="Tema Merah"
+            title="Merah"
+          ></button>
+
+          <button
+            type="button"
+            class="theme-color theme-orange"
+            data-theme="orange"
+            aria-label="Tema Orange"
+            title="Orange"
+          ></button>
+
+          <button
+            type="button"
+            class="theme-color theme-cyan"
+            data-theme="cyan"
+            aria-label="Tema Cyan"
+            title="Cyan"
+          ></button>
+
+        </div>
+
+      </div>
+
+      <!-- LOGOUT -->
+
+      <button
+        type="button"
+        class="logout"
+        id="logout-trigger"
+        title="Logout"
+        aria-label="Logout"
+      >
+
+        <span class="icon">
+
+          <svg
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+            />
+          </svg>
+
+        </span>
+
+        <span class="label">
+          Logout
+        </span>
+
+      </button>
+
+    </div>
+
+  </nav>
+
+</aside>
+
+<!-- =========================================================
+     LOGOUT MODAL
+========================================================= -->
+
+<div
+  class="logout-modal"
+  id="logout-modal"
+  aria-hidden="true"
+>
+
+  <div class="logout-modal-card">
+
+    <div class="logout-modal-icon">
+      !
+    </div>
+
+    <h3>
+      Konfirmasi Logout
+    </h3>
+
+    <p>
+      Anda yakin mau logout dari panel admin?
+    </p>
+
+    <div class="logout-modal-actions">
+
+      <button
+        type="button"
+        class="btn btn-secondary"
+        id="logout-cancel"
+      >
+        Batal
+      </button>
+
+      <a
+        href="/admin/logout"
+        class="btn btn-danger"
+      >
+        Ya, Logout
+      </a>
+
+    </div>
+
+  </div>
+
+</div>
+
+<style>
+
+/* =========================================================
+   ROOT
+========================================================= */
+
+.sidebar-wrapper {
+
+  --sidebar-bg: #0b4387;
+  --sidebar-dark: #062d61;
+  --sidebar-text: #eaf3ff;
+  --sidebar-muted: #a9c4e5;
+
+  --accent: #ffd21f;
+  --accent-strong: #e5b900;
+  --accent-soft: rgba(255,210,31,.14);
+
+  width: 250px;
+  min-width: 250px;
+  height: 100vh;
+
+  position: sticky;
+  top: 0;
+
+  flex: 0 0 250px;
+
+  z-index: 1000;
+
+  transition:
+    width .28s cubic-bezier(.4,0,.2,1),
+    min-width .28s cubic-bezier(.4,0,.2,1),
+    flex-basis .28s cubic-bezier(.4,0,.2,1);
+
+}
+
+/* =========================================================
+   THEMES
+========================================================= */
+
+.sidebar-wrapper[data-theme="blue"] {
+  --sidebar-bg: #0b4387;
+  --sidebar-dark: #062d61;
+  --sidebar-text: #eaf3ff;
+  --sidebar-muted: #a9c4e5;
+  --accent: #ffd21f;
+  --accent-strong: #e5b900;
+  --accent-soft: rgba(255,210,31,.14);
+}
+
+.sidebar-wrapper[data-theme="black"] {
+  --sidebar-bg: #17191f;
+  --sidebar-dark: #0b0d11;
+  --sidebar-text: #f5f7fa;
+  --sidebar-muted: #aeb5c0;
+  --accent: #ffffff;
+  --accent-strong: #e5e7eb;
+  --accent-soft: rgba(255,255,255,.10);
+}
+
+.sidebar-wrapper[data-theme="purple"] {
+  --sidebar-bg: #51258a;
+  --sidebar-dark: #2d1155;
+  --sidebar-text: #f7efff;
+  --sidebar-muted: #d1b9ee;
+  --accent: #b58cff;
+  --accent-strong: #9b6df0;
+  --accent-soft: rgba(181,140,255,.15);
+}
+
+.sidebar-wrapper[data-theme="green"] {
+  --sidebar-bg: #075f49;
+  --sidebar-dark: #03382c;
+  --sidebar-text: #e7fff6;
+  --sidebar-muted: #9fe1c9;
+  --accent: #35d39b;
+  --accent-strong: #20b982;
+  --accent-soft: rgba(53,211,155,.15);
+}
+
+.sidebar-wrapper[data-theme="red"] {
+  --sidebar-bg: #8d2228;
+  --sidebar-dark: #4e1015;
+  --sidebar-text: #fff0f1;
+  --sidebar-muted: #f0b0b4;
+  --accent: #ff777d;
+  --accent-strong: #eb565e;
+  --accent-soft: rgba(255,119,125,.15);
+}
+
+.sidebar-wrapper[data-theme="orange"] {
+  --sidebar-bg: #8b3b14;
+  --sidebar-dark: #4c1b08;
+  --sidebar-text: #fff2e8;
+  --sidebar-muted: #f2c29e;
+  --accent: #ff9b54;
+  --accent-strong: #f17c2e;
+  --accent-soft: rgba(255,155,84,.15);
+}
+
+.sidebar-wrapper[data-theme="cyan"] {
+  --sidebar-bg: #155d73;
+  --sidebar-dark: #093747;
+  --sidebar-text: #e9fbff;
+  --sidebar-muted: #9fd9e5;
+  --accent: #39d5e9;
+  --accent-strong: #18b8cf;
+  --accent-soft: rgba(57,213,233,.15);
+}
+
+/* =========================================================
+   SIDEBAR
+========================================================= */
+
+.sidebar {
+
+  width: 100%;
+  height: 100%;
+
+  display: flex;
+  flex-direction: column;
+
+  box-sizing: border-box;
+
+  padding: 15px 12px;
+
+  background:
+    radial-gradient(
+      circle at 15% 0%,
+      rgba(255,255,255,.08),
+      transparent 30%
+    ),
+    linear-gradient(
+      180deg,
+      var(--sidebar-bg),
+      var(--sidebar-dark)
+    );
+
+  box-shadow:
+    12px 0 35px rgba(15,23,42,.14);
+
+  overflow: hidden;
+
+}
+
+/* =========================================================
+   BRAND
+========================================================= */
+
+.brand {
+
+  position: relative;
+
+  min-height: 76px;
+
+  display: flex;
+  align-items: center;
+
+  padding: 4px 4px 16px;
+
+  flex-shrink: 0;
+
+  border-bottom:
+    1px solid rgba(255,255,255,.09);
+
+}
+
+.brand-link {
+
+  display: flex;
+  align-items: center;
+
+  gap: 11px;
+
+  min-width: 0;
+
+  text-decoration: none;
+
+}
+
+.brand-logo {
+
+  width: 48px;
+  height: 48px;
+
+  flex: 0 0 48px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 5px;
+
+  box-sizing: border-box;
+
+  border-radius: 14px;
+
+  background: rgba(255,255,255,.96);
+
+  box-shadow:
+    0 8px 22px rgba(0,0,0,.16);
+
+  overflow: hidden;
+
+}
+
+.brand-logo img {
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: contain;
+
+  display: block;
+
+}
+
+.brand-text {
+
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  line-height: 1;
+
+}
+
+.brand-text strong {
+
+  color: #fff;
+
+  font-size: .98rem;
+  font-weight: 900;
+
+  white-space: nowrap;
+
+}
+
+.brand-text span {
+
+  margin-top: 7px;
+
+  color: var(--sidebar-muted);
+
+  font-size: .58rem;
+  font-weight: 800;
+
+  letter-spacing: .16em;
+
+  white-space: nowrap;
+
+}
+
+/* =========================================================
+   COLLAPSE
+========================================================= */
+
+.collapse-button {
+
+  position: absolute;
+
+  top: 28px;
+  right: -12px;
+
+  width: 30px;
+  height: 30px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 2px solid var(--sidebar-bg);
+  border-radius: 50%;
+
+  background: var(--accent);
+
+  color: var(--sidebar-dark);
+
+  cursor: pointer;
+
+  z-index: 20;
+
+}
+
+.collapse-button svg {
+
+  width: 15px;
+  height: 15px;
+
+  transition:
+    transform .25s ease;
+
+}
+
+/* =========================================================
+   MOBILE TRIGGER
+========================================================= */
+
+.mobile-sidebar-trigger {
+
+  display: none;
+
+  position: fixed;
+
+  left: 14px;
+  top: 14px;
+
+  width: 44px;
+  height: 44px;
+
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid #dbe4f0;
+  border-radius: 13px;
+
+  background: #fff;
+
+  color: #155eef;
+
+  box-shadow:
+    0 8px 25px rgba(15,23,42,.15);
+
+  cursor: pointer;
+
+  z-index: 11000;
+
+}
+
+.mobile-sidebar-trigger svg {
+
+  width: 21px;
+  height: 21px;
+
+}
+
+.mobile-close {
+  display: none;
+}
+
+/* =========================================================
+   API WARNING
+========================================================= */
+
+.api-warning {
+
+  display: flex;
+  align-items: center;
+
+  gap: 7px;
+
+  margin: 10px 3px 0;
+
+  padding: 7px 9px;
+
+  border-radius: 8px;
+
+  background:
+    rgba(245,158,11,.14);
+
+  color:
+    #fbbf24;
+
+  font-size: .67rem;
+  font-weight: 700;
+
+}
+
+.api-warning span:first-child {
+
+  width: 17px;
+  height: 17px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: #f59e0b;
+
+  color: #fff;
+
+  font-size: .65rem;
+
+}
+
+/* =========================================================
+   MENU
+========================================================= */
+
+.menu {
+
+  list-style: none;
+
+  padding: 13px 0 8px;
+  margin: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 4px;
+
+  flex: 1;
+  min-height: 0;
+
+  overflow-y: auto;
+  overflow-x: visible;
+
+}
+
+.menu::-webkit-scrollbar {
+  width: 4px;
+}
+
+.menu::-webkit-scrollbar-thumb {
+
+  background:
+    rgba(255,255,255,.16);
+
+  border-radius: 999px;
+
+}
+
+.menu li {
+
+  width: 100%;
+
+  flex-shrink: 0;
+
+}
+
+.menu a {
+
+  position: relative;
+
+  width: 100%;
+  min-height: 47px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 12px;
+
+  padding: 10px 12px;
+
+  box-sizing: border-box;
+
+  border-radius: 12px;
+
+  text-decoration: none;
+
+  color: var(--sidebar-muted);
+
+  font-size: .88rem;
+  font-weight: 750;
+
+  transition:
+    background .18s ease,
+    color .18s ease,
+    transform .18s ease;
+
+}
+
+.menu a:hover {
+
+  background:
+    var(--accent-soft);
+
+  color:
+    var(--sidebar-text);
+
+  transform:
+    translateX(2px);
+
+}
+
+.menu a .icon {
+
+  width: 22px;
+  height: 22px;
+
+  flex: 0 0 22px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+}
+
+.menu a .icon svg {
+
+  width: 20px;
+  height: 20px;
+
+}
+
+.menu a .label {
+
+  min-width: 0;
+
+  overflow: hidden;
+
+  white-space: nowrap;
+
+  text-overflow: ellipsis;
+
+}
+
+.menu a.active {
+
+  color:
+    var(--sidebar-dark);
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--accent),
+      var(--accent-strong)
+    );
+
+  box-shadow:
+    0 8px 22px var(--accent-soft);
+
+}
+
+.menu a.active .icon {
+  color: var(--sidebar-dark);
+}
+
+.menu a.active::before {
+
+  content: "";
+
+  position: absolute;
+
+  left: 0;
+
+  top: 9px;
+  bottom: 9px;
+
+  width: 3px;
+
+  border-radius:
+    0 4px 4px 0;
+
+  background:
+    rgba(255,255,255,.9);
+
+}
+
+/* =========================================================
+   EMPTY
+========================================================= */
+
+.menu-empty {
+
+  padding: 20px 12px;
+
+  text-align: center;
+
+  color:
+    rgba(255,255,255,.45);
+
+  font-size: .75rem;
+
+}
+
+/* =========================================================
+   SUBMENU
+========================================================= */
+
+.submenu {
+
+  list-style: none;
+
+  margin:
+    2px 0 3px 17px;
+
+  padding:
+    0 0 0 11px;
+
+  border-left:
+    1px solid rgba(255,255,255,.12);
+
+}
+
+.submenu a {
+
+  min-height: 40px;
+
+  padding:
+    8px 10px;
+
+  border-radius: 9px;
+
+  font-size: .79rem;
+
+}
+
+.submenu a .icon {
+
+  width: 18px;
+  height: 18px;
+
+  flex-basis: 18px;
+
+}
+
+.submenu a .icon svg {
+
+  width: 16px;
+  height: 16px;
+
+}
+
+/* =========================================================
+   ARROW
+========================================================= */
+
+.submenu-arrow {
+
+  margin-left: auto;
+
+  width: 16px;
+  height: 16px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  opacity: .65;
+
+}
+
+.submenu-arrow svg {
+
+  width: 14px;
+  height: 14px;
+
+}
+
+/* =========================================================
+   COLLAPSED
+========================================================= */
+
+.sidebar-wrapper.collapsed {
+
+  width: 82px;
+  min-width: 82px;
+
+  flex-basis: 82px;
+
+}
+
+.sidebar-wrapper.collapsed .brand {
+
+  justify-content: center;
+
+}
+
+.sidebar-wrapper.collapsed .brand-link {
+
+  justify-content: center;
+
+}
+
+.sidebar-wrapper.collapsed .brand-logo {
+
+  width: 45px;
+  height: 45px;
+
+  flex-basis: 45px;
+
+}
+
+.sidebar-wrapper.collapsed .brand-text {
+
+  width: 0;
+
+  opacity: 0;
+
+  overflow: hidden;
+
+}
+
+.sidebar-wrapper.collapsed .collapse-button {
+
+  right: -1px;
+
+}
+
+.sidebar-wrapper.collapsed
+.collapse-button svg {
+
+  transform:
+    rotate(180deg);
+
+}
+
+.sidebar-wrapper.collapsed .menu a {
+
+  justify-content: center;
+
+  gap: 0;
+
+  padding-left: 0;
+  padding-right: 0;
+
+}
+
+.sidebar-wrapper.collapsed
+.menu a .label {
+
+  width: 0;
+
+  opacity: 0;
+
+}
+
+.sidebar-wrapper.collapsed
+.submenu {
+
+  display: none;
+
+}
+
+.sidebar-wrapper.collapsed
+.submenu-arrow {
+
+  display: none;
+
+}
+
+.sidebar-wrapper.collapsed
+.menu a:hover {
+
+  transform: none;
+
+}
+
+.sidebar-wrapper.collapsed
+.menu a:hover::after {
+
+  content: attr(data-label);
+
+  position: absolute;
+
+  left: calc(100% + 11px);
+
+  top: 50%;
+
+  transform:
+    translateY(-50%);
+
+  z-index: 5000;
+
+  white-space: nowrap;
+
+  padding: 8px 11px;
+
+  border-radius: 8px;
+
+  background: #111827;
+
+  color: #fff;
+
+  font-size: .73rem;
+  font-weight: 750;
+
+  box-shadow:
+    0 8px 25px rgba(0,0,0,.24);
+
+  pointer-events: none;
+
+}
+
+/* =========================================================
+   FOOTER
+========================================================= */
+
+.sidebar-footer {
+
+  flex-shrink: 0;
+
+  padding-top: 12px;
+
+  margin-top: 5px;
+
+  border-top:
+    1px solid rgba(255,255,255,.09);
+
+}
+
+.theme-section {
+
+  padding:
+    0 5px 13px;
+
+}
+
+.theme-header {
+
+  margin-bottom: 9px;
+
+  padding:
+    0 4px;
+
+}
+
+.theme-header span {
+
+  color:
+    rgba(255,255,255,.48);
+
+  font-size: .59rem;
+
+  font-weight: 850;
+
+  letter-spacing: .13em;
+
+}
+
+.theme-colors {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 7px;
+
+  flex-wrap: wrap;
+
+}
+
+.theme-color {
+
+  width: 21px;
+  height: 21px;
+
+  padding: 0;
+
+  border:
+    2px solid rgba(255,255,255,.17);
+
+  border-radius: 50%;
+
+  cursor: pointer;
+
+}
+
+.theme-color.active {
+
+  border-color: #fff;
+
+  box-shadow:
+    0 0 0 2px rgba(255,255,255,.20);
+
+  transform:
+    scale(1.08);
+
+}
+
+.theme-blue {
+  background: #0b4387;
+}
+
+.theme-black {
+  background: #17191f;
+}
+
+.theme-purple {
+  background: #51258a;
+}
+
+.theme-green {
+  background: #075f49;
+}
+
+.theme-red {
+  background: #8d2228;
+}
+
+.theme-orange {
+  background: #8b3b14;
+}
+
+.theme-cyan {
+  background: #155d73;
+}
+
+/* =========================================================
+   LOGOUT
+========================================================= */
+
+.logout {
+
+  width: 100%;
+  min-height: 44px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 11px;
+
+  padding: 9px 12px;
+
+  border:
+    1px solid rgba(255,255,255,.07);
+
+  border-radius: 11px;
+
+  background:
+    rgba(255,255,255,.055);
+
+  color:
+    #fb7185;
+
+  font: inherit;
+
+  font-weight: 800;
+
+  cursor: pointer;
+
+  text-align: left;
+
+}
+
+.logout .icon {
+
+  width: 21px;
+  height: 21px;
+
+  flex: 0 0 21px;
+
+  display: flex;
+
+}
+
+.logout .icon svg {
+
+  width: 19px;
+  height: 19px;
+
+}
+
+/* =========================================================
+   OVERLAY
+========================================================= */
+
+.sidebar-overlay {
+
+  position: fixed;
+
+  inset: 0;
+
+  background:
+    rgba(8,6,25,.58);
+
+  opacity: 0;
+
+  visibility: hidden;
+
+  pointer-events: none;
+
+  z-index: 9990;
+
+  transition:
+    opacity .25s ease,
+    visibility .25s ease;
+
+}
+
+.sidebar-overlay.show {
+
+  opacity: 1;
+
+  visibility: visible;
+
+  pointer-events: auto;
+
+}
+
+/* =========================================================
+   LOGOUT MODAL
+========================================================= */
+
+.logout-modal {
+
+  position: fixed;
+
+  inset: 0;
+
+  display: none;
+
+  align-items: center;
+  justify-content: center;
+
+  padding: 20px;
+
+  background:
+    rgba(15,23,42,.48);
+
+  z-index: 20000;
+
+}
+
+.logout-modal.show {
+  display: flex;
+}
+
+.logout-modal-card {
+
+  width: min(420px,100%);
+
+  padding:
+    28px 22px 22px;
+
+  box-sizing: border-box;
+
+  background: #fff;
+
+  border-radius: 20px;
+
+  box-shadow:
+    0 25px 70px rgba(15,23,42,.25);
+
+  text-align: center;
+
+}
+
+.logout-modal-icon {
+
+  width: 64px;
+  height: 64px;
+
+  margin:
+    0 auto 15px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background:
+    rgba(239,68,68,.12);
+
+  color:
+    #dc2626;
+
+  font-size: 2rem;
+
+  font-weight: 900;
+
+}
+
+.logout-modal-card h3 {
+
+  margin:
+    0 0 9px;
+
+  color:
+    #0f172a;
+
+  font-size: 1.25rem;
+
+}
+
+.logout-modal-card p {
+
+  margin:
+    0 0 22px;
+
+  color:
+    #64748b;
+
+}
+
+.logout-modal-actions {
+
+  display: flex;
+
+  justify-content: center;
+
+  gap: 10px;
+
+}
+
+.btn {
+
+  min-width: 120px;
+
+  padding:
+    11px 16px;
+
+  border: 0;
+
+  border-radius: 10px;
+
+  font-weight: 800;
+
+  cursor: pointer;
+
+  text-decoration: none;
+
+  text-align: center;
+
+}
+
+.btn-secondary {
+
+  background: #e2e8f0;
+
+  color: #0f172a;
+
+}
+
+.btn-danger {
+
+  background:
+    linear-gradient(
+      135deg,
+      #ef4444,
+      #dc2626
+    );
+
+  color: #fff;
+
+}
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 900px) {
+
+  .mobile-sidebar-trigger {
+    display: flex;
+  }
+
+  .sidebar-wrapper {
+
+    position: fixed;
+
+    left: 0;
+    top: 0;
+
+    width: min(300px,86vw);
+
+    min-width: 0;
+
+    max-width: 300px;
+
+    height: 100dvh;
+
+    flex: none;
+
+    transform:
+      translate3d(-105%,0,0);
+
+    z-index: 10000;
+
+    transition:
+      transform .30s cubic-bezier(.4,0,.2,1);
+
+    pointer-events: none;
+
+    visibility: hidden;
+
+  }
+
+  .sidebar-wrapper.open {
+
+    transform:
+      translate3d(0,0,0);
+
+    pointer-events: auto;
+
+    visibility: visible;
+
+  }
+
+  .sidebar-wrapper.collapsed {
+
+    width: min(300px,86vw);
+
+    min-width: 0;
+
+    flex-basis: auto;
+
+  }
+
+  .sidebar-wrapper.collapsed.open {
+
+    transform:
+      translate3d(0,0,0);
+
+  }
+
+  .sidebar {
+
+    border-radius:
+      0 18px 18px 0;
+
+    box-shadow:
+      12px 0 40px rgba(0,0,0,.25);
+
+  }
+
+  .collapse-button {
+    display: none;
+  }
+
+  .mobile-close {
+
+    width: 36px;
+    height: 36px;
+
+    flex: 0 0 36px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    margin-left: auto;
+
+    border:
+      1px solid rgba(255,255,255,.12);
+
+    border-radius: 10px;
+
+    background:
+      rgba(255,255,255,.08);
+
+    color:
+      var(--sidebar-text);
+
+    cursor: pointer;
+
+  }
+
+  .sidebar-wrapper.collapsed .brand {
+
+    justify-content: flex-start;
+
+  }
+
+  .sidebar-wrapper.collapsed .brand-link {
+
+    justify-content: flex-start;
+
+  }
+
+  .sidebar-wrapper.collapsed .brand-text {
+
+    width: auto;
+
+    opacity: 1;
+
+    overflow: visible;
+
+  }
+
+  .sidebar-wrapper.collapsed .menu a {
+
+    justify-content: flex-start;
+
+    gap: 12px;
+
+    padding-left: 12px;
+    padding-right: 12px;
+
+  }
+
+  .sidebar-wrapper.collapsed
+  .menu a .label {
+
+    width: auto;
+
+    opacity: 1;
+
+  }
+
+  .sidebar-wrapper.collapsed
+  .submenu {
+
+    display: block;
+
+  }
+
+  .sidebar-wrapper.collapsed
+  .submenu-arrow {
+
+    display: flex;
+
+  }
+
+  .sidebar-wrapper.collapsed
+  .menu a:hover::after {
+
+    display: none;
+
+  }
+
+  body.admin-sidebar-open {
+
+    overflow: hidden;
+
+    touch-action: none;
+
+  }
+
+}
+
+@media (max-width: 480px) {
+
+  .sidebar-wrapper {
+
+    width: 88vw;
+
+    max-width: 300px;
+
+  }
+
+  .logout-modal {
+
+    padding: 15px;
+
+  }
+
+  .logout-modal-actions {
+
+    flex-direction: column;
+
+  }
+
+  .btn {
+
+    width: 100%;
+
+  }
+
+}
+
+@media (min-width: 901px) {
+
+  .mobile-sidebar-trigger {
+    display: none !important;
+  }
+
+  .sidebar-overlay {
+    display: none;
+  }
+
+}
+
+</style>
+
+<script is:inline>
+(() => {
+
+  /* =======================================================
+     ELEMENT
+  ======================================================== */
+
+  const sidebar =
+    document.getElementById(
+      "admin-sidebar"
+    );
+
+  const overlay =
+    document.getElementById(
+      "sidebar-overlay"
+    );
+
+  const mobileTrigger =
+    document.getElementById(
+      "mobile-sidebar-trigger"
+    );
+
+  const closeButton =
+    document.getElementById(
+      "sidebar-close"
+    );
+
+  const collapseButton =
+    document.getElementById(
+      "sidebar-collapse"
+    );
+
+  const logoutTrigger =
+    document.getElementById(
+      "logout-trigger"
+    );
+
+  const logoutModal =
+    document.getElementById(
+      "logout-modal"
+    );
+
+  const logoutCancel =
+    document.getElementById(
+      "logout-cancel"
+    );
+
+  if (!sidebar) {
+    return;
+  }
+
+  const MOBILE_BREAKPOINT =
+    900;
+
+  const isMobile = () =>
+    window.innerWidth <=
+    MOBILE_BREAKPOINT;
+
+  /* =======================================================
+     MOBILE OPEN
+  ======================================================== */
+
+  function openSidebar() {
+
+    if (!isMobile()) {
+      return;
+    }
+
+    sidebar.classList.add(
+      "open"
+    );
+
+    overlay?.classList.add(
+      "show"
+    );
+
+    overlay?.setAttribute(
+      "aria-hidden",
+      "false"
+    );
+
+    mobileTrigger?.setAttribute(
+      "aria-expanded",
+      "true"
+    );
+
+    document.body.classList.add(
+      "admin-sidebar-open"
+    );
+
+  }
+
+  /* =======================================================
+     MOBILE CLOSE
+  ======================================================== */
+
+  function closeSidebar() {
+
+    sidebar.classList.remove(
+      "open"
+    );
+
+    overlay?.classList.remove(
+      "show"
+    );
+
+    overlay?.setAttribute(
+      "aria-hidden",
+      "true"
+    );
+
+    mobileTrigger?.setAttribute(
+      "aria-expanded",
+      "false"
+    );
+
+    document.body.classList.remove(
+      "admin-sidebar-open"
+    );
+
+  }
+
+  /* =======================================================
+     MOBILE TRIGGER
+  ======================================================== */
+
+  mobileTrigger?.addEventListener(
+    "click",
+    () => {
+
+      if (
+        sidebar.classList.contains(
+          "open"
+        )
+      ) {
+
+        closeSidebar();
+
+      } else {
+
+        openSidebar();
+
+      }
+
+    }
+  );
+
+  closeButton?.addEventListener(
+    "click",
+    closeSidebar
+  );
+
+  overlay?.addEventListener(
+    "click",
+    closeSidebar
+  );
+
+  /* =======================================================
+     NAVBAR SUPPORT
+  ======================================================== */
+
+  window.addEventListener(
+    "admin-sidebar-open",
+    openSidebar
+  );
+
+  window.addEventListener(
+    "admin-sidebar-close",
+    closeSidebar
+  );
+
+  document.addEventListener(
+    "click",
+    (event) => {
+
+      const target =
+        event.target instanceof Element
+          ? event.target.closest(
+              "[data-admin-sidebar-open]"
+            )
+          : null;
+
+      if (!target) {
+        return;
+      }
+
+      event.preventDefault();
+
+      openSidebar();
+
+    }
+  );
+
+  /* =======================================================
+     DESKTOP COLLAPSE
+  ======================================================== */
+
+  function applyCollapsedState(
+    collapsed,
+    save = true
+  ) {
+
+    if (isMobile()) {
+
+      sidebar.classList.remove(
+        "collapsed"
+      );
+
+      return;
+
+    }
+
+    sidebar.classList.toggle(
+      "collapsed",
+      collapsed
+    );
+
+    collapseButton?.setAttribute(
+      "aria-expanded",
+      String(!collapsed)
+    );
+
+    collapseButton?.setAttribute(
+      "aria-label",
+      collapsed
+        ? "Buka sidebar"
+        : "Ciutkan sidebar"
+    );
+
+    collapseButton?.setAttribute(
+      "title",
+      collapsed
+        ? "Buka sidebar"
+        : "Ciutkan sidebar"
+    );
+
+    if (save) {
+
+      localStorage.setItem(
+        "admin-sidebar-collapsed",
+        collapsed
+          ? "true"
+          : "false"
+      );
+
+    }
+
+    window.dispatchEvent(
+      new CustomEvent(
+        "admin-sidebar-change",
+        {
+          detail: {
+            collapsed
+          }
+        }
+      )
+    );
+
+  }
+
+  collapseButton?.addEventListener(
+    "click",
+    () => {
+
+      const collapsed =
+        sidebar.classList.contains(
+          "collapsed"
+        );
+
+      applyCollapsedState(
+        !collapsed,
+        true
+      );
+
+    }
+  );
+
+  /* =======================================================
+     RESTORE COLLAPSED
+  ======================================================== */
+
+  const savedCollapsed =
+    localStorage.getItem(
+      "admin-sidebar-collapsed"
+    );
+
+  if (
+    savedCollapsed === "true" &&
+    !isMobile()
+  ) {
+
+    applyCollapsedState(
+      true,
+      false
+    );
+
+  }
+
+  /* =======================================================
+     MENU CLICK
+  ======================================================== */
+
+  sidebar
+    .querySelectorAll(
+      ".menu a"
+    )
+    .forEach(
+      (link) => {
+
+        link.addEventListener(
+          "click",
+          () => {
+
+            if (isMobile()) {
+              closeSidebar();
+            }
+
+          }
+        );
+
+      }
+    );
+
+  /* =======================================================
+     RESIZE
+  ======================================================== */
+
+  let resizeTimer;
+
+  window.addEventListener(
+    "resize",
+    () => {
+
+      clearTimeout(
+        resizeTimer
+      );
+
+      resizeTimer =
+        setTimeout(
+          () => {
+
+            if (isMobile()) {
+
+              sidebar.classList.remove(
+                "collapsed"
+              );
+
+            } else {
+
+              closeSidebar();
+
+              const saved =
+                localStorage.getItem(
+                  "admin-sidebar-collapsed"
+                );
+
+              applyCollapsedState(
+                saved === "true",
+                false
+              );
+
+            }
+
+          },
+          100
+        );
+
+    }
+  );
+
+  /* =======================================================
+     THEME
+  ======================================================== */
+
+  const themeButtons =
+    document.querySelectorAll(
+      ".theme-color"
+    );
+
+  const themes = {
+
+    blue: {
+      bg: "#0b4387",
+      dark: "#062d61",
+      text: "#eaf3ff",
+      muted: "#a9c4e5",
+      accent: "#ffd21f",
+      strong: "#e5b900",
+      soft: "rgba(255,210,31,.14)"
+    },
+
+    black: {
+      bg: "#17191f",
+      dark: "#0b0d11",
+      text: "#f5f7fa",
+      muted: "#aeb5c0",
+      accent: "#ffffff",
+      strong: "#e5e7eb",
+      soft: "rgba(255,255,255,.10)"
+    },
+
+    purple: {
+      bg: "#51258a",
+      dark: "#2d1155",
+      text: "#f7efff",
+      muted: "#d1b9ee",
+      accent: "#b58cff",
+      strong: "#9b6df0",
+      soft: "rgba(181,140,255,.15)"
+    },
+
+    green: {
+      bg: "#075f49",
+      dark: "#03382c",
+      text: "#e7fff6",
+      muted: "#9fe1c9",
+      accent: "#35d39b",
+      strong: "#20b982",
+      soft: "rgba(53,211,155,.15)"
+    },
+
+    red: {
+      bg: "#8d2228",
+      dark: "#4e1015",
+      text: "#fff0f1",
+      muted: "#f0b0b4",
+      accent: "#ff777d",
+      strong: "#eb565e",
+      soft: "rgba(255,119,125,.15)"
+    },
+
+    orange: {
+      bg: "#8b3b14",
+      dark: "#4c1b08",
+      text: "#fff2e8",
+      muted: "#f2c29e",
+      accent: "#ff9b54",
+      strong: "#f17c2e",
+      soft: "rgba(255,155,84,.15)"
+    },
+
+    cyan: {
+      bg: "#155d73",
+      dark: "#093747",
+      text: "#e9fbff",
+      muted: "#9fd9e5",
+      accent: "#39d5e9",
+      strong: "#18b8cf",
+      soft: "rgba(57,213,233,.15)"
+    }
+
+  };
+
+  function applyTheme(
+    themeName
+  ) {
+
+    const theme =
+      themes[themeName] ||
+      themes.blue;
+
+    sidebar.dataset.theme =
+      themeName;
+
+    sidebar.style.setProperty(
+      "--sidebar-bg",
+      theme.bg
+    );
+
+    sidebar.style.setProperty(
+      "--sidebar-dark",
+      theme.dark
+    );
+
+    sidebar.style.setProperty(
+      "--sidebar-text",
+      theme.text
+    );
+
+    sidebar.style.setProperty(
+      "--sidebar-muted",
+      theme.muted
+    );
+
+    sidebar.style.setProperty(
+      "--accent",
+      theme.accent
+    );
+
+    sidebar.style.setProperty(
+      "--accent-strong",
+      theme.strong
+    );
+
+    sidebar.style.setProperty(
+      "--accent-soft",
+      theme.soft
+    );
+
+    themeButtons.forEach(
+      (button) => {
+
+        const active =
+          button.dataset.theme ===
+          themeName;
+
+        button.classList.toggle(
+          "active",
+          active
+        );
+
+        button.setAttribute(
+          "aria-pressed",
+          String(active)
+        );
+
+      }
+    );
+
+    localStorage.setItem(
+      "admin-theme",
+      themeName
+    );
+
+    window.dispatchEvent(
+      new CustomEvent(
+        "admin-theme-change",
+        {
+          detail: {
+            theme:
+              themeName,
+
+            colors:
+              theme
+          }
+        }
+      )
+    );
+
+  }
+
+  themeButtons.forEach(
+    (button) => {
+
+      button.addEventListener(
+        "click",
+        () => {
+
+          applyTheme(
+            button.dataset.theme ||
+            "blue"
+          );
+
+        }
+      );
+
+    }
+  );
+
+  /* =======================================================
+     RESTORE THEME
+  ======================================================== */
+
+  const savedTheme =
+    localStorage.getItem(
+      "admin-theme"
+    );
+
+  applyTheme(
+    themes[savedTheme]
+      ? savedTheme
+      : "blue"
+  );
+
+  /* =======================================================
+     LOGOUT MODAL
+  ======================================================== */
+
+  function openLogoutModal() {
+
+    logoutModal?.classList.add(
+      "show"
+    );
+
+    logoutModal?.setAttribute(
+      "aria-hidden",
+      "false"
+    );
+
+  }
+
+  function closeLogoutModal() {
+
+    logoutModal?.classList.remove(
+      "show"
+    );
+
+    logoutModal?.setAttribute(
+      "aria-hidden",
+      "true"
+    );
+
+  }
+
+  logoutTrigger?.addEventListener(
+    "click",
+    openLogoutModal
+  );
+
+  logoutCancel?.addEventListener(
+    "click",
+    closeLogoutModal
+  );
+
+  logoutModal?.addEventListener(
+    "click",
+    (event) => {
+
+      if (
+        event.target ===
+        logoutModal
+      ) {
+
+        closeLogoutModal();
+
+      }
+
+    }
+  );
+
+  /* =======================================================
+     ESC
+  ======================================================== */
+
+  document.addEventListener(
+    "keydown",
+    (event) => {
+
+      if (
+        event.key !== "Escape"
+      ) {
+        return;
+      }
+
+      closeSidebar();
+
+      closeLogoutModal();
+
+    }
+  );
+
+})();
+</script>
