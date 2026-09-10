@@ -5626,29 +5626,27 @@ try {
         >
 
           {berita.map((item, index) => (
+  <button
+    type="button"
+    class:list={[
+      "news-thumb",
+      { active: index === 0 }
+    ]}
+    data-index={index}
+  >
 
-            <button
-              type="button"
-              class:list={[
-                "news-thumb",
-                { active: index === 0 }
-              ]}
-              data-index={index}
-            >
+    <img
+      src={`https://dpm-ptsp.surabaya.go.id/fileberita/${item.picture}`}
+      alt={item.title}
+      loading={index === 0 ? "eager" : "lazy"}
+    />
 
-              <img
-                 src={`https://dpm-ptsp.surabaya.go.id/fileberita/${berita[0].picture}`}
-                alt=""
-                loading={index === 0 ? "eager" : "lazy"}
-              />
+    <span>
+      {item.title}
+    </span>
 
-              <span>
-                {item.title}
-              </span>
-
-            </button>
-
-          ))}
+  </button>
+))}
 
         </div>
 
