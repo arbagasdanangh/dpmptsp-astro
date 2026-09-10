@@ -1,4 +1,4 @@
-import { db } from "../../../lib/db.js";
+import { db } from "../../lib/db.js";
 
 export async function POST({ request }) {
   const url = new URL(request.url);
