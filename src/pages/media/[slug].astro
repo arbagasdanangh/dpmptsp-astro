@@ -1755,13 +1755,10 @@ function imageUrl(picture) {
 .media-filter-sticky {
 
   position:
-    sticky;
-
-  top:
-    82px;
+    relative;
 
   z-index:
-    50;
+    5;
 
   padding-top:
     4px;
@@ -2924,7 +2921,7 @@ function imageUrl(picture) {
                 text-white
               "
             >
-              10
+              {beritaMedia.length}
             </strong>
 
           </div>
@@ -2964,7 +2961,7 @@ function imageUrl(picture) {
                 text-yellow-300
               "
             >
-              10
+              {artikelMedia.length}
             </strong>
 
           </div>
