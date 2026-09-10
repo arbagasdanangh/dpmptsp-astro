@@ -1,0 +1,1383 @@
+---
+import AdminShell from "../../components/admin/AdminShell.astro";
+import { db } from "../../lib/db";
+import {
+    writeFile,
+    mkdir,
+    access
+} from "node:fs/promises";
+import path from "node:path";
+
+export const prerender = false;
+
+let errorMessage = "";
+
+if (Astro.request.method === "POST") {
+
+    try {
+
+        // =====================================================
+        // CEK CONTENT TYPE
+        // =====================================================
+
+        const contentType =
+            Astro.request.headers.get("content-type") || "";
+
+        if (!contentType.includes("multipart/form-data")) {
+
+            throw new Error(
+                "Form upload harus menggunakan multipart/form-data."
+            );
+
+        }
+
+
+        // =====================================================
+        // AMBIL FORM DATA
+        // =====================================================
+
+        const formData =
+            await Astro.request.formData();
+
+        const judul =
+            formData
+                .get("judul")
+                ?.toString()
+                .trim() || "";
+
+        const file =
+            formData.get("file");
+
+
+        // =====================================================
+        // VALIDASI JUDUL
+        // =====================================================
+
+        if (!judul) {
+
+            throw new Error(
+                "Judul kinerja wajib diisi."
+            );
+
+        }
+
+
+        // =====================================================
+        // VALIDASI FILE
+        // =====================================================
+
+        if (!(file instanceof File)) {
+
+            throw new Error(
+                "Dokumen PDF wajib dipilih."
+            );
+
+        }
+
+
+        if (file.size <= 0) {
+
+            throw new Error(
+                "File PDF yang dipilih kosong."
+            );
+
+        }
+
+
+        // Maksimal 50 MB
+
+        if (
+            file.size >
+            50 * 1024 * 1024
+        ) {
+
+            throw new Error(
+                "Ukuran file maksimal 50 MB."
+            );
+
+        }
+
+
+        // =====================================================
+        // VALIDASI PDF
+        // =====================================================
+
+        const extension =
+            path
+                .extname(file.name)
+                .toLowerCase();
+
+
+        if (
+            extension !== ".pdf" &&
+            file.type !== "application/pdf"
+        ) {
+
+            throw new Error(
+                "File harus berformat PDF."
+            );
+
+        }
+
+
+        // =====================================================
+        // BUAT NAMA JUDUL YANG AMAN
+        // =====================================================
+
+        const safeName =
+            judul
+                .trim()
+                .replace(/[^a-zA-Z0-9]+/g, "-")
+                .replace(/^-+|-+$/g, "");
+
+
+        // =====================================================
+        // TANGGAL POSTING
+        // TIMEZONE ASIA/JAKARTA
+        // =====================================================
+
+        const sekarang =
+            new Date();
+
+
+        const tahun =
+            sekarang.toLocaleString(
+                "en-US",
+                {
+                    timeZone: "Asia/Jakarta",
+                    year: "numeric"
+                }
+            );
+
+
+        const bulan =
+            sekarang.toLocaleString(
+                "en-US",
+                {
+                    timeZone: "Asia/Jakarta",
+                    month: "2-digit"
+                }
+            );
+
+
+        const hari =
+            sekarang.toLocaleString(
+                "en-US",
+                {
+                    timeZone: "Asia/Jakarta",
+                    day: "2-digit"
+                }
+            );
+
+
+        const tanggalPos =
+            `${tahun}${bulan}${hari}`;
+
+
+        // =====================================================
+        // NAMA FILE DASAR
+        //
+        // Contoh:
+        // Kinerja-Investasi-TWI-2023-20260906.pdf
+        // =====================================================
+
+        let namaFile =
+            `${safeName}-${tanggalPos}.pdf`;
+
+
+        // =====================================================
+        // FOLDER PDF
+        // =====================================================
+
+        const uploadDir =
+            path.join(
+                process.cwd(),
+                "public",
+                "pdf"
+            );
+
+
+        await mkdir(
+            uploadDir,
+            {
+                recursive: true
+            }
+        );
+
+
+        // =====================================================
+        // CEK NAMA FILE AGAR TIDAK TABRAKAN
+        // =====================================================
+
+        let nomor = 1;
+
+        let filePath =
+            path.join(
+                uploadDir,
+                namaFile
+            );
+
+
+        while (true) {
+
+            try {
+
+                await access(filePath);
+
+                nomor++;
+
+                namaFile =
+                    `${safeName}-${tanggalPos}-${nomor}.pdf`;
+
+                filePath =
+                    path.join(
+                        uploadDir,
+                        namaFile
+                    );
+
+            } catch {
+
+                break;
+
+            }
+
+        }
+
+
+        // =====================================================
+        // SIMPAN FILE
+        // =====================================================
+
+        const buffer =
+            Buffer.from(
+                await file.arrayBuffer()
+            );
+
+
+        await writeFile(
+            filePath,
+            buffer
+        );
+
+
+        // =====================================================
+        // PATH YANG DISIMPAN KE DATABASE
+        // =====================================================
+
+        const filePathDatabase =
+            `/pdf/${namaFile}`;
+
+
+        // =====================================================
+        // SIMPAN DATABASE
+        // =====================================================
+
+        await db.query(
+            `
+            INSERT INTO twdata
+            (
+                tw_option,
+                file_path
+            )
+            VALUES (?, ?)
+            `,
+            [
+                judul,
+                filePathDatabase
+            ]
+        );
+
+
+        // =====================================================
+        // REDIRECT
+        // =====================================================
+
+        return Astro.redirect(
+            "/admin/kinerja?status=success"
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "ERROR TAMBAH KINERJA:",
+            error
+        );
+
+
+        if (
+            error instanceof Error
+        ) {
+
+            errorMessage =
+                error.message;
+
+        } else {
+
+            errorMessage =
+                "Terjadi kesalahan saat menyimpan kinerja.";
+
+        }
+
+    }
+
+}
+---
+
+
+<AdminShell
+    title="Tambah Kinerja Investasi"
+    subtitle="Tambahkan dokumen kinerja investasi baru."
+>
+
+
+    <div class="form-box">
+
+
+        <!-- =====================================================
+             HEADER
+        ====================================================== -->
+
+        <div class="form-header">
+
+            <div>
+
+                <h2>
+                    Form Tambah Kinerja
+                </h2>
+
+                <p>
+                    Tambahkan judul dan dokumen PDF kinerja investasi.
+                </p>
+
+            </div>
+
+
+            <div class="header-icon">
+                +
+            </div>
+
+        </div>
+
+
+        <!-- =====================================================
+             ERROR
+        ====================================================== -->
+
+        {
+            errorMessage && (
+
+                <div class="alert">
+                    {errorMessage}
+                </div>
+
+            )
+        }
+
+
+        <!-- =====================================================
+             FORM
+        ====================================================== -->
+
+        <form
+            method="POST"
+            enctype="multipart/form-data"
+        >
+
+
+            <!-- =================================================
+                 JUDUL
+            ================================================== -->
+
+            <div class="form-group">
+
+                <label for="judul">
+
+                    Judul Kinerja
+
+                    <span>
+                        *
+                    </span>
+
+                </label>
+
+
+                <input
+                    id="judul"
+                    type="text"
+                    name="judul"
+                    placeholder="Contoh: Kinerja Investasi TWI 2023"
+                    required
+                    autocomplete="off"
+                />
+
+            </div>
+
+
+            <!-- =================================================
+                 FILE
+            ================================================== -->
+
+            <div class="form-group">
+
+                <label for="file">
+
+                    Upload Dokumen PDF
+
+                    <span>
+                        *
+                    </span>
+
+                </label>
+
+
+                <div class="upload-box">
+
+
+                    <div class="upload-icon">
+
+                        PDF
+
+                    </div>
+
+
+                    <div class="upload-content">
+
+                        <strong id="file-name">
+
+                            Pilih dokumen PDF
+
+                        </strong>
+
+
+                        <small>
+
+                            Format PDF, maksimal 50 MB
+
+                        </small>
+
+                    </div>
+
+
+                    <input
+                        id="file"
+                        type="file"
+                        name="file"
+                        accept="application/pdf,.pdf"
+                        required
+                    />
+
+                </div>
+
+
+                <!-- =================================================
+                     PREVIEW NAMA FILE
+                ================================================== -->
+
+                <div
+                    id="filename-preview"
+                    class="filename-preview"
+                >
+
+                    <span class="preview-label">
+                        Nama file:
+                    </span>
+
+                    <strong id="generated-name">
+                        -
+                    </strong>
+
+                </div>
+
+
+            </div>
+
+
+            <!-- =================================================
+                 BUTTON
+            ================================================== -->
+
+            <div class="form-footer">
+
+
+                <a
+                    href="/admin/kinerja"
+                    class="btn-cancel"
+                >
+
+                    Batal
+
+                </a>
+
+
+                <button
+                    type="submit"
+                    class="btn-save"
+                >
+
+                    <span>
+                        Simpan Kinerja
+                    </span>
+
+                </button>
+
+
+            </div>
+
+
+        </form>
+
+
+    </div>
+
+
+</AdminShell>
+
+
+<script>
+
+    const judulInput =
+        document.getElementById(
+            "judul"
+        ) as HTMLInputElement | null;
+
+
+    const fileInput =
+        document.getElementById(
+            "file"
+        ) as HTMLInputElement | null;
+
+
+    const fileName =
+        document.getElementById(
+            "file-name"
+        );
+
+
+    const generatedName =
+        document.getElementById(
+            "generated-name"
+        );
+
+
+    // =========================================================
+    // FORMAT JUDUL
+    // =========================================================
+
+    function formatJudul(
+        value: string
+    ) {
+
+        return value
+            .trim()
+            .replace(
+                /[^a-zA-Z0-9]+/g,
+                "-"
+            )
+            .replace(
+                /^-+|-+$/g,
+                "");
+
+    }
+
+
+    // =========================================================
+    // TANGGAL SEKARANG
+    // ASIA/JAKARTA
+    // =========================================================
+
+    function getTanggalPos() {
+
+        const sekarang =
+            new Date();
+
+
+        const tahun =
+            sekarang.toLocaleString(
+                "en-US",
+                {
+                    timeZone: "Asia/Jakarta",
+                    year: "numeric"
+                }
+            );
+
+
+        const bulan =
+            sekarang.toLocaleString(
+                "en-US",
+                {
+                    timeZone: "Asia/Jakarta",
+                    month: "2-digit"
+                }
+            );
+
+
+        const hari =
+            sekarang.toLocaleString(
+                "en-US",
+                {
+                    timeZone: "Asia/Jakarta",
+                    day: "2-digit"
+                }
+            );
+
+
+        return `${tahun}${bulan}${hari}`;
+
+    }
+
+
+    // =========================================================
+    // UPDATE PREVIEW
+    // =========================================================
+
+    function updateFilenamePreview() {
+
+        if (
+            !judulInput ||
+            !generatedName
+        ) {
+
+            return;
+
+        }
+
+
+        const judul =
+            formatJudul(
+                judulInput.value
+            );
+
+
+        if (!judul) {
+
+            generatedName.textContent =
+                "-";
+
+            return;
+
+        }
+
+
+        const tanggalPos =
+            getTanggalPos();
+
+
+        generatedName.textContent =
+            `${judul}-${tanggalPos}.pdf`;
+
+    }
+
+
+    // =========================================================
+    // FILE DIPILIH
+    // =========================================================
+
+    if (
+        fileInput &&
+        fileName
+    ) {
+
+        fileInput.addEventListener(
+            "change",
+            () => {
+
+                if (
+                    fileInput.files &&
+                    fileInput.files.length > 0
+                ) {
+
+                    fileName.textContent =
+                        fileInput.files[0].name;
+
+                } else {
+
+                    fileName.textContent =
+                        "Pilih dokumen PDF";
+
+                }
+
+            }
+        );
+
+    }
+
+
+    // =========================================================
+    // JUDUL BERUBAH
+    // =========================================================
+
+    if (judulInput) {
+
+        judulInput.addEventListener(
+            "input",
+            updateFilenamePreview
+        );
+
+    }
+
+
+    updateFilenamePreview();
+
+</script>
+
+
+<style>
+
+    /* =====================================================
+       FORM BOX
+    ====================================================== */
+
+    .form-box {
+
+        width: 100%;
+        max-width: 760px;
+
+        background: #ffffff;
+
+        border: 1px solid #edf1f5;
+
+        border-radius: 20px;
+
+        box-shadow:
+            0 12px 30px rgba(
+                15,
+                23,
+                42,
+                .06
+            );
+
+        overflow: hidden;
+
+    }
+
+
+    /* =====================================================
+       HEADER
+    ====================================================== */
+
+    .form-header {
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: space-between;
+
+        padding: 24px 28px;
+
+        border-bottom:
+            1px solid #edf1f5;
+
+    }
+
+
+    .form-header h2 {
+
+        margin:
+            0 0 5px;
+
+        color:
+            #0f172a;
+
+        font-size:
+            20px;
+
+        font-weight:
+            750;
+
+    }
+
+
+    .form-header p {
+
+        margin: 0;
+
+        color:
+            #94a3b8;
+
+        font-size:
+            13px;
+
+    }
+
+
+    .header-icon {
+
+        width:
+            42px;
+
+        height:
+            42px;
+
+        display:
+            flex;
+
+        align-items:
+            center;
+
+        justify-content:
+            center;
+
+        border-radius:
+            12px;
+
+        background:
+            #eff6ff;
+
+        color:
+            #2563eb;
+
+        font-size:
+            25px;
+
+        font-weight:
+            400;
+
+    }
+
+
+    /* =====================================================
+       ALERT
+    ====================================================== */
+
+    .alert {
+
+        margin:
+            20px 28px 0;
+
+        padding:
+            12px 15px;
+
+        border-radius:
+            10px;
+
+        background:
+            #fef2f2;
+
+        border:
+            1px solid #fecaca;
+
+        color:
+            #dc2626;
+
+        font-size:
+            13px;
+
+        font-weight:
+            600;
+
+    }
+
+
+    /* =====================================================
+       FORM
+    ====================================================== */
+
+    form {
+
+        padding:
+            28px;
+
+    }
+
+
+    .form-group {
+
+        margin-bottom:
+            22px;
+
+    }
+
+
+    label {
+
+        display:
+            block;
+
+        margin-bottom:
+            8px;
+
+        color:
+            #334155;
+
+        font-size:
+            13px;
+
+        font-weight:
+            700;
+
+    }
+
+
+    label span {
+
+        color:
+            #ef4444;
+
+    }
+
+
+    input[type="text"] {
+
+        width:
+            100%;
+
+        box-sizing:
+            border-box;
+
+        padding:
+            13px 14px;
+
+        border:
+            1px solid #dbe3ec;
+
+        border-radius:
+            10px;
+
+        outline:
+            none;
+
+        color:
+            #334155;
+
+        background:
+            #ffffff;
+
+        font-family:
+            inherit;
+
+        font-size:
+            13px;
+
+        transition:
+            border-color .2s ease,
+            box-shadow .2s ease;
+
+    }
+
+
+    input[type="text"]:focus {
+
+        border-color:
+            #93c5fd;
+
+        box-shadow:
+            0 0 0 3px
+            rgba(
+                37,
+                99,
+                235,
+                .08
+            );
+
+    }
+
+
+    /* =====================================================
+       UPLOAD
+    ====================================================== */
+
+    .upload-box {
+
+        position:
+            relative;
+
+        display:
+            flex;
+
+        align-items:
+            center;
+
+        gap:
+            14px;
+
+        min-height:
+            90px;
+
+        padding:
+            16px;
+
+        border:
+            1.5px dashed #cbd5e1;
+
+        border-radius:
+            12px;
+
+        background:
+            #f8fafc;
+
+        cursor:
+            pointer;
+
+        transition:
+            border-color .2s ease,
+            background .2s ease;
+
+    }
+
+
+    .upload-box:hover {
+
+        border-color:
+            #93c5fd;
+
+        background:
+            #f8fbff;
+
+    }
+
+
+    .upload-box input {
+
+        position:
+            absolute;
+
+        inset:
+            0;
+
+        width:
+            100%;
+
+        height:
+            100%;
+
+        opacity:
+            0;
+
+        cursor:
+            pointer;
+
+    }
+
+
+    .upload-icon {
+
+        width:
+            48px;
+
+        height:
+            48px;
+
+        flex-shrink:
+            0;
+
+        display:
+            flex;
+
+        align-items:
+            center;
+
+        justify-content:
+            center;
+
+        border-radius:
+            10px;
+
+        background:
+            #fee2e2;
+
+        color:
+            #dc2626;
+
+        font-size:
+            12px;
+
+        font-weight:
+            800;
+
+    }
+
+
+    .upload-content {
+
+        display:
+            flex;
+
+        flex-direction:
+            column;
+
+        gap:
+            5px;
+
+        min-width:
+            0;
+
+    }
+
+
+    .upload-content strong {
+
+        color:
+            #334155;
+
+        font-size:
+            13px;
+
+        overflow:
+            hidden;
+
+        text-overflow:
+            ellipsis;
+
+        white-space:
+            nowrap;
+
+    }
+
+
+    .upload-content small {
+
+        color:
+            #94a3b8;
+
+        font-size:
+            11px;
+
+    }
+
+
+    /* =====================================================
+       PREVIEW NAMA FILE
+    ====================================================== */
+
+    .filename-preview {
+
+        margin-top:
+            10px;
+
+        padding:
+            10px 12px;
+
+        border-radius:
+            8px;
+
+        background:
+            #f8fafc;
+
+        border:
+            1px solid #edf1f5;
+
+        display:
+            flex;
+
+        align-items:
+            center;
+
+        gap:
+            6px;
+
+        min-width:
+            0;
+
+    }
+
+
+    .preview-label {
+
+        color:
+            #94a3b8;
+
+        font-size:
+            11px;
+
+        flex-shrink:
+            0;
+
+    }
+
+
+    .filename-preview strong {
+
+        color:
+            #2563eb;
+
+        font-size:
+            11px;
+
+        overflow:
+            hidden;
+
+        text-overflow:
+            ellipsis;
+
+        white-space:
+            nowrap;
+
+    }
+
+
+    /* =====================================================
+       FOOTER
+    ====================================================== */
+
+    .form-footer {
+
+        display:
+            flex;
+
+        justify-content:
+            flex-end;
+
+        align-items:
+            center;
+
+        gap:
+            10px;
+
+        padding-top:
+            24px;
+
+        margin-top:
+            8px;
+
+        border-top:
+            1px solid #edf1f5;
+
+    }
+
+
+    .btn-cancel,
+    .btn-save {
+
+        min-height:
+            40px;
+
+        display:
+            inline-flex;
+
+        align-items:
+            center;
+
+        justify-content:
+            center;
+
+        padding:
+            0 18px;
+
+        border-radius:
+            9px;
+
+        font-family:
+            inherit;
+
+        font-size:
+            13px;
+
+        font-weight:
+            700;
+
+        text-decoration:
+            none;
+
+        cursor:
+            pointer;
+
+    }
+
+
+    .btn-cancel {
+
+        border:
+            1px solid #dbe3ec;
+
+        background:
+            #ffffff;
+
+        color:
+            #475569;
+
+    }
+
+
+    .btn-cancel:hover {
+
+        background:
+            #f8fafc;
+
+    }
+
+
+    .btn-save {
+
+        border:
+            none;
+
+        background:
+            #2563eb;
+
+        color:
+            #ffffff;
+
+        box-shadow:
+            0 6px 16px
+            rgba(
+                37,
+                99,
+                235,
+                .18
+            );
+
+    }
+
+
+    .btn-save:hover {
+
+        background:
+            #1d4ed8;
+
+    }
+
+
+    /* =====================================================
+       RESPONSIVE
+    ====================================================== */
+
+    @media (max-width: 650px) {
+
+        .form-header {
+
+            padding:
+                20px;
+
+        }
+
+
+        form {
+
+            padding:
+                20px;
+
+        }
+
+
+        .form-footer {
+
+            flex-direction:
+                column-reverse;
+
+            align-items:
+                stretch;
+
+        }
+
+
+        .btn-cancel,
+        .btn-save {
+
+            width:
+                100%;
+
+        }
+
+
+        .upload-box {
+
+            min-height:
+                80px;
+
+        }
+
+    }
+
+</style>

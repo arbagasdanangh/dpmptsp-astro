@@ -1,0 +1,646 @@
+---
+import AdminShell from "../../components/admin/AdminShell.astro";
+import { db } from "../../lib/db";
+import fs from "node:fs/promises";
+import path from "node:path";
+
+export const prerender = false;
+
+const url = new URL(Astro.request.url);
+const id = url.searchParams.get("id");
+
+if (!id) {
+  return Astro.redirect("/admin/inovasi");
+}
+
+let dataInovasi: any = null;
+let errorMessage = "";
+
+// ======================================================
+// AMBIL DATA INOVASI
+// ======================================================
+try {
+  const [rows]: any = await db.query(
+    "SELECT * FROM inovasi_layanan WHERE id = ?",
+    [id]
+  );
+
+  if (rows.length > 0) {
+    dataInovasi = rows[0];
+  }
+} catch (error) {
+  console.error("Gagal mengambil data:", error);
+}
+
+if (!dataInovasi) {
+  return Astro.redirect("/admin/inovasi");
+}
+
+// ======================================================
+// UPDATE DATA
+// ======================================================
+if (Astro.request.method === "POST") {
+  try {
+    const formData = await Astro.request.formData();
+
+    const nama = formData.get("nama")?.toString().trim() || "";
+    const singkatan = formData.get("singkatan")?.toString().trim() || "";
+    const kategori = formData.get("kategori")?.toString().trim() || "";
+    const deskripsi = formData.get("deskripsi")?.toString().trim() || "";
+    const url_layanan =
+      formData.get("url_layanan")?.toString().trim() || null;
+    const warna = formData.get("warna")?.toString().trim() || "blue";
+    const icon =
+      formData.get("icon")?.toString().trim() || "fa-lightbulb";
+
+    // ==================================================
+    // GAMBAR LAMA
+    // ==================================================
+    let gambarPath =
+      dataInovasi.gambar ||
+      dataInovasi.foto ||
+      null;
+
+    // ==================================================
+    // FILE BARU
+    // ==================================================
+    const fileGambar = formData.get("foto");
+
+    if (
+      fileGambar instanceof File &&
+      fileGambar.size > 0 &&
+      fileGambar.name
+    ) {
+      // Folder upload
+      const uploadDir = path.join(
+        process.cwd(),
+        "public",
+        "gambar",
+        "inovasi"
+      );
+
+      // Pastikan folder ada
+      await fs.mkdir(uploadDir, {
+        recursive: true,
+      });
+
+      // Ambil ekstensi asli
+      const originalName = fileGambar.name;
+      const ext = path.extname(originalName).toLowerCase();
+
+      // Hanya izinkan format gambar
+      const allowedExt = [
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".webp",
+        ".gif",
+        ".svg",
+      ];
+
+      if (!allowedExt.includes(ext)) {
+        throw new Error(
+          "Format gambar tidak didukung. Gunakan JPG, JPEG, PNG, WEBP, GIF, atau SVG."
+        );
+      }
+
+      // Buat nama file aman
+      const safeName = nama
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+
+      const fileName =
+        `${safeName || "inovasi"}-${Date.now()}${ext}`;
+
+      // Path fisik
+      const filePath = path.join(
+        uploadDir,
+        fileName
+      );
+
+      // Ubah File menjadi Buffer
+      const arrayBuffer = await fileGambar.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+
+      // Simpan file
+      await fs.writeFile(filePath, buffer);
+
+      // Path yang disimpan ke database
+      gambarPath = `/gambar/inovasi/${fileName}`;
+
+      // ==================================================
+      // HAPUS GAMBAR LAMA JIKA BERADA DI FOLDER INOVASI
+      // ==================================================
+      const oldImage =
+        dataInovasi.gambar ||
+        dataInovasi.foto ||
+        "";
+
+      if (
+        oldImage &&
+        oldImage.startsWith("/gambar/inovasi/")
+      ) {
+        const oldFileName = path.basename(oldImage);
+
+        const oldFilePath = path.join(
+          uploadDir,
+          oldFileName
+        );
+
+        // Jangan hapus kalau kebetulan nama sama
+        if (oldFilePath !== filePath) {
+          try {
+            await fs.unlink(oldFilePath);
+          } catch (deleteError) {
+            console.warn(
+              "Gambar lama tidak dapat dihapus:",
+              deleteError
+            );
+          }
+        }
+      }
+    }
+
+    // ==================================================
+    // UPDATE DATABASE
+    // ==================================================
+    await db.query(
+      `
+      UPDATE inovasi_layanan
+      SET
+        nama = ?,
+        singkatan = ?,
+        kategori = ?,
+        deskripsi = ?,
+        url_layanan = ?,
+        warna = ?,
+        icon = ?,
+        gambar = ?
+      WHERE id = ?
+      `,
+      [
+        nama,
+        singkatan,
+        kategori,
+        deskripsi,
+        url_layanan,
+        warna,
+        icon,
+        gambarPath,
+        id,
+      ]
+    );
+
+    // ==================================================
+    // KEMBALI KE DAFTAR
+    // ==================================================
+    return Astro.redirect("/admin/inovasi");
+
+  } catch (error: any) {
+    console.error(
+      "Gagal update data:",
+      error
+    );
+
+    errorMessage =
+      "Gagal menyimpan perubahan: " +
+      (error?.message || "Terjadi kesalahan.");
+  }
+}
+---
+
+<AdminShell title="" subtitle="" showHeader={false}>
+  <div class="page-header-simple">
+    <h2>Edit Inovasi Astro (ID: {dataInovasi.id})</h2>
+  </div>
+
+  {errorMessage && (
+    <div class="error-message">
+      {errorMessage}
+    </div>
+  )}
+
+  <div class="card-form-container">
+    <form
+      method="POST"
+      enctype="multipart/form-data"
+    >
+      <div class="form-grid">
+
+        <!-- =========================================
+             KOLOM KIRI
+        ========================================== -->
+        <div class="form-column">
+
+          <div class="form-group">
+            <label for="nama">
+              Nama Inovasi
+            </label>
+
+            <input
+              type="text"
+              id="nama"
+              name="nama"
+              value={dataInovasi.nama || ""}
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="singkatan">
+              Singkatan / Kepanjangan
+            </label>
+
+            <input
+              type="text"
+              id="singkatan"
+              name="singkatan"
+              value={dataInovasi.singkatan || ""}
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="kategori">
+              Kategori
+            </label>
+
+            <input
+              type="text"
+              id="kategori"
+              name="kategori"
+              value={dataInovasi.kategori || ""}
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="url_layanan">
+              URL Layanan
+            </label>
+
+            <input
+              type="text"
+              id="url_layanan"
+              name="url_layanan"
+              value={dataInovasi.url_layanan || ""}
+              placeholder="https://..."
+            />
+          </div>
+
+        </div>
+
+        <!-- =========================================
+             KOLOM KANAN
+        ========================================== -->
+        <div class="form-column">
+
+          <div class="form-group">
+            <label for="deskripsi">
+              Deskripsi
+            </label>
+
+            <textarea
+              id="deskripsi"
+              name="deskripsi"
+              required
+            >{dataInovasi.deskripsi || ""}</textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="warna">
+              Warna Aksen
+            </label>
+
+            <input
+              type="text"
+              id="warna"
+              name="warna"
+              value={dataInovasi.warna || ""}
+              placeholder="blue"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="icon">
+              Icon Class
+            </label>
+
+            <input
+              type="text"
+              id="icon"
+              name="icon"
+              value={dataInovasi.icon || ""}
+              placeholder="fa-lightbulb"
+            />
+          </div>
+
+          <!-- =========================================
+               UPLOAD GAMBAR
+          ========================================== -->
+          <div class="form-group">
+            <label for="foto">
+              Ganti Foto Inovasi
+            </label>
+
+            <div class="file-info-box">
+
+              <!-- PREVIEW GAMBAR LAMA -->
+              {
+                dataInovasi.gambar && (
+                  <div class="current-image">
+                    <img
+                      src={dataInovasi.gambar}
+                      alt={dataInovasi.nama || "Gambar inovasi"}
+                    />
+                  </div>
+                )
+              }
+
+              <span class="file-name">
+                File aktif:
+                <b>
+                  {
+                    dataInovasi.gambar ||
+                    dataInovasi.foto ||
+                    "-"
+                  }
+                </b>
+              </span>
+
+              <input
+                type="file"
+                id="foto"
+                name="foto"
+                accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml"
+              />
+
+              <small>
+                Pilih gambar baru jika ingin mengganti gambar lama.
+              </small>
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- =========================================
+           TOMBOL
+      ========================================== -->
+      <div class="form-actions">
+
+        <a
+          href="/admin/inovasi"
+          class="btn-back"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <line
+              x1="19"
+              y1="12"
+              x2="5"
+              y2="12"
+            ></line>
+
+            <polyline
+              points="12 19 5 12 12 5"
+            ></polyline>
+          </svg>
+
+          Kembali
+        </a>
+
+        <button
+          type="submit"
+          class="btn-submit"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+
+            <polyline
+              points="17 21 17 13 7 13 7 21"
+            ></polyline>
+
+            <polyline
+              points="7 3 7 8 15 8"
+            ></polyline>
+          </svg>
+
+          Simpan Perubahan
+        </button>
+
+      </div>
+    </form>
+  </div>
+</AdminShell>
+
+<style>
+.page-header-simple {
+  margin-bottom: 12px;
+}
+
+.page-header-simple h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.error-message {
+  color: #b91c1c;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  font-size: 13px;
+}
+
+.card-form-container {
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.04);
+  border: 1px solid #f1f5f9;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.form-group {
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.form-group label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.form-group input[type="text"],
+.form-group textarea {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  font-size: 13px;
+  outline: none;
+  color: #334155;
+  width: 100%;
+  box-sizing: border-box;
+  background-color: #f8fafc;
+}
+
+.form-group textarea {
+  resize: none;
+  height: 95px;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  border-color: #2563eb;
+  background-color: #fff;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.file-info-box {
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  padding: 12px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.current-image {
+  width: 100%;
+  height: 150px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #e2e8f0;
+  border: 1px solid #e2e8f0;
+}
+
+.current-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.file-name {
+  font-size: 12px;
+  color: #64748b;
+  word-break: break-all;
+}
+
+.file-name b {
+  color: #2563eb;
+}
+
+.form-group input[type="file"] {
+  font-size: 12px;
+  color: #475569;
+  width: 100%;
+}
+
+.file-info-box small {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.btn-back {
+  background: #f1f5f9;
+  color: #475569;
+  padding: 8px 16px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+
+.btn-back:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+.btn-submit {
+  background: #2563eb;
+  color: white;
+  padding: 8px 18px;
+  border-radius: 8px;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+  transition: all 0.2s;
+}
+
+.btn-submit:hover {
+  background: #1d4ed8;
+  box-shadow: 0 6px 15px rgba(37, 99, 235, 0.3);
+}
+
+@media (max-width: 768px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .card-form-container {
+    padding: 14px;
+  }
+
+  .form-actions {
+    justify-content: stretch;
+  }
+
+  .btn-back,
+  .btn-submit {
+    flex: 1;
+    justify-content: center;
+  }
+}
+</style>

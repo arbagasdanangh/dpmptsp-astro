@@ -1,0 +1,152 @@
+---
+import AdminShell from "../../components/admin/AdminShell.astro";
+import { db } from "../../lib/db.js";
+import fs from "node:fs/promises";
+import path from "node:path";
+
+let slides: any[] = [];
+let errorMsg = "";
+let successMsg = "";
+
+/* =====================================================
+   HAPUS SLIDE
+   POST /admin/carousel
+===================================================== */
+
+if (Astro.request.method === "POST") {
+  try {
+    const formData = await Astro.request.formData();
+
+    const action = String(formData.get("action") || "");
+    const id = Number(formData.get("id"));
+
+    if (action === "delete" && id > 0) {
+      /* Ambil data gambar terlebih dahulu */
+      const [rows]: any = await db.execute(
+        `
+        SELECT id, gambar
+        FROM beranda_slider
+        WHERE id = ?
+        LIMIT 1
+        `,
+        [id]
+      );
+
+      if (!rows || rows.length === 0) {
+        throw new Error("Slide tidak ditemukan.");
+      }
+
+      const slide = rows[0];
+
+      /* Hapus dari database */
+      const [result]: any = await db.execute(
+        `
+        DELETE FROM beranda_slider
+        WHERE id = ?
+        `,
+        [id]
+      );
+
+      if (result.affectedRows !== 1) {
+        throw new Error("Slide gagal dihapus dari database.");
+      }
+
+      /* Hapus file gambar */
+      if (slide.gambar) {
+        try {
+          const gambar = String(slide.gambar);
+
+          /*
+           * Contoh nilai database:
+           *
+           * /uploads/dpm3.jpg
+           * uploads/dpm3.jpg
+           */
+
+          const relativePath = gambar
+            .replace(/^\/+/, "")
+            .replace(/\\/g, "/");
+
+          const filePath = path.resolve(
+            process.cwd(),
+            "public",
+            relativePath
+          );
+
+          console.log("Menghapus file:", filePath);
+
+          await fs.unlink(filePath);
+
+          console.log("File berhasil dihapus:", filePath);
+        } catch (fileError: any) {
+          /*
+           * Database tetap berhasil dihapus walaupun
+           * file gambar sudah tidak ada.
+           */
+
+          if (fileError?.code === "ENOENT") {
+            console.warn(
+              "File gambar memang sudah tidak ada:",
+              slide.gambar
+            );
+          } else {
+            console.error(
+              "Gagal menghapus file gambar:",
+              fileError
+            );
+          }
+        }
+      }
+
+      return Astro.redirect(
+        "/admin/carousel?success=deleted"
+      );
+    }
+  } catch (error: any) {
+    console.error("=================================");
+    console.error("HAPUS SLIDER ERROR");
+    console.error(error);
+    console.error("=================================");
+
+    errorMsg =
+      error?.sqlMessage ||
+      error?.message ||
+      "Gagal menghapus slide.";
+  }
+}
+
+
+/* =====================================================
+   PESAN SUKSES
+===================================================== */
+
+if (
+  Astro.url.searchParams.get("success") === "deleted"
+) {
+  successMsg = "Slide berhasil dihapus.";
+}
+
+
+/* =====================================================
+   AMBIL DATA
+===================================================== */
+
+try {
+  const [rows]: any = await db.execute(
+    `
+    SELECT *
+    FROM beranda_slider
+    ORDER BY urutan ASC, id ASC
+    `
+  );
+
+  slides = rows || [];
+} catch (error: any) {
+  console.error("Fetch slider error:", error);
+
+  errorMsg =
+    error?.sqlMessage ||
+    error?.message ||
+    "Gagal mengambil data carousel.";
+}
+---

@@ -1,0 +1,2045 @@
+---
+import AdminShell from "../../components/admin/AdminShell.astro";
+import { db } from "../../lib/db";
+
+export const prerender = false;
+
+/* =========================================================
+   DELETE PPID
+========================================================= */
+
+if (Astro.request.method === "DELETE") {
+  const url = new URL(Astro.request.url);
+  const id = url.searchParams.get("id");
+
+  if (id) {
+    try {
+      await db.query(
+        "DELETE FROM ppid_item WHERE id = ?",
+        [id]
+      );
+
+      return new Response(
+        JSON.stringify({
+          success: true
+        }),
+        {
+          status: 200,
+          headers: {
+            "Content-Type": "application/json"
+          }
+        }
+      );
+    } catch (error) {
+      console.error("Gagal hapus PPID:", error);
+
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: "Gagal menghapus data PPID"
+        }),
+        {
+          status: 500,
+          headers: {
+            "Content-Type": "application/json"
+          }
+        }
+      );
+    }
+  }
+
+  return new Response(
+    JSON.stringify({
+      success: false,
+      message: "ID tidak ditemukan"
+    }),
+    {
+      status: 400,
+      headers: {
+        "Content-Type": "application/json"
+      }
+    }
+  );
+}
+
+/* =========================================================
+   AMBIL DATA PPID
+========================================================= */
+
+let daftarPPID: any[] = [];
+
+try {
+  const [rows]: any = await db.query(`
+    SELECT
+      i.id,
+      i.kategori_id,
+      i.judul,
+      i.isi,
+      i.file_url,
+      i.urutan,
+      k.nama_kategori,
+      k.slug
+    FROM ppid_item i
+    LEFT JOIN ppid_kategori k
+      ON k.id = i.kategori_id
+    ORDER BY
+      i.kategori_id ASC,
+      i.urutan ASC,
+      i.id ASC
+  `);
+
+  daftarPPID = rows || [];
+} catch (error) {
+  console.error("Gagal ambil data PPID:", error);
+  daftarPPID = [];
+}
+---
+
+<AdminShell
+  title="Daftar PPID"
+  subtitle="Kelola informasi dan dokumen PPID yang ditampilkan pada website."
+  actionLabel="Tambah PPID"
+  actionHref="/admin/tambah-ppid"
+>
+
+  <div class="card-table-container">
+
+    <!-- =====================================================
+         TABLE CONTROLS
+    ====================================================== -->
+
+    <div class="table-controls">
+
+      <!-- SHOW ENTRIES -->
+
+      <div class="entries-wrapper">
+
+        <label for="entriesPerPage">
+          Tampilkan
+        </label>
+
+        <select
+          id="entriesPerPage"
+          class="entries-select"
+        >
+          <option value="10" selected>10</option>
+          <option value="25">25</option>
+          <option value="50">50</option>
+          <option value="100">100</option>
+        </select>
+
+        <span>
+          entri
+        </span>
+
+      </div>
+
+
+      <!-- SEARCH -->
+
+      <div class="search-wrapper">
+
+        <label for="search">
+          Cari:
+        </label>
+
+        <input
+          type="text"
+          id="search"
+          placeholder="Cari kategori, judul..."
+          class="search-input"
+        />
+
+      </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         TABLE
+    ====================================================== -->
+
+    <div class="table-responsive">
+
+      <table
+        class="data-table"
+        id="ppidTable"
+      >
+
+        <thead>
+
+          <tr>
+
+            <th style="width: 55px;">
+              ID
+            </th>
+
+            <th style="width: 170px;">
+              Kategori
+            </th>
+
+            <th style="width: 250px;">
+              Judul
+            </th>
+
+            <th>
+              Isi
+            </th>
+
+            <th style="width: 150px;">
+              File
+            </th>
+
+            <th style="width: 70px;">
+              Urutan
+            </th>
+
+            <th
+              style="width: 90px;"
+              class="text-center"
+            >
+              Aksi
+            </th>
+
+          </tr>
+
+        </thead>
+
+
+        <tbody id="tableBody">
+
+          {
+            daftarPPID.length > 0 ? (
+
+              daftarPPID.map((item) => (
+
+                <tr class="table-row-item">
+
+                  <!-- ID -->
+
+                  <td class="text-center fw-medium">
+                    {item.id}
+                  </td>
+
+
+                  <!-- KATEGORI -->
+
+                  <td>
+
+                    <div
+                      class="category-wrapper"
+                      title={item.nama_kategori || "-"}
+                    >
+
+                      <span class="badge-category">
+                        {item.nama_kategori || "Tanpa Kategori"}
+                      </span>
+
+                      {item.slug && (
+                        <small class="category-slug">
+                          /{item.slug}
+                        </small>
+                      )}
+
+                    </div>
+
+                  </td>
+
+
+                  <!-- JUDUL -->
+
+                  <td>
+
+                    <div
+                      class="truncate-text fw-bold"
+                      title={item.judul || "-"}
+                    >
+                      {item.judul || "-"}
+                    </div>
+
+                  </td>
+
+
+                  <!-- ISI -->
+
+                  <td>
+
+                    <div
+                      class="truncate-multiline"
+                      title={item.isi || "-"}
+                    >
+                      {item.isi || "-"}
+                    </div>
+
+                  </td>
+
+
+                  <!-- FILE -->
+
+                  <td>
+
+                    {item.file_url ? (
+
+                      <a
+                        href={item.file_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="file-link"
+                        title={item.file_url}
+                      >
+
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        >
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                          <polyline points="14 2 14 8 20 8"></polyline>
+                          <line x1="16" y1="13" x2="8" y2="13"></line>
+                          <line x1="16" y1="17" x2="8" y2="17"></line>
+                          <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+
+                        <span>
+                          Lihat File
+                        </span>
+
+                      </a>
+
+                    ) : (
+
+                      <span class="no-file">
+                        -
+                      </span>
+
+                    )}
+
+                  </td>
+
+
+                  <!-- URUTAN -->
+
+                  <td class="text-center">
+
+                    <span class="order-badge">
+                      {item.urutan ?? 0}
+                    </span>
+
+                  </td>
+
+
+                  <!-- AKSI -->
+
+                  <td>
+
+                    <div class="action-buttons justify-center">
+
+                      <!-- EDIT -->
+
+                      <button
+                        class="btn-action edit"
+                        title="Edit"
+                        data-id={item.id}
+                        onclick="openEditModal(this)"
+                      >
+
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="15"
+                          height="15"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        >
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+
+                      </button>
+
+
+                      <!-- DELETE -->
+
+                      <button
+                        class="btn-action delete"
+                        title="Hapus"
+                        data-id={item.id}
+                        onclick="openDeleteModal(this)"
+                      >
+
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="15"
+                          height="15"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        >
+                          <polyline points="3 6 5 6 21 6"></polyline>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+
+                      </button>
+
+                    </div>
+
+                  </td>
+
+                </tr>
+
+              ))
+
+            ) : (
+
+              <tr>
+
+                <td
+                  colspan="7"
+                  class="text-center empty-msg"
+                >
+                  Tidak ada data PPID ditemukan.
+                </td>
+
+              </tr>
+
+            )
+          }
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+
+    <!-- =====================================================
+         FOOTER
+    ====================================================== -->
+
+    <div class="table-footer">
+
+      <div
+        class="table-info"
+        id="tableInfo"
+      >
+        Menampilkan 0 entri
+      </div>
+
+
+      <div class="pagination">
+
+        <button
+          class="page-btn"
+          id="prevBtn"
+          disabled
+        >
+          Sebelumnya
+        </button>
+
+
+        <div
+          id="pageNumbers"
+          class="page-numbers"
+        ></div>
+
+
+        <button
+          class="page-btn"
+          id="nextBtn"
+          disabled
+        >
+          Selanjutnya
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- =======================================================
+       MODAL EDIT
+  ======================================================== -->
+
+  <div
+    id="editModal"
+    class="modal-overlay"
+  >
+
+    <div class="modal-card">
+
+      <div class="modal-icon-wrapper">
+
+        <div class="modal-icon edit-icon">
+          !
+        </div>
+
+      </div>
+
+      <h3>
+        Edit Data?
+      </h3>
+
+      <p>
+        Apakah Anda yakin ingin mengedit data PPID ini?
+      </p>
+
+      <div class="modal-actions">
+
+        <button
+          type="button"
+          class="btn-modal-cancel"
+          onclick="closeEditModal()"
+        >
+          Batal
+        </button>
+
+        <button
+          type="button"
+          class="btn-modal-edit"
+          id="confirmEditBtn"
+        >
+          Ya, Edit
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- =======================================================
+       MODAL DELETE
+  ======================================================== -->
+
+  <div
+    id="deleteModal"
+    class="modal-overlay"
+  >
+
+    <div class="modal-card">
+
+      <div class="modal-icon-wrapper">
+
+        <div class="modal-icon">
+          !
+        </div>
+
+      </div>
+
+      <h3>
+        Hapus Data?
+      </h3>
+
+      <p>
+        Apakah Anda yakin ingin menghapus data PPID ini?
+      </p>
+
+      <div class="modal-actions">
+
+        <button
+          type="button"
+          class="btn-modal-cancel"
+          onclick="closeDeleteModal()"
+        >
+          Batal
+        </button>
+
+        <button
+          type="button"
+          class="btn-modal-delete"
+          id="confirmDeleteBtn"
+        >
+          Hapus
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</AdminShell>
+
+
+<style>
+
+/* =========================================================
+   WRAPPER
+========================================================= */
+
+.card-table-container {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 16px 20px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+  border: 1px solid #e2e8f0;
+  width: 100%;
+  box-sizing: border-box;
+
+  display: flex;
+  flex-direction: column;
+
+  height: calc(100vh - 120px);
+
+  min-height: 400px;
+
+  overflow: hidden;
+}
+
+
+/* =========================================================
+   TABLE CONTROLS
+========================================================= */
+
+.table-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  gap: 20px;
+
+  margin-bottom: 12px;
+
+  flex-shrink: 0;
+}
+
+
+/* =========================================================
+   ENTRIES
+========================================================= */
+
+.entries-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+
+  font-size: 13px;
+  color: #475569;
+}
+
+.entries-select {
+  height: 32px;
+
+  min-width: 65px;
+
+  padding: 4px 8px;
+
+  border-radius: 6px;
+
+  border: 1px solid #cbd5e1;
+
+  background: #ffffff;
+
+  color: #334155;
+
+  font-size: 13px;
+
+  outline: none;
+
+  cursor: pointer;
+}
+
+.entries-select:focus {
+  border-color: #2563eb;
+
+  box-shadow:
+    0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+
+/* =========================================================
+   SEARCH
+========================================================= */
+
+.search-wrapper {
+  display: flex;
+  align-items: center;
+
+  gap: 8px;
+
+  font-size: 13px;
+
+  color: #475569;
+}
+
+.search-input {
+  height: 32px;
+
+  padding: 6px 12px;
+
+  border-radius: 6px;
+
+  border: 1px solid #cbd5e1;
+
+  font-size: 13px;
+
+  width: 240px;
+
+  outline: none;
+}
+
+.search-input:focus {
+  border-color: #2563eb;
+
+  box-shadow:
+    0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+
+/* =========================================================
+   TABLE RESPONSIVE
+========================================================= */
+
+.table-responsive {
+  width: 100%;
+
+  flex: 1;
+
+  min-height: 0;
+
+  overflow-y: auto;
+  overflow-x: auto;
+
+  border: 1px solid #e2e8f0;
+
+  border-radius: 8px;
+
+  background: #ffffff;
+}
+
+
+/* =========================================================
+   TABLE
+========================================================= */
+
+.data-table {
+  width: 100%;
+
+  border-collapse: collapse;
+
+  text-align: left;
+
+  font-size: 12px;
+
+  table-layout: fixed;
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.data-table th {
+  position: sticky;
+
+  top: 0;
+
+  z-index: 10;
+
+  background: #f8fafc;
+
+  color: #334155;
+
+  padding: 8px 10px;
+
+  border-bottom: 1px solid #cbd5e1;
+
+  font-weight: 600;
+
+  white-space: nowrap;
+}
+
+
+/* =========================================================
+   BODY
+========================================================= */
+
+.data-table td {
+  padding: 7px 10px;
+
+  border-bottom: 1px solid #f1f5f9;
+
+  color: #475569;
+
+  vertical-align: middle;
+
+  background: #ffffff;
+}
+
+.data-table tbody tr:hover td {
+  background-color: #f8fafc;
+}
+
+
+/* =========================================================
+   TEXT
+========================================================= */
+
+.truncate-text {
+  white-space: nowrap;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+
+  max-width: 240px;
+}
+
+.truncate-multiline {
+  display: -webkit-box;
+
+  -webkit-line-clamp: 2;
+
+  -webkit-box-orient: vertical;
+
+  overflow: hidden;
+
+  line-height: 1.4;
+
+  font-size: 11.5px;
+
+  max-height: 32px;
+}
+
+
+/* =========================================================
+   CATEGORY
+========================================================= */
+
+.category-wrapper {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 3px;
+}
+
+.badge-category {
+  display: inline-block;
+
+  width: fit-content;
+
+  background: #eff6ff;
+
+  color: #2563eb;
+
+  border: 1px solid #dbeafe;
+
+  padding: 3px 7px;
+
+  border-radius: 5px;
+
+  font-size: 10.5px;
+
+  font-weight: 600;
+}
+
+.category-slug {
+  color: #94a3b8;
+
+  font-size: 10px;
+
+  white-space: nowrap;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+
+  max-width: 150px;
+}
+
+
+/* =========================================================
+   FILE
+========================================================= */
+
+.file-link {
+  display: inline-flex;
+
+  align-items: center;
+
+  gap: 5px;
+
+  color: #2563eb;
+
+  text-decoration: none;
+
+  background: #eff6ff;
+
+  border: 1px solid #dbeafe;
+
+  padding: 5px 8px;
+
+  border-radius: 5px;
+
+  font-size: 10.5px;
+
+  max-width: 130px;
+}
+
+.file-link:hover {
+  background: #dbeafe;
+}
+
+.file-link span {
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+
+  white-space: nowrap;
+}
+
+.no-file {
+  color: #94a3b8;
+
+  font-size: 12px;
+}
+
+
+/* =========================================================
+   URUTAN
+========================================================= */
+
+.order-badge {
+  display: inline-flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  min-width: 28px;
+
+  height: 24px;
+
+  padding: 0 6px;
+
+  background: #f1f5f9;
+
+  color: #334155;
+
+  border-radius: 5px;
+
+  font-size: 11px;
+
+  font-weight: 600;
+}
+
+
+/* =========================================================
+   ACTION
+========================================================= */
+
+.action-buttons {
+  display: flex;
+
+  gap: 4px;
+}
+
+.justify-center {
+  justify-content: center;
+}
+
+.btn-action {
+  padding: 4px 6px;
+
+  border-radius: 4px;
+
+  border: none;
+
+  cursor: pointer;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+}
+
+.btn-action.edit {
+  color: #2563eb;
+
+  background: #eff6ff;
+}
+
+.btn-action.edit:hover {
+  background: #dbeafe;
+}
+
+.btn-action.delete {
+  color: #dc2626;
+
+  background: #fef2f2;
+}
+
+.btn-action.delete:hover {
+  background: #fee2e2;
+}
+
+
+/* =========================================================
+   FOOTER
+========================================================= */
+
+.table-footer {
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: center;
+
+  margin-top: 12px;
+
+  font-size: 12px;
+
+  color: #64748b;
+
+  flex-shrink: 0;
+}
+
+.pagination {
+  display: flex;
+
+  align-items: center;
+
+  gap: 4px;
+}
+
+.page-numbers {
+  display: flex;
+
+  gap: 4px;
+}
+
+.page-btn {
+  padding: 4px 10px;
+
+  border: 1px solid #cbd5e1;
+
+  background: white;
+
+  border-radius: 5px;
+
+  cursor: pointer;
+
+  font-size: 12px;
+
+  color: #334155;
+}
+
+.page-btn:hover:not(:disabled) {
+  background: #f8fafc;
+}
+
+.page-btn.active {
+  background: #2563eb;
+
+  color: white;
+
+  border-color: #2563eb;
+}
+
+.page-btn:disabled {
+  opacity: 0.4;
+
+  cursor: not-allowed;
+}
+
+
+/* =========================================================
+   GENERAL
+========================================================= */
+
+.text-center {
+  text-align: center;
+}
+
+.fw-bold {
+  font-weight: 600;
+}
+
+.fw-medium {
+  font-weight: 500;
+}
+
+.empty-msg {
+  padding: 20px !important;
+
+  color: #94a3b8;
+}
+
+
+/* =========================================================
+   MODAL
+========================================================= */
+
+.modal-overlay {
+  position: fixed;
+
+  top: 0;
+  left: 0;
+
+  width: 100vw;
+  height: 100vh;
+
+  background: rgba(15, 23, 42, 0.5);
+
+  display: none;
+
+  justify-content: center;
+
+  align-items: center;
+
+  z-index: 9999;
+}
+
+.modal-card {
+  background: white;
+
+  padding: 24px;
+
+  border-radius: 12px;
+
+  width: 100%;
+
+  max-width: 360px;
+
+  text-align: center;
+}
+
+.modal-icon-wrapper {
+  display: flex;
+
+  justify-content: center;
+
+  margin-bottom: 12px;
+}
+
+.modal-icon {
+  width: 48px;
+  height: 48px;
+
+  background: #fee2e2;
+
+  color: #dc2626;
+
+  border-radius: 50%;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  font-size: 22px;
+
+  font-weight: bold;
+}
+
+.edit-icon {
+  background: #dbeafe;
+
+  color: #2563eb;
+}
+
+.modal-card h3 {
+  font-size: 18px;
+
+  margin-bottom: 6px;
+
+  color: #1e293b;
+}
+
+.modal-card p {
+  font-size: 13px;
+
+  color: #64748b;
+
+  margin-bottom: 18px;
+}
+
+.modal-actions {
+  display: flex;
+
+  gap: 8px;
+
+  justify-content: center;
+}
+
+.btn-modal-cancel {
+  padding: 8px 18px;
+
+  border-radius: 6px;
+
+  border: none;
+
+  background: #e2e8f0;
+
+  color: #334155;
+
+  cursor: pointer;
+
+  font-size: 13px;
+}
+
+.btn-modal-delete {
+  padding: 8px 18px;
+
+  border-radius: 6px;
+
+  border: none;
+
+  background: #ef4444;
+
+  color: white;
+
+  cursor: pointer;
+
+  font-size: 13px;
+}
+
+.btn-modal-edit {
+  padding: 8px 18px;
+
+  border-radius: 6px;
+
+  border: none;
+
+  background: #2563eb;
+
+  color: white;
+
+  cursor: pointer;
+
+  font-size: 13px;
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 768px) {
+
+  .card-table-container {
+    padding: 12px;
+  }
+
+  .table-controls {
+    flex-direction: column;
+
+    align-items: stretch;
+
+    gap: 10px;
+  }
+
+  .search-wrapper {
+    justify-content: space-between;
+  }
+
+  .search-input {
+    width: 100%;
+  }
+
+  .table-footer {
+    flex-direction: column;
+
+    align-items: flex-start;
+
+    gap: 10px;
+  }
+
+  .pagination {
+    width: 100%;
+
+    justify-content: center;
+
+    flex-wrap: wrap;
+  }
+
+}
+
+</style>
+
+
+<script>
+
+  /* =========================================================
+     DATATABLE
+  ========================================================= */
+
+  let currentPage = 1;
+
+  let itemsPerPage = 10;
+
+
+  const rows =
+    Array.from(
+      document.querySelectorAll(".table-row-item")
+    ) as HTMLElement[];
+
+
+  const searchInput =
+    document.getElementById(
+      "search"
+    ) as HTMLInputElement;
+
+
+  const entriesPerPage =
+    document.getElementById(
+      "entriesPerPage"
+    ) as HTMLSelectElement;
+
+
+  const prevBtn =
+    document.getElementById(
+      "prevBtn"
+    ) as HTMLButtonElement;
+
+
+  const nextBtn =
+    document.getElementById(
+      "nextBtn"
+    ) as HTMLButtonElement;
+
+
+  const pageNumbers =
+    document.getElementById(
+      "pageNumbers"
+    ) as HTMLElement;
+
+
+  const tableInfo =
+    document.getElementById(
+      "tableInfo"
+    ) as HTMLElement;
+
+
+  let filteredRows =
+    [...rows];
+
+
+  /* =========================================================
+     RENDER TABLE
+  ========================================================= */
+
+  function renderTable() {
+
+    const totalItems =
+      filteredRows.length;
+
+
+    const totalPages =
+      Math.ceil(
+        totalItems /
+        itemsPerPage
+      ) || 1;
+
+
+    if (
+      currentPage >
+      totalPages
+    ) {
+
+      currentPage =
+        totalPages;
+
+    }
+
+
+    const start =
+      (currentPage - 1) *
+      itemsPerPage;
+
+
+    const end =
+      start +
+      itemsPerPage;
+
+
+    /* -------------------------------------------------------
+       HIDE SEMUA ROW
+    ------------------------------------------------------- */
+
+    rows.forEach((row) => {
+
+      row.style.display =
+        "none";
+
+    });
+
+
+    /* -------------------------------------------------------
+       TAMPILKAN ROW AKTIF
+    ------------------------------------------------------- */
+
+    filteredRows
+      .slice(start, end)
+      .forEach((row) => {
+
+        row.style.display =
+          "";
+
+      });
+
+
+    /* -------------------------------------------------------
+       TABLE INFO
+    ------------------------------------------------------- */
+
+    const showingStart =
+      totalItems === 0
+        ? 0
+        : start + 1;
+
+
+    const showingEnd =
+      Math.min(
+        end,
+        totalItems
+      );
+
+
+    if (tableInfo) {
+
+      tableInfo.innerText =
+        `Menampilkan ${showingStart} sampai ${showingEnd} dari ${totalItems} entri`;
+
+    }
+
+
+    /* -------------------------------------------------------
+       PAGE NUMBERS
+    ------------------------------------------------------- */
+
+    if (pageNumbers) {
+
+      pageNumbers.innerHTML =
+        "";
+
+
+      if (totalPages <= 7) {
+
+        for (
+          let i = 1;
+          i <= totalPages;
+          i++
+        ) {
+
+          createPageButton(i);
+
+        }
+
+      } else {
+
+        /*
+         * Halaman pertama
+         */
+
+        createPageButton(1);
+
+
+        /*
+         * Ellipsis kiri
+         */
+
+        if (currentPage > 4) {
+
+          createEllipsis();
+
+        }
+
+
+        /*
+         * Halaman sekitar posisi aktif
+         */
+
+        const startPage =
+          Math.max(
+            2,
+            currentPage - 1
+          );
+
+
+        const endPage =
+          Math.min(
+            totalPages - 1,
+            currentPage + 1
+          );
+
+
+        for (
+          let i = startPage;
+          i <= endPage;
+          i++
+        ) {
+
+          createPageButton(i);
+
+        }
+
+
+        /*
+         * Ellipsis kanan
+         */
+
+        if (
+          currentPage <
+          totalPages - 3
+        ) {
+
+          createEllipsis();
+
+        }
+
+
+        /*
+         * Halaman terakhir
+         */
+
+        createPageButton(
+          totalPages
+        );
+
+      }
+
+    }
+
+
+    /* -------------------------------------------------------
+       PREVIOUS
+    ------------------------------------------------------- */
+
+    if (prevBtn) {
+
+      prevBtn.disabled =
+        currentPage === 1;
+
+    }
+
+
+    /* -------------------------------------------------------
+       NEXT
+    ------------------------------------------------------- */
+
+    if (nextBtn) {
+
+      nextBtn.disabled =
+        currentPage === totalPages;
+
+    }
+
+  }
+
+
+  /* =========================================================
+     CREATE PAGE BUTTON
+  ========================================================= */
+
+  function createPageButton(
+    page: number
+  ) {
+
+    if (!pageNumbers) {
+      return;
+    }
+
+
+    const btn =
+      document.createElement(
+        "button"
+      );
+
+
+    btn.type =
+      "button";
+
+
+    btn.className =
+      `page-btn ${
+        page === currentPage
+          ? "active"
+          : ""
+      }`;
+
+
+    btn.innerText =
+      page.toString();
+
+
+    btn.addEventListener(
+      "click",
+      () => {
+
+        currentPage =
+          page;
+
+        renderTable();
+
+      }
+    );
+
+
+    pageNumbers.appendChild(
+      btn
+    );
+
+  }
+
+
+  /* =========================================================
+     ELLIPSIS
+  ========================================================= */
+
+  function createEllipsis() {
+
+    if (!pageNumbers) {
+      return;
+    }
+
+
+    const span =
+      document.createElement(
+        "span"
+      );
+
+
+    span.className =
+      "page-ellipsis";
+
+
+    span.innerText =
+      "...";
+
+
+    pageNumbers.appendChild(
+      span
+    );
+
+  }
+
+
+  /* =========================================================
+     PREVIOUS
+  ========================================================= */
+
+  prevBtn?.addEventListener(
+    "click",
+    () => {
+
+      if (
+        currentPage >
+        1
+      ) {
+
+        currentPage--;
+
+        renderTable();
+
+      }
+
+    }
+  );
+
+
+  /* =========================================================
+     NEXT
+  ========================================================= */
+
+  nextBtn?.addEventListener(
+    "click",
+    () => {
+
+      const totalPages =
+        Math.ceil(
+          filteredRows.length /
+          itemsPerPage
+        );
+
+
+      if (
+        currentPage <
+        totalPages
+      ) {
+
+        currentPage++;
+
+        renderTable();
+
+      }
+
+    }
+  );
+
+
+  /* =========================================================
+     ITEMS PER PAGE
+  ========================================================= */
+
+  entriesPerPage?.addEventListener(
+    "change",
+    () => {
+
+      itemsPerPage =
+        parseInt(
+          entriesPerPage.value
+        );
+
+
+      currentPage =
+        1;
+
+
+      renderTable();
+
+    }
+  );
+
+
+  /* =========================================================
+     SEARCH
+  ========================================================= */
+
+  searchInput?.addEventListener(
+    "input",
+    (event) => {
+
+      const query =
+        (
+          event.target as HTMLInputElement
+        ).value
+          .toLowerCase()
+          .trim();
+
+
+      filteredRows =
+        rows.filter(
+          (row) =>
+            row.innerText
+              .toLowerCase()
+              .includes(query)
+        );
+
+
+      currentPage =
+        1;
+
+
+      renderTable();
+
+    }
+  );
+
+
+  /* =========================================================
+     INITIAL RENDER
+  ========================================================= */
+
+  renderTable();
+
+
+  /* =========================================================
+     EDIT MODAL
+  ========================================================= */
+
+  let selectedEditId:
+    string | null = null;
+
+
+  // @ts-ignore
+  window.openEditModal =
+    function (
+      button: HTMLElement
+    ) {
+
+      selectedEditId =
+        button.getAttribute(
+          "data-id"
+        );
+
+
+      const modal =
+        document.getElementById(
+          "editModal"
+        );
+
+
+      if (modal) {
+
+        modal.style.display =
+          "flex";
+
+      }
+
+    };
+
+
+  // @ts-ignore
+  window.closeEditModal =
+    function () {
+
+      selectedEditId =
+        null;
+
+
+      const modal =
+        document.getElementById(
+          "editModal"
+        );
+
+
+      if (modal) {
+
+        modal.style.display =
+          "none";
+
+      }
+
+    };
+
+
+  /* =========================================================
+     CONFIRM EDIT
+  ========================================================= */
+
+  document
+    .getElementById(
+      "confirmEditBtn"
+    )
+    ?.addEventListener(
+      "click",
+      function () {
+
+        if (
+          selectedEditId
+        ) {
+
+          window.location.href =
+            `/admin/edit-ppid?id=${selectedEditId}`;
+
+        }
+
+      }
+    );
+
+
+  /* =========================================================
+     DELETE MODAL
+  ========================================================= */
+
+  let selectedDeleteId:
+    string | null = null;
+
+
+  // @ts-ignore
+  window.openDeleteModal =
+    function (
+      button: HTMLElement
+    ) {
+
+      selectedDeleteId =
+        button.getAttribute(
+          "data-id"
+        );
+
+
+      const modal =
+        document.getElementById(
+          "deleteModal"
+        );
+
+
+      if (modal) {
+
+        modal.style.display =
+          "flex";
+
+      }
+
+    };
+
+
+  // @ts-ignore
+  window.closeDeleteModal =
+    function () {
+
+      selectedDeleteId =
+        null;
+
+
+      const modal =
+        document.getElementById(
+          "deleteModal"
+        );
+
+
+      if (modal) {
+
+        modal.style.display =
+          "none";
+
+      }
+
+    };
+
+
+  /* =========================================================
+     CONFIRM DELETE
+  ========================================================= */
+
+  document
+    .getElementById(
+      "confirmDeleteBtn"
+    )
+    ?.addEventListener(
+      "click",
+      async function () {
+
+        if (
+          !selectedDeleteId
+        ) {
+
+          return;
+
+        }
+
+
+        const button =
+          this as HTMLButtonElement;
+
+
+        button.disabled =
+          true;
+
+
+        button.innerText =
+          "Menghapus...";
+
+
+        try {
+
+          const response =
+            await fetch(
+              `/admin/ppid?id=${selectedDeleteId}`,
+              {
+                method: "DELETE"
+              }
+            );
+
+
+          const result =
+            await response.json();
+
+
+          if (
+            response.ok &&
+            result.success
+          ) {
+
+            window.location.reload();
+
+          } else {
+
+            alert(
+              result.message ||
+              "Gagal menghapus data PPID."
+            );
+
+
+            button.disabled =
+              false;
+
+
+            button.innerText =
+              "Hapus";
+
+          }
+
+        } catch (error) {
+
+          console.error(
+            "Gagal hapus PPID:",
+            error
+          );
+
+
+          alert(
+            "Terjadi kesalahan koneksi."
+          );
+
+
+          button.disabled =
+            false;
+
+
+          button.innerText =
+            "Hapus";
+
+        }
+
+      }
+    );
+
+
+  /* =========================================================
+     CLOSE MODAL OUTSIDE
+  ========================================================= */
+
+  document
+    .getElementById(
+      "editModal"
+    )
+    ?.addEventListener(
+      "click",
+      (event) => {
+
+        if (
+          event.target ===
+          event.currentTarget
+        ) {
+
+          // @ts-ignore
+          window.closeEditModal();
+
+        }
+
+      }
+    );
+
+
+  document
+    .getElementById(
+      "deleteModal"
+    )
+    ?.addEventListener(
+      "click",
+      (event) => {
+
+        if (
+          event.target ===
+          event.currentTarget
+        ) {
+
+          // @ts-ignore
+          window.closeDeleteModal();
+
+        }
+
+      }
+    );
+
+</script>

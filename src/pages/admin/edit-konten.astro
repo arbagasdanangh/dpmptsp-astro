@@ -1,0 +1,1383 @@
+---
+export const prerender = false;
+
+import AdminShell from "../../components/admin/AdminShell.astro";
+import { db } from "../../lib/db.js";
+import fs from "node:fs/promises";
+import path from "node:path";
+
+/* =========================================================
+   CACHE
+========================================================= */
+
+Astro.response.headers.set(
+  "Cache-Control",
+  "no-store, no-cache, must-revalidate, proxy-revalidate"
+);
+
+Astro.response.headers.set(
+  "Pragma",
+  "no-cache"
+);
+
+Astro.response.headers.set(
+  "Expires",
+  "0"
+);
+
+
+/* =========================================================
+   AMBIL ID
+========================================================= */
+
+const idParam = Astro.url.searchParams.get("id");
+const id = Number(idParam);
+
+if (!idParam || !Number.isInteger(id) || id <= 0) {
+  return Astro.redirect("/admin/konten");
+}
+
+
+/* =========================================================
+   VARIABEL
+========================================================= */
+
+let kontenItem: any = null;
+let errorMessage = "";
+let successMessage = "";
+
+
+/* =========================================================
+   PROSES POST
+========================================================= */
+
+if (Astro.request.method === "POST") {
+
+  try {
+
+    const formData = await Astro.request.formData();
+
+    const namaKonten =
+      String(
+        formData.get("Nama_Konten") || ""
+      ).trim();
+
+    const isiKonten =
+      String(
+        formData.get("Isi_Konten") || ""
+      ).trim();
+
+    const judulKonten =
+      String(
+        formData.get("Judul_Konten") || ""
+      ).trim();
+
+    const keterangan =
+      String(
+        formData.get("Keterangan") || ""
+      ).trim();
+
+    const tags =
+      String(
+        formData.get("tags") || ""
+      ).trim();
+
+    const fotoFile =
+      formData.get("Foto_Konten");
+
+
+    /* =====================================================
+       VALIDASI
+    ===================================================== */
+
+    if (!namaKonten) {
+
+      errorMessage =
+        "Nama konten wajib diisi.";
+
+    } else {
+
+
+      /* ===================================================
+         AMBIL DATA LAMA
+      =================================================== */
+
+      const [oldRows]: any =
+        await db.execute(
+          `
+          SELECT *
+          FROM tentangkamiswebv5
+          WHERE Id_Konten = ?
+          LIMIT 1
+          `,
+          [id]
+        );
+
+
+      if (!oldRows || oldRows.length === 0) {
+
+        return Astro.redirect(
+          "/admin/konten?error=notfound"
+        );
+
+      }
+
+
+      const oldData =
+        oldRows[0];
+
+
+      let namaFotoBaru =
+        oldData.Foto_Konten || "";
+
+
+      /* ===================================================
+         UPLOAD FOTO BARU
+      =================================================== */
+
+      if (
+        fotoFile &&
+        fotoFile instanceof File &&
+        fotoFile.size > 0 &&
+        fotoFile.name
+      ) {
+
+        /*
+         * Folder:
+         *
+         * public/uploads/konten
+         */
+
+        const uploadDir =
+          path.join(
+            process.cwd(),
+            "public",
+            "uploads",
+            "konten"
+          );
+
+
+        await fs.mkdir(
+          uploadDir,
+          {
+            recursive: true
+          }
+        );
+
+
+        /*
+         * Bersihkan nama file
+         */
+
+        const originalName =
+          path
+            .basename(fotoFile.name)
+            .replace(
+              /[^a-zA-Z0-9._-]/g,
+              "_"
+            );
+
+
+        const uniqueName =
+          `${Date.now()}-${Math.round(
+            Math.random() * 1e9
+          )}-${originalName}`;
+
+
+        const newFilePath =
+          path.join(
+            uploadDir,
+            uniqueName
+          );
+
+
+        const buffer =
+          Buffer.from(
+            await fotoFile.arrayBuffer()
+          );
+
+
+        await fs.writeFile(
+          newFilePath,
+          buffer
+        );
+
+
+        namaFotoBaru =
+          uniqueName;
+
+
+        /* =================================================
+           HAPUS FOTO LAMA
+        ================================================= */
+
+        if (
+          oldData.Foto_Konten &&
+          typeof oldData.Foto_Konten === "string"
+        ) {
+
+          try {
+
+            const oldFileName =
+              path.basename(
+                oldData.Foto_Konten
+              );
+
+
+            const oldFilePath =
+              path.join(
+                uploadDir,
+                oldFileName
+              );
+
+
+            /*
+             * Jangan hapus jika ternyata
+             * nama file lama sama dengan baru.
+             */
+
+            if (
+              oldFileName !==
+              uniqueName
+            ) {
+
+              await fs.unlink(
+                oldFilePath
+              );
+
+            }
+
+          } catch (fileError) {
+
+            /*
+             * Jika file lama tidak ditemukan,
+             * update database tetap dilanjutkan.
+             */
+
+            console.warn(
+              "Foto lama tidak ditemukan:",
+              fileError
+            );
+
+          }
+
+        }
+
+      }
+
+
+      /* ===================================================
+         UPDATE DATABASE
+      =================================================== */
+
+      await db.execute(
+        `
+        UPDATE tentangkamiswebv5
+        SET
+          Nama_Konten = ?,
+          Isi_Konten = ?,
+          Foto_Konten = ?,
+          Judul_Konten = ?,
+          Keterangan = ?,
+          tags = ?
+        WHERE Id_Konten = ?
+        `,
+        [
+          namaKonten,
+          isiKonten,
+          namaFotoBaru,
+          judulKonten,
+          keterangan,
+          tags,
+          id
+        ]
+      );
+
+
+      /*
+       * Setelah berhasil kembali ke daftar.
+       */
+
+      return Astro.redirect(
+        "/admin/konten?updated=1"
+      );
+
+    }
+
+  } catch (error: any) {
+
+    console.error(
+      "Gagal mengupdate konten:",
+      error
+    );
+
+    errorMessage =
+      `Gagal menyimpan perubahan: ${
+        error?.message || "Terjadi kesalahan."
+      }`;
+
+  }
+
+}
+
+
+/* =========================================================
+   AMBIL DATA KONTEN
+========================================================= */
+
+try {
+
+  const [rows]: any =
+    await db.execute(
+      `
+      SELECT *
+      FROM tentangkamiswebv5
+      WHERE Id_Konten = ?
+      LIMIT 1
+      `,
+      [id]
+    );
+
+
+  if (
+    rows &&
+    rows.length > 0
+  ) {
+
+    kontenItem =
+      rows[0];
+
+  }
+
+} catch (error) {
+
+  console.error(
+    "Gagal mengambil data konten:",
+    error
+  );
+
+  errorMessage =
+    "Gagal mengambil data konten.";
+
+}
+
+
+/* =========================================================
+   JIKA DATA TIDAK DITEMUKAN
+========================================================= */
+
+if (!kontenItem) {
+
+  return Astro.redirect(
+    "/admin/konten?error=notfound"
+  );
+
+}
+
+
+/* =========================================================
+   FOTO URL
+========================================================= */
+
+let fotoUrl = "";
+
+if (
+  kontenItem.Foto_Konten
+) {
+
+  const foto =
+    String(
+      kontenItem.Foto_Konten
+    );
+
+  if (
+    foto.startsWith("/")
+  ) {
+
+    fotoUrl =
+      foto;
+
+  } else {
+
+    fotoUrl =
+      `/uploads/konten/${foto}`;
+
+  }
+
+}
+---
+
+<AdminShell
+  title="Edit Konten"
+  subtitle="Silakan ubah informasi konten di bawah ini."
+>
+
+
+  <div class="form-card">
+
+    <!-- =====================================================
+         HEADER
+    ====================================================== -->
+
+    <div class="form-header-top">
+
+      <div>
+
+        <div class="title-row">
+
+          <h2>
+            Form Edit Konten
+          </h2>
+
+        </div>
+
+        <p>
+          Silakan ubah informasi di bawah ini sesuai kebutuhan.
+        </p>
+
+      </div>
+
+
+      <div class="form-actions-top">
+
+        <a
+          href="/admin/konten"
+          class="btn-cancel"
+        >
+          Kembali
+        </a>
+
+        <button
+          type="submit"
+          form="editForm"
+          class="btn-submit"
+          id="saveButton"
+        >
+          Simpan Perubahan
+        </button>
+
+      </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         ERROR
+    ====================================================== -->
+
+    {
+      errorMessage && (
+
+        <div
+          class="alert error"
+          role="alert"
+        >
+          {errorMessage}
+        </div>
+
+      )
+    }
+
+
+    <!-- =====================================================
+         FORM
+    ====================================================== -->
+
+    <form
+      method="POST"
+      action={`/admin/edit-konten?id=${id}`}
+      enctype="multipart/form-data"
+      class="styled-form"
+      id="editForm"
+    >
+
+      <!-- ===================================================
+           NAMA + FOTO
+      ==================================================== -->
+
+      <div class="form-row">
+
+        <div class="form-group">
+
+          <label
+            for="Nama_Konten"
+          >
+            Nama Konten
+          </label>
+
+          <input
+            type="text"
+            id="Nama_Konten"
+            name="Nama_Konten"
+            value={kontenItem.Nama_Konten || ""}
+            placeholder="Masukkan nama konten"
+            required
+          />
+
+        </div>
+
+
+        <div class="form-group">
+
+          <label
+            for="Foto_Konten"
+          >
+            Foto Konten
+          </label>
+
+          <input
+            type="file"
+            id="Foto_Konten"
+            name="Foto_Konten"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+          />
+
+
+          {
+            fotoUrl ? (
+
+              <div class="current-photo">
+
+                <img
+                  src={fotoUrl}
+                  alt={
+                    kontenItem.Nama_Konten ||
+                    "Foto konten"
+                  }
+                  class="current-photo-img"
+                />
+
+                <div class="current-photo-info">
+
+                  <strong>
+                    Foto saat ini
+                  </strong>
+
+                  <span>
+                    {String(
+                      kontenItem.Foto_Konten
+                    )
+                      .split("/")
+                      .pop()}
+                  </span>
+
+                </div>
+
+              </div>
+
+            ) : (
+
+              <span class="file-info">
+                Belum ada foto.
+              </span>
+
+            )
+          }
+
+          <span class="file-hint">
+            Kosongkan jika tidak ingin mengganti foto.
+          </span>
+
+        </div>
+
+      </div>
+
+
+      <!-- ===================================================
+           ISI
+      ==================================================== -->
+
+      <div class="form-group">
+
+        <label
+          for="Isi_Konten"
+        >
+          Isi Konten
+        </label>
+
+        <textarea
+          id="Isi_Konten"
+          name="Isi_Konten"
+          rows="6"
+          placeholder="Masukkan isi konten..."
+        >{kontenItem.Isi_Konten || ""}</textarea>
+
+      </div>
+
+
+      <!-- ===================================================
+           JUDUL
+      ==================================================== -->
+
+      <div class="form-group">
+
+        <label
+          for="Judul_Konten"
+        >
+          Judul Konten
+        </label>
+
+        <input
+          type="text"
+          id="Judul_Konten"
+          name="Judul_Konten"
+          value={kontenItem.Judul_Konten || ""}
+          placeholder="Masukkan judul konten"
+        />
+
+      </div>
+
+
+      <!-- ===================================================
+           KETERANGAN + TAG
+      ==================================================== -->
+
+      <div class="form-row">
+
+        <div class="form-group">
+
+          <label
+            for="Keterangan"
+          >
+            Keterangan
+          </label>
+
+          <input
+            type="text"
+            id="Keterangan"
+            name="Keterangan"
+            value={kontenItem.Keterangan || ""}
+            placeholder="Masukkan keterangan"
+          />
+
+        </div>
+
+
+        <div class="form-group">
+
+          <label
+            for="tags"
+          >
+            Tags
+          </label>
+
+          <input
+            type="text"
+            id="tags"
+            name="tags"
+            value={kontenItem.tags || ""}
+            placeholder="Contoh: berita, informasi"
+          />
+
+        </div>
+
+      </div>
+
+
+      <!-- ===================================================
+           BOTTOM ACTION
+      ==================================================== -->
+
+      <div class="form-bottom-actions">
+
+        <a
+          href="/admin/konten"
+          class="btn-cancel"
+        >
+          Batal
+        </a>
+
+        <button
+          type="submit"
+          class="btn-submit"
+        >
+          Simpan Perubahan
+        </button>
+
+      </div>
+
+    </form>
+
+  </div>
+
+</AdminShell>
+
+
+<script>
+
+  const editForm =
+    document.getElementById(
+      "editForm"
+    );
+
+  const saveButton =
+    document.getElementById(
+      "saveButton"
+    );
+
+
+  editForm?.addEventListener(
+    "submit",
+    () => {
+
+      if (saveButton) {
+
+        saveButton.disabled =
+          true;
+
+        saveButton.textContent =
+          "Menyimpan...";
+
+      }
+
+    }
+  );
+
+
+  /*
+   * Preview foto baru
+   */
+
+  const fotoInput =
+    document.getElementById(
+      "Foto_Konten"
+    ) as HTMLInputElement | null;
+
+
+  fotoInput?.addEventListener(
+    "change",
+    () => {
+
+      const file =
+        fotoInput.files?.[0];
+
+      if (!file) {
+        return;
+      }
+
+      /*
+       * Validasi sederhana
+       */
+
+      if (
+        !file.type.startsWith(
+          "image/"
+        )
+      ) {
+
+        alert(
+          "File harus berupa gambar."
+        );
+
+        fotoInput.value =
+          "";
+
+        return;
+
+      }
+
+    }
+  );
+
+</script>
+
+
+<style>
+
+  /* =========================================================
+     CARD
+  ========================================================= */
+
+  .form-card {
+
+    width: 100%;
+
+    box-sizing: border-box;
+
+    margin-bottom: 40px;
+
+    padding: 22px 24px;
+
+    background: #ffffff;
+
+    border: 1px solid #e2e8f0;
+
+    border-radius: 16px;
+
+    box-shadow:
+      0 4px 20px
+      rgba(
+        15,
+        23,
+        42,
+        0.03
+      );
+
+  }
+
+
+  /* =========================================================
+     HEADER
+  ========================================================= */
+
+  .form-header-top {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 20px;
+
+    margin-bottom: 18px;
+
+    padding-bottom: 14px;
+
+    border-bottom:
+      1px solid
+      #e2e8f0;
+
+  }
+
+
+  .title-row {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+  }
+
+
+  .form-header-top h2 {
+
+    margin: 0;
+
+    color: #0f172a;
+
+    font-size: 18px;
+
+    font-weight: 700;
+
+  }
+
+
+  .form-header-top p {
+
+    margin: 5px 0 0;
+
+    color: #64748b;
+
+    font-size: 12.5px;
+
+  }
+
+
+  .id-badge {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    padding: 4px 8px;
+
+    border-radius: 6px;
+
+    background: #eff6ff;
+
+    color: #2563eb;
+
+    font-size: 10px;
+
+    font-weight: 700;
+
+  }
+
+
+  .form-actions-top {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+    flex-shrink: 0;
+
+  }
+
+
+  /* =========================================================
+     FORM
+  ========================================================= */
+
+  .styled-form {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 16px;
+
+  }
+
+
+  .form-row {
+
+    display: grid;
+
+    grid-template-columns:
+      repeat(
+        2,
+        minmax(
+          0,
+          1fr
+        )
+      );
+
+    gap: 16px;
+
+  }
+
+
+  .form-group {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 6px;
+
+    min-width: 0;
+
+  }
+
+
+  .form-group label {
+
+    color: #475569;
+
+    font-size: 12.5px;
+
+    font-weight: 650;
+
+  }
+
+
+  .form-group input,
+  .form-group textarea {
+
+    width: 100%;
+
+    box-sizing: border-box;
+
+    padding: 9px 12px;
+
+    border:
+      1px solid
+      #cbd5e1;
+
+    border-radius: 8px;
+
+    outline: none;
+
+    background: #f8fafc;
+
+    color: #1e293b;
+
+    font-family: inherit;
+
+    font-size: 13px;
+
+    transition:
+      border-color .15s ease,
+      background .15s ease,
+      box-shadow .15s ease;
+
+  }
+
+
+  .form-group textarea {
+
+    resize: vertical;
+
+    min-height: 130px;
+
+    line-height: 1.5;
+
+  }
+
+
+  .form-group input::placeholder,
+  .form-group textarea::placeholder {
+
+    color: #94a3b8;
+
+  }
+
+
+  .form-group input:focus,
+  .form-group textarea:focus {
+
+    border-color: #2563eb;
+
+    background: #ffffff;
+
+    box-shadow:
+      0 0 0 3px
+      rgba(
+        37,
+        99,
+        235,
+        0.10
+      );
+
+  }
+
+
+  .form-group input[type="file"] {
+
+    padding: 6px 8px;
+
+    background: #ffffff;
+
+    cursor: pointer;
+
+  }
+
+
+  /* =========================================================
+     FOTO
+  ========================================================= */
+
+  .current-photo {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    padding: 8px;
+
+    border:
+      1px solid
+      #e2e8f0;
+
+    border-radius: 9px;
+
+    background: #f8fafc;
+
+  }
+
+
+  .current-photo-img {
+
+    width: 56px;
+
+    height: 56px;
+
+    object-fit: cover;
+
+    flex-shrink: 0;
+
+    border-radius: 7px;
+
+    border:
+      1px solid
+      #e2e8f0;
+
+    background: #ffffff;
+
+  }
+
+
+  .current-photo-info {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 2px;
+
+    min-width: 0;
+
+  }
+
+
+  .current-photo-info strong {
+
+    color: #475569;
+
+    font-size: 11px;
+
+  }
+
+
+  .current-photo-info span {
+
+    max-width: 220px;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+
+    color: #64748b;
+
+    font-size: 11px;
+
+  }
+
+
+  .file-info {
+
+    color: #64748b;
+
+    font-size: 11px;
+
+  }
+
+
+  .file-hint {
+
+    color: #94a3b8;
+
+    font-size: 10.5px;
+
+  }
+
+
+  /* =========================================================
+     BUTTON
+  ========================================================= */
+
+  .form-bottom-actions {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: flex-end;
+
+    gap: 8px;
+
+    margin-top: 4px;
+
+    padding-top: 16px;
+
+    border-top:
+      1px solid
+      #e2e8f0;
+
+  }
+
+
+  .btn-cancel,
+  .btn-submit {
+
+    min-height: 36px;
+
+    box-sizing: border-box;
+
+    border-radius: 8px;
+
+    padding:
+      8px 16px;
+
+    font-family: inherit;
+
+    font-size: 12.5px;
+
+    font-weight: 650;
+
+    text-decoration: none;
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    cursor: pointer;
+
+    transition:
+      background .15s ease,
+      color .15s ease,
+      opacity .15s ease,
+      transform .15s ease;
+
+  }
+
+
+  .btn-cancel {
+
+    border: none;
+
+    background: #f1f5f9;
+
+    color: #334155;
+
+  }
+
+
+  .btn-cancel:hover {
+
+    background: #e2e8f0;
+
+  }
+
+
+  .btn-submit {
+
+    border: none;
+
+    background: #2563eb;
+
+    color: #ffffff;
+
+  }
+
+
+  .btn-submit:hover {
+
+    background: #1d4ed8;
+
+  }
+
+
+  .btn-submit:disabled {
+
+    opacity: .65;
+
+    cursor: not-allowed;
+
+    transform: none;
+
+  }
+
+
+  /* =========================================================
+     ALERT
+  ========================================================= */
+
+  .alert {
+
+    margin-bottom: 16px;
+
+    padding: 10px 12px;
+
+    border-radius: 8px;
+
+    font-size: 12.5px;
+
+  }
+
+
+  .alert.error {
+
+    border:
+      1px solid
+      #fecaca;
+
+    background: #fef2f2;
+
+    color: #991b1b;
+
+  }
+
+
+  /* =========================================================
+     RESPONSIVE
+  ========================================================= */
+
+  @media (max-width: 768px) {
+
+    .form-card {
+
+      padding:
+        18px 16px;
+
+    }
+
+
+    .form-header-top {
+
+      flex-direction: column;
+
+      align-items: flex-start;
+
+    }
+
+
+    .form-actions-top {
+
+      width: 100%;
+
+      justify-content: flex-end;
+
+    }
+
+
+    .form-row {
+
+      grid-template-columns: 1fr;
+
+    }
+
+
+    .form-bottom-actions {
+
+      justify-content: stretch;
+
+    }
+
+
+    .form-bottom-actions
+    .btn-cancel,
+    .form-bottom-actions
+    .btn-submit {
+
+      flex: 1;
+
+    }
+
+  }
+
+
+  @media (max-width: 480px) {
+
+    .form-actions-top {
+
+      flex-direction: column-reverse;
+
+      align-items: stretch;
+
+    }
+
+
+    .form-actions-top
+    .btn-cancel,
+    .form-actions-top
+    .btn-submit {
+
+      width: 100%;
+
+    }
+
+
+    .title-row {
+
+      align-items: flex-start;
+
+      flex-direction: column;
+
+    }
+
+  }
+
+</style>

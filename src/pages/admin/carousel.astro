@@ -1,0 +1,2922 @@
+---
+export const prerender = false;
+
+import AdminShell from "../../components/admin/AdminShell.astro";
+import { db } from "../../lib/db.js";
+import fs from "node:fs/promises";
+import path from "node:path";
+
+let slides: any[] = [];
+let errorMsg = "";
+let successMsg = "";
+
+/* =====================================================
+   HAPUS SLIDE
+===================================================== */
+
+if (Astro.request.method === "POST") {
+  try {
+    const formData = await Astro.request.formData();
+
+    const action = String(formData.get("action") || "");
+    const deleteId = String(formData.get("deleteId") || "");
+
+    if (action !== "delete") {
+      throw new Error("Action tidak valid.");
+    }
+
+    const id = Number(deleteId);
+
+    if (!Number.isInteger(id) || id <= 0) {
+      throw new Error("ID slide tidak valid.");
+    }
+
+    /* =================================================
+       AMBIL DATA SLIDE
+    ================================================= */
+
+    const [rows]: any = await db.execute(
+      `
+      SELECT id, gambar
+      FROM beranda_slider
+      WHERE id = ?
+      LIMIT 1
+      `,
+      [id]
+    );
+
+    if (!rows || rows.length === 0) {
+      throw new Error(
+        `Slide dengan ID ${id} tidak ditemukan.`
+      );
+    }
+
+    const slide = rows[0];
+
+    /* =================================================
+       HAPUS DATABASE
+    ================================================= */
+
+    const [result]: any = await db.execute(
+      `
+      DELETE FROM beranda_slider
+      WHERE id = ?
+      `,
+      [id]
+    );
+
+    if (result.affectedRows !== 1) {
+      throw new Error(
+        "Data slide gagal dihapus dari database."
+      );
+    }
+
+    /* =================================================
+       HAPUS FILE GAMBAR
+    ================================================= */
+
+    if (slide.gambar) {
+      try {
+        const gambar = String(slide.gambar).trim();
+
+        /*
+         * Jangan hapus URL eksternal.
+         */
+        if (
+          !gambar.startsWith("http://") &&
+          !gambar.startsWith("https://") &&
+          !gambar.startsWith("//")
+        ) {
+          const relativePath = gambar
+            .replace(/^\/+/, "")
+            .replace(/\\/g, "/");
+
+          const publicDir = path.resolve(
+            process.cwd(),
+            "public"
+          );
+
+          const fullPath = path.resolve(
+            publicDir,
+            relativePath
+          );
+
+          const publicPrefix =
+            publicDir + path.sep;
+
+          /*
+           * Pastikan file berada
+           * di dalam folder public.
+           */
+          if (
+            fullPath.startsWith(publicPrefix)
+          ) {
+            try {
+              await fs.unlink(fullPath);
+            } catch (fileError: any) {
+              if (
+                fileError?.code !== "ENOENT"
+              ) {
+                console.error(
+                  "Gagal menghapus file gambar:",
+                  fileError
+                );
+              }
+            }
+          }
+        }
+      } catch (fileError) {
+        console.error(
+          "Kesalahan proses file gambar:",
+          fileError
+        );
+      }
+    }
+
+    /* =================================================
+       BERHASIL
+    ================================================= */
+
+    return Astro.redirect(
+      "/admin/carousel?success=deleted"
+    );
+
+  } catch (error: any) {
+    console.error(
+      "HAPUS SLIDE ERROR:",
+      error
+    );
+
+    errorMsg =
+      error?.sqlMessage ||
+      error?.message ||
+      "Gagal menghapus slide.";
+  }
+}
+
+/* =====================================================
+   SUCCESS MESSAGE
+===================================================== */
+
+if (
+  Astro.url.searchParams.get("success") ===
+  "deleted"
+) {
+  successMsg = "Slide berhasil dihapus.";
+}
+
+/* =====================================================
+   AMBIL DATA SLIDE
+===================================================== */
+
+try {
+  const [rows]: any = await db.execute(
+    `
+    SELECT *
+    FROM beranda_slider
+    ORDER BY urutan ASC, id ASC
+    `
+  );
+
+  slides = rows || [];
+
+} catch (error: any) {
+  console.error(
+    "Fetch slider error:",
+    error
+  );
+
+  errorMsg =
+    error?.sqlMessage ||
+    error?.message ||
+    "Gagal mengambil data carousel.";
+}
+---
+
+<AdminShell
+  title="Carousel"
+  subtitle="Atur banner utama dan visual promosi yang tampil di publik."
+  actionLabel="Tambah Slide"
+  actionHref="/admin/tambah-carousel"
+>
+
+  <div class="panel">
+
+    <!-- =================================================
+         HEADER
+    ================================================== -->
+
+    <div class="panel-header">
+
+      <div>
+
+        <h3>
+          Daftar Slide
+        </h3>
+
+        <p>
+          Kelola banner carousel yang tampil di halaman beranda.
+        </p>
+
+      </div>
+
+    </div>
+
+
+    <!-- =================================================
+         ERROR
+    ================================================== -->
+
+    {errorMsg && (
+      <div
+        class="alert alert-error"
+        id="errorAlert"
+      >
+
+        <div class="alert-icon">
+          !
+        </div>
+
+        <div class="alert-content">
+
+          <strong>
+            Gagal
+          </strong>
+
+          <span>
+            {errorMsg}
+          </span>
+
+        </div>
+
+      </div>
+    )}
+
+
+    <!-- =================================================
+         SUCCESS
+    ================================================== -->
+
+    {successMsg && (
+      <div
+        class="alert alert-success auto-hide"
+        id="successAlert"
+      >
+
+        <div class="alert-icon">
+          ✓
+        </div>
+
+        <div class="alert-content">
+
+          <strong>
+            Berhasil
+          </strong>
+
+          <span>
+            {successMsg}
+          </span>
+
+        </div>
+
+        <button
+          type="button"
+          class="alert-close"
+          id="successClose"
+          aria-label="Tutup notifikasi"
+        >
+          ×
+        </button>
+
+      </div>
+    )}
+
+
+    <!-- =================================================
+         TOOLBAR
+    ================================================== -->
+
+    {slides.length > 0 && (
+
+      <div class="datatable-toolbar">
+
+        <div class="toolbar-left">
+
+          <label for="pageLength">
+            Tampilkan
+          </label>
+
+          <select id="pageLength">
+
+            <option value="5">
+              5
+            </option>
+
+            <option value="10" selected>
+              10
+            </option>
+
+            <option value="25">
+              25
+            </option>
+
+            <option value="50">
+              50
+            </option>
+
+          </select>
+
+          <span>
+            data
+          </span>
+
+        </div>
+
+
+        <!-- SEARCH -->
+
+        <div class="search-box">
+
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="17"
+            height="17"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle
+              cx="11"
+              cy="11"
+              r="8"
+            />
+
+            <path
+              d="m21 21-4.3-4.3"
+            />
+          </svg>
+
+          <input
+            type="search"
+            id="tableSearch"
+            placeholder="Cari slide..."
+            autocomplete="off"
+          />
+
+          <button
+            type="button"
+            id="clearSearch"
+            class="clear-search"
+            aria-label="Hapus pencarian"
+            title="Hapus pencarian"
+          >
+            ×
+          </button>
+
+        </div>
+
+      </div>
+
+    )}
+
+
+    <!-- =================================================
+         TABLE
+    ================================================== -->
+
+    {slides.length === 0 ? (
+
+      <div class="empty">
+
+        <div class="empty-icon">
+
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="32"
+            height="32"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.6"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+
+            <rect
+              x="3"
+              y="3"
+              width="18"
+              height="18"
+              rx="2"
+            />
+
+            <circle
+              cx="8.5"
+              cy="8.5"
+              r="1.5"
+            />
+
+            <path
+              d="m21 15-5-5L5 21"
+            />
+
+          </svg>
+
+        </div>
+
+        <p>
+          Belum ada slide.
+        </p>
+
+        <a
+          href="/admin/tambah-carousel"
+          class="empty-button"
+        >
+          Tambah Slide
+        </a>
+
+      </div>
+
+    ) : (
+
+      <div class="table-wrapper">
+
+        <table
+          class="slide-table"
+          id="slideTable"
+        >
+
+          <thead>
+
+            <tr>
+
+              <!-- ID -->
+
+              <th
+                class="sortable"
+                data-sort="id"
+              >
+
+                <span>
+                  ID
+                </span>
+
+                <span class="sort-icon">
+                  ↕
+                </span>
+
+              </th>
+
+
+              <!-- FOTO -->
+
+              <th>
+                Foto
+              </th>
+
+
+              <!-- JUDUL -->
+
+              <th
+                class="sortable"
+                data-sort="judul"
+              >
+
+                <span>
+                  Judul
+                </span>
+
+                <span class="sort-icon">
+                  ↕
+                </span>
+
+              </th>
+
+
+              <!-- URUTAN -->
+
+              <th
+                class="sortable"
+                data-sort="urutan"
+              >
+
+                <span>
+                  Urutan
+                </span>
+
+                <span class="sort-icon">
+                  ↕
+                </span>
+
+              </th>
+
+
+              <!-- AKSI -->
+
+              <th>
+                Aksi
+              </th>
+
+            </tr>
+
+          </thead>
+
+
+          <tbody id="slideTableBody">
+
+            {slides.map((item: any) => (
+
+              <tr
+                data-id={item.id}
+                data-judul={item.judul || ""}
+                data-deskripsi={item.deskripsi || ""}
+                data-urutan={item.urutan ?? ""}
+              >
+
+                <!-- ID -->
+
+                <td>
+
+                  <span class="id-badge">
+                    {item.id}
+                  </span>
+
+                </td>
+
+
+                <!-- FOTO -->
+
+                <td>
+
+                  {item.gambar ? (
+
+                    <div class="image-wrapper">
+
+                      <img
+                        src={item.gambar}
+                        alt={
+                          item.judul ||
+                          "Slide"
+                        }
+                        class="thumb"
+                        loading="lazy"
+                      />
+
+                    </div>
+
+                  ) : (
+
+                    <div class="no-image">
+                      Tidak ada
+                    </div>
+
+                  )}
+
+                </td>
+
+
+                <!-- JUDUL -->
+
+                <td>
+
+                  <strong>
+                    {item.judul ||
+                      "(tanpa judul)"}
+                  </strong>
+
+                  {item.deskripsi && (
+
+                    <p>
+                      {item.deskripsi}
+                    </p>
+
+                  )}
+
+                </td>
+
+
+                <!-- URUTAN -->
+
+                <td>
+
+                  <span class="order-badge">
+                    {item.urutan}
+                  </span>
+
+                </td>
+
+
+                <!-- AKSI -->
+
+                <td>
+
+                  <div class="action-icons">
+
+                    <!-- EDIT -->
+
+                    <a
+                      href={`/admin/edit-carousel?id=${item.id}`}
+                      class="icon-btn icon-edit"
+                      title="Edit"
+                      aria-label="Edit slide"
+                    >
+
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="17"
+                        height="17"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+
+                        <path
+                          d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
+                        />
+
+                        <path
+                          d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
+                        />
+
+                      </svg>
+
+                    </a>
+
+
+                    <!-- DELETE -->
+
+                    <button
+                      type="button"
+                      class="icon-btn icon-delete"
+                      title="Hapus"
+                      aria-label="Hapus slide"
+                      data-delete-id={item.id}
+                    >
+
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="17"
+                        height="17"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+
+                        <polyline
+                          points="3 6 5 6 21 6"
+                        />
+
+                        <path
+                          d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"
+                        />
+
+                        <path
+                          d="M10 11v6"
+                        />
+
+                        <path
+                          d="M14 11v6"
+                        />
+
+                        <path
+                          d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"
+                        />
+
+                      </svg>
+
+                    </button>
+
+                  </div>
+
+                </td>
+
+              </tr>
+
+            ))}
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+    )}
+
+
+    <!-- =================================================
+         FOOTER
+    ================================================== -->
+
+    {slides.length > 0 && (
+
+      <div class="datatable-footer">
+
+        <div
+          class="table-info"
+          id="tableInfo"
+        >
+          Menampilkan data
+        </div>
+
+
+        <div
+          class="pagination"
+          id="pagination"
+        >
+
+          <button
+            type="button"
+            class="page-btn"
+            id="prevPage"
+          >
+            ‹
+          </button>
+
+
+          <div
+            class="page-numbers"
+            id="pageNumbers"
+          >
+          </div>
+
+
+          <button
+            type="button"
+            class="page-btn"
+            id="nextPage"
+          >
+            ›
+          </button>
+
+        </div>
+
+      </div>
+
+    )}
+
+  </div>
+
+
+  <!-- ===================================================
+       FORM DELETE
+  ==================================================== -->
+
+  <form
+    id="deleteForm"
+    method="POST"
+    action="/admin/carousel"
+    enctype="application/x-www-form-urlencoded"
+    style="display:none;"
+  >
+
+    <input
+      type="hidden"
+      name="action"
+      value="delete"
+    />
+
+    <input
+      type="hidden"
+      name="deleteId"
+      id="deleteIdInput"
+    />
+
+  </form>
+
+
+  <!-- ===================================================
+       MODAL KONFIRMASI
+  ==================================================== -->
+
+  <div
+    class="confirm-overlay"
+    id="confirmOverlay"
+  >
+
+    <div
+      class="confirm-box"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="confirmTitle"
+    >
+
+      <div class="confirm-icon">
+
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="27"
+          height="27"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+
+          <polyline
+            points="3 6 5 6 21 6"
+          />
+
+          <path
+            d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"
+          />
+
+          <path
+            d="M10 11v6"
+          />
+
+          <path
+            d="M14 11v6"
+          />
+
+        </svg>
+
+      </div>
+
+
+      <h4 id="confirmTitle">
+        Hapus Slide?
+      </h4>
+
+
+      <p class="confirm-message">
+        Slide yang dihapus tidak dapat
+        dikembalikan. Apakah Anda yakin
+        ingin menghapus slide ini?
+      </p>
+
+
+      <div class="confirm-actions">
+
+        <button
+          type="button"
+          class="confirm-cancel"
+          id="confirmCancel"
+        >
+          Batal
+        </button>
+
+
+        <button
+          type="button"
+          class="confirm-ok"
+          id="confirmOk"
+        >
+          Hapus
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</AdminShell>
+
+
+<style>
+
+/* =====================================================
+   PANEL
+===================================================== */
+
+.panel {
+  background: #ffffff;
+  padding: 22px;
+  border-radius: 16px;
+  border: 1px solid #edf1f7;
+  box-shadow:
+    0 8px 28px rgba(15, 23, 42, 0.045);
+}
+
+
+/* =====================================================
+   HEADER
+===================================================== */
+
+.panel-header {
+  margin-bottom: 22px;
+}
+
+.panel-header h3 {
+  margin: 0 0 5px;
+  color: #111827;
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.panel-header p {
+  margin: 0;
+  color: #718096;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+
+/* =====================================================
+   ALERT
+===================================================== */
+
+.alert {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  position: relative;
+  padding: 13px 15px;
+  margin-bottom: 17px;
+  border-radius: 11px;
+  font-size: 12px;
+  overflow: hidden;
+
+  transition:
+    opacity 0.35s ease,
+    transform 0.35s ease,
+    max-height 0.4s ease,
+    margin 0.4s ease,
+    padding 0.4s ease;
+}
+
+.alert-success {
+  max-height: 100px;
+  background: #effdf5;
+  border: 1px solid #b7efcf;
+  color: #166534;
+}
+
+.alert-success.hide {
+  opacity: 0;
+  transform: translateY(-8px);
+  max-height: 0;
+  margin-top: 0;
+  margin-bottom: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  border-width: 0;
+}
+
+.alert-error {
+  background: #fff5f5;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+}
+
+.alert-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 27px;
+  height: 27px;
+  flex: 0 0 27px;
+
+  border-radius: 50%;
+
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.alert-success .alert-icon {
+  background: #16a34a;
+  color: #ffffff;
+}
+
+.alert-error .alert-icon {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+.alert-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.alert-content strong {
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.alert-content span {
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.alert-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 25px;
+  height: 25px;
+
+  margin-left: auto;
+
+  border: 0;
+  border-radius: 7px;
+
+  background: transparent;
+  color: #15803d;
+
+  font-size: 18px;
+  line-height: 1;
+
+  cursor: pointer;
+
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.alert-close:hover {
+  background: rgba(22, 101, 52, 0.08);
+  color: #166534;
+}
+
+
+/* =====================================================
+   TOOLBAR
+===================================================== */
+
+.datatable-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 15px;
+  margin-bottom: 17px;
+}
+
+.toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+
+  color: #718096;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.toolbar-left select {
+  height: 36px;
+
+  padding:
+    0 30px
+    0 10px;
+
+  border: 1px solid #dfe5ee;
+  border-radius: 9px;
+
+  background: #ffffff;
+  color: #334155;
+
+  font-size: 12px;
+
+  outline: none;
+  cursor: pointer;
+
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.toolbar-left select:hover {
+  border-color: #cbd5e1;
+}
+
+.toolbar-left select:focus {
+  border-color: #93c5fd;
+
+  box-shadow:
+    0 0 0 3px
+    rgba(59, 130, 246, 0.08);
+}
+
+
+/* =====================================================
+   SEARCH
+===================================================== */
+
+.search-box {
+  position: relative;
+
+  display: flex;
+  align-items: center;
+
+  width: 300px;
+}
+
+.search-box > svg {
+  position: absolute;
+
+  left: 12px;
+
+  color: #94a3b8;
+
+  pointer-events: none;
+}
+
+.search-box input {
+  width: 100%;
+  height: 39px;
+
+  padding:
+    0 38px
+    0 38px;
+
+  border: 1px solid #dfe5ee;
+  border-radius: 10px;
+
+  background: #ffffff;
+  color: #0f172a;
+
+  font-size: 12px;
+
+  outline: none;
+
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.search-box input::placeholder {
+  color: #9aa7b8;
+}
+
+.search-box input:hover {
+  border-color: #cbd5e1;
+}
+
+.search-box input:focus {
+  border-color: #60a5fa;
+
+  box-shadow:
+    0 0 0 3px
+    rgba(59, 130, 246, 0.08);
+}
+
+.clear-search {
+  position: absolute;
+
+  right: 7px;
+
+  display: none;
+
+  align-items: center;
+  justify-content: center;
+
+  width: 26px;
+  height: 26px;
+
+  padding: 0;
+
+  border: 0;
+  border-radius: 7px;
+
+  background: #f1f5f9;
+  color: #64748b;
+
+  font-size: 17px;
+  line-height: 1;
+
+  cursor: pointer;
+}
+
+.clear-search:hover {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.clear-search.visible {
+  display: flex;
+}
+
+
+/* =====================================================
+   TABLE
+===================================================== */
+
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.slide-table {
+  width: 100%;
+  min-width: 760px;
+
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.slide-table thead th {
+  padding: 12px 14px;
+
+  text-align: left;
+
+  color: #1d4ed8;
+
+  font-size: 0.72rem;
+  font-weight: 800;
+
+  text-transform: uppercase;
+  letter-spacing: 0.045em;
+
+  border-bottom: 1px solid #e2e8f0;
+
+  white-space: nowrap;
+}
+
+.slide-table thead th.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.slide-table thead th.sortable:hover {
+  color: #1e40af;
+}
+
+.sort-icon {
+  display: inline-block;
+
+  margin-left: 4px;
+
+  color: #a0aec0;
+
+  font-size: 12px;
+}
+
+.slide-table thead th.sort-active .sort-icon {
+  color: #1d4ed8;
+}
+
+.slide-table tbody td {
+  padding: 15px 14px;
+
+  border-bottom: 1px solid #f0f3f7;
+
+  vertical-align: middle;
+}
+
+.slide-table tbody tr {
+  transition:
+    background 0.15s ease;
+}
+
+.slide-table tbody tr:hover {
+  background: #fafcff;
+}
+
+.slide-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+
+/* =====================================================
+   ID
+===================================================== */
+
+.id-badge {
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  min-width: 34px;
+  height: 30px;
+
+  padding: 0 9px;
+
+  border-radius: 8px;
+
+  background: #f1f5f9;
+  color: #475569;
+
+  font-size: 12px;
+  font-weight: 700;
+}
+
+
+/* =====================================================
+   IMAGE
+===================================================== */
+
+.image-wrapper {
+  width: 100px;
+  height: 64px;
+
+  overflow: hidden;
+
+  border-radius: 10px;
+
+  border: 1px solid #e2e8f0;
+
+  background: #f8fafc;
+}
+
+.thumb {
+  display: block;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+
+  transition:
+    transform 0.25s ease;
+}
+
+.image-wrapper:hover .thumb {
+  transform: scale(1.04);
+}
+
+.no-image {
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  width: 100px;
+  height: 64px;
+
+  border-radius: 10px;
+
+  background: #f8fafc;
+
+  border: 1px dashed #dbe2ea;
+
+  color: #94a3b8;
+
+  font-size: 10px;
+}
+
+
+/* =====================================================
+   TEXT
+===================================================== */
+
+.slide-table strong {
+  display: block;
+
+  margin-bottom: 4px;
+
+  color: #111827;
+
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.slide-table td p {
+  max-width: 400px;
+
+  margin: 0;
+
+  color: #718096;
+
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+
+/* =====================================================
+   ORDER
+===================================================== */
+
+.order-badge {
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  min-width: 32px;
+  height: 30px;
+
+  padding: 0 9px;
+
+  border-radius: 8px;
+
+  background: #eff6ff;
+  color: #1d4ed8;
+
+  font-size: 12px;
+  font-weight: 700;
+}
+
+
+/* =====================================================
+   ACTION
+===================================================== */
+
+.action-icons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.icon-btn {
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  width: 38px;
+  height: 38px;
+
+  padding: 0;
+
+  border: 0;
+  border-radius: 10px;
+
+  text-decoration: none;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    background 0.15s ease;
+}
+
+.icon-btn:hover {
+  transform: translateY(-1px);
+}
+
+.icon-edit {
+  background: #e3efff;
+  color: #2563eb;
+}
+
+.icon-edit:hover {
+  background: #dbeafe;
+
+  box-shadow:
+    0 5px 14px
+    rgba(37, 99, 235, 0.14);
+}
+
+.icon-delete {
+  background: #ffe5e5;
+  color: #dc2626;
+}
+
+.icon-delete:hover {
+  background: #fecaca;
+
+  box-shadow:
+    0 5px 14px
+    rgba(220, 38, 38, 0.14);
+}
+
+
+/* =====================================================
+   FOOTER
+===================================================== */
+
+.datatable-footer {
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 15px;
+
+  padding-top: 16px;
+  margin-top: 3px;
+
+  border-top: 1px solid #f0f3f7;
+}
+
+.table-info {
+  color: #718096;
+  font-size: 12px;
+}
+
+.pagination {
+  display: flex;
+
+  align-items: center;
+
+  gap: 5px;
+}
+
+.page-numbers {
+  display: flex;
+
+  align-items: center;
+
+  gap: 4px;
+}
+
+.page-btn,
+.page-number {
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  min-width: 33px;
+  height: 33px;
+
+  padding: 0 8px;
+
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+
+  background: #ffffff;
+  color: #475569;
+
+  font-size: 12px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.page-btn {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.page-btn:hover:not(:disabled),
+.page-number:hover {
+  border-color: #bfdbfe;
+
+  background: #eff6ff;
+
+  color: #1d4ed8;
+}
+
+.page-btn:disabled {
+  opacity: 0.4;
+
+  cursor: not-allowed;
+}
+
+.page-number.active {
+  border-color: #1d4ed8;
+
+  background: #1d4ed8;
+
+  color: #ffffff;
+}
+
+.page-dots {
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  width: 25px;
+
+  color: #94a3b8;
+}
+
+
+/* =====================================================
+   EMPTY
+===================================================== */
+
+.empty {
+  padding: 60px 20px;
+
+  text-align: center;
+
+  color: #94a3b8;
+}
+
+.empty-icon {
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  width: 65px;
+  height: 65px;
+
+  margin: 0 auto 15px;
+
+  border-radius: 17px;
+
+  background: #f1f5f9;
+  color: #94a3b8;
+}
+
+.empty p {
+  margin: 0 0 16px;
+
+  font-size: 13px;
+}
+
+.empty-button {
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  padding: 9px 17px;
+
+  border-radius: 9px;
+
+  background: #1d4ed8;
+  color: #ffffff;
+
+  text-decoration: none;
+
+  font-size: 13px;
+  font-weight: 700;
+
+  transition:
+    background 0.15s ease,
+    transform 0.15s ease;
+}
+
+.empty-button:hover {
+  background: #1e40af;
+
+  transform: translateY(-1px);
+}
+
+
+/* =====================================================
+   CONFIRM MODAL
+===================================================== */
+
+.confirm-overlay {
+  display: none;
+
+  position: fixed;
+
+  inset: 0;
+
+  padding: 20px;
+
+  background:
+    rgba(15, 23, 42, 0.42);
+
+  backdrop-filter: blur(2px);
+
+  align-items: center;
+  justify-content: center;
+
+  z-index: 9999;
+}
+
+.confirm-overlay.active {
+  display: flex;
+}
+
+.confirm-box {
+  width: 100%;
+  max-width: 380px;
+
+  padding: 27px;
+
+  background: #ffffff;
+
+  border: 1px solid #edf1f7;
+
+  border-radius: 17px;
+
+  box-shadow:
+    0 25px 70px
+    rgba(15, 23, 42, 0.22);
+
+  text-align: center;
+
+  animation:
+    modalIn 0.2s ease;
+}
+
+@keyframes modalIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.confirm-icon {
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  width: 54px;
+  height: 54px;
+
+  margin: 0 auto 15px;
+
+  border-radius: 50%;
+
+  background: #fff1f2;
+  color: #dc2626;
+}
+
+.confirm-box h4 {
+  margin: 0 0 8px;
+
+  color: #111827;
+
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.confirm-message {
+  margin: 0 0 23px;
+
+  color: #64748b;
+
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.confirm-actions {
+  display: flex;
+
+  justify-content: center;
+
+  gap: 9px;
+}
+
+.confirm-actions button {
+  min-width: 105px;
+
+  padding: 10px 18px;
+
+  border: 0;
+
+  border-radius: 9px;
+
+  font-size: 12px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    background 0.15s ease,
+    transform 0.15s ease;
+}
+
+.confirm-actions button:hover {
+  transform: translateY(-1px);
+}
+
+.confirm-cancel {
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.confirm-cancel:hover {
+  background: #e2e8f0;
+}
+
+.confirm-ok {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+.confirm-ok:hover {
+  background: #b91c1c;
+}
+
+.confirm-ok:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+
+/* =====================================================
+   RESPONSIVE
+===================================================== */
+
+@media (max-width: 700px) {
+
+  .panel {
+    padding: 14px;
+    border-radius: 14px;
+  }
+
+  .panel-header {
+    margin-bottom: 17px;
+  }
+
+  .datatable-toolbar {
+    align-items: stretch;
+
+    flex-direction: column;
+  }
+
+  .toolbar-left {
+    justify-content: flex-start;
+  }
+
+  .search-box {
+    width: 100%;
+  }
+
+  .datatable-footer {
+    align-items: flex-start;
+
+    flex-direction: column;
+  }
+
+  .pagination {
+    width: 100%;
+
+    justify-content: flex-end;
+  }
+
+  .slide-table {
+    min-width: 760px;
+  }
+
+  .alert {
+    align-items: flex-start;
+  }
+
+}
+
+</style>
+
+
+<script>
+
+let deleteId = null;
+
+
+/* =====================================================
+   ELEMENT
+===================================================== */
+
+const overlay =
+  document.getElementById(
+    "confirmOverlay"
+  );
+
+const okBtn =
+  document.getElementById(
+    "confirmOk"
+  );
+
+const cancelBtn =
+  document.getElementById(
+    "confirmCancel"
+  );
+
+const deleteForm =
+  document.getElementById(
+    "deleteForm"
+  );
+
+const deleteIdInput =
+  document.getElementById(
+    "deleteIdInput"
+  );
+
+const successAlert =
+  document.getElementById(
+    "successAlert"
+  );
+
+const successClose =
+  document.getElementById(
+    "successClose"
+  );
+
+
+/* =====================================================
+   SUCCESS AUTO HIDE
+===================================================== */
+
+function hideSuccessAlert() {
+
+  if (!successAlert) {
+    return;
+  }
+
+  successAlert.classList.add(
+    "hide"
+  );
+
+  setTimeout(() => {
+
+    successAlert.remove();
+
+  }, 450);
+
+}
+
+
+/*
+ * Hilang otomatis setelah 2 detik.
+ */
+
+if (successAlert) {
+
+  setTimeout(() => {
+
+    hideSuccessAlert();
+
+  }, 2000);
+
+}
+
+
+/*
+ * Bisa juga ditutup manual.
+ */
+
+successClose?.addEventListener(
+  "click",
+  () => {
+
+    hideSuccessAlert();
+
+  }
+);
+
+
+/* =====================================================
+   DELETE BUTTON
+===================================================== */
+
+document
+  .querySelectorAll(
+    "[data-delete-id]"
+  )
+  .forEach(
+    (button) => {
+
+      button.addEventListener(
+        "click",
+        () => {
+
+          deleteId =
+            button.getAttribute(
+              "data-delete-id"
+            );
+
+          if (overlay) {
+
+            overlay.classList.add(
+              "active"
+            );
+
+          }
+
+        }
+      );
+
+    }
+  );
+
+
+/* =====================================================
+   CONFIRM DELETE
+===================================================== */
+
+okBtn?.addEventListener(
+  "click",
+  () => {
+
+    if (
+      !deleteId ||
+      !deleteForm ||
+      !deleteIdInput
+    ) {
+      return;
+    }
+
+    deleteIdInput.value =
+      deleteId;
+
+    okBtn.disabled = true;
+
+    okBtn.textContent =
+      "Menghapus...";
+
+    /*
+     * FORM POST BIASA.
+     */
+
+    deleteForm.submit();
+
+  }
+);
+
+
+/* =====================================================
+   CANCEL
+===================================================== */
+
+cancelBtn?.addEventListener(
+  "click",
+  () => {
+
+    overlay?.classList.remove(
+      "active"
+    );
+
+    deleteId = null;
+
+  }
+);
+
+
+/* =====================================================
+   CLICK OUTSIDE MODAL
+===================================================== */
+
+overlay?.addEventListener(
+  "click",
+  (event) => {
+
+    if (
+      event.target === overlay
+    ) {
+
+      overlay.classList.remove(
+        "active"
+      );
+
+      deleteId = null;
+
+    }
+
+  }
+);
+
+
+/* =====================================================
+   ESC
+===================================================== */
+
+document.addEventListener(
+  "keydown",
+  (event) => {
+
+    if (
+      event.key === "Escape"
+    ) {
+
+      overlay?.classList.remove(
+        "active"
+      );
+
+      deleteId = null;
+
+    }
+
+  }
+);
+
+
+/* =====================================================
+   DATATABLE
+===================================================== */
+
+const searchInput =
+  document.getElementById(
+    "tableSearch"
+  );
+
+const clearSearch =
+  document.getElementById(
+    "clearSearch"
+  );
+
+const pageLength =
+  document.getElementById(
+    "pageLength"
+  );
+
+const tableBody =
+  document.getElementById(
+    "slideTableBody"
+  );
+
+const tableInfo =
+  document.getElementById(
+    "tableInfo"
+  );
+
+const pageNumbers =
+  document.getElementById(
+    "pageNumbers"
+  );
+
+const prevPage =
+  document.getElementById(
+    "prevPage"
+  );
+
+const nextPage =
+  document.getElementById(
+    "nextPage"
+  );
+
+const table =
+  document.getElementById(
+    "slideTable"
+  );
+
+
+if (
+  table &&
+  tableBody &&
+  searchInput &&
+  pageLength &&
+  tableInfo &&
+  pageNumbers &&
+  prevPage &&
+  nextPage
+) {
+
+  const allRows =
+    Array.from(
+      tableBody.querySelectorAll(
+        "tr"
+      )
+    );
+
+
+  let filteredRows =
+    [...allRows];
+
+
+  let currentPage = 1;
+
+
+  let rowsPerPage =
+    Number(
+      pageLength.value
+    ) || 10;
+
+
+  let sortColumn = null;
+
+
+  let sortDirection =
+    "asc";
+
+
+  /* =================================================
+     NORMALIZE
+  ================================================== */
+
+  const normalize =
+    (value) => {
+
+      return String(
+        value ?? ""
+      )
+        .toLowerCase()
+        .trim();
+
+    };
+
+
+  /* =================================================
+     SEARCH
+  ================================================== */
+
+  function applySearch() {
+
+    const keyword =
+      normalize(
+        searchInput.value
+      );
+
+
+    if (!keyword) {
+
+      filteredRows =
+        [...allRows];
+
+    } else {
+
+      filteredRows =
+        allRows.filter(
+          (row) => {
+
+            const text =
+              normalize(
+                [
+                  row.dataset.id,
+                  row.dataset.judul,
+                  row.dataset.deskripsi,
+                  row.dataset.urutan
+                ].join(" ")
+              );
+
+
+            return text.includes(
+              keyword
+            );
+
+          }
+        );
+
+    }
+
+
+    currentPage = 1;
+
+    render();
+
+  }
+
+
+  /* =================================================
+     SORT
+  ================================================== */
+
+  function applySort(
+    column
+  ) {
+
+    if (
+      sortColumn === column
+    ) {
+
+      sortDirection =
+        sortDirection === "asc"
+          ? "desc"
+          : "asc";
+
+    } else {
+
+      sortColumn =
+        column;
+
+      sortDirection =
+        "asc";
+
+    }
+
+
+    filteredRows.sort(
+      (a, b) => {
+
+        let valueA = "";
+        let valueB = "";
+
+
+        if (
+          column === "id"
+        ) {
+
+          valueA =
+            Number(
+              a.dataset.id
+            ) || 0;
+
+          valueB =
+            Number(
+              b.dataset.id
+            ) || 0;
+
+        }
+
+
+        if (
+          column === "judul"
+        ) {
+
+          valueA =
+            normalize(
+              a.dataset.judul
+            );
+
+          valueB =
+            normalize(
+              b.dataset.judul
+            );
+
+        }
+
+
+        if (
+          column === "urutan"
+        ) {
+
+          valueA =
+            Number(
+              a.dataset.urutan
+            ) || 0;
+
+          valueB =
+            Number(
+              b.dataset.urutan
+            ) || 0;
+
+        }
+
+
+        let comparison = 0;
+
+
+        if (
+          typeof valueA ===
+          "number"
+        ) {
+
+          comparison =
+            valueA -
+            valueB;
+
+        } else {
+
+          comparison =
+            String(valueA)
+              .localeCompare(
+                String(valueB),
+                "id"
+              );
+
+        }
+
+
+        return sortDirection ===
+          "asc"
+          ? comparison
+          : -comparison;
+
+      }
+    );
+
+
+    currentPage = 1;
+
+    updateSortIcons();
+
+    render();
+
+  }
+
+
+  /* =================================================
+     SORT ICON
+  ================================================== */
+
+  function updateSortIcons() {
+
+    table
+      .querySelectorAll(
+        "th.sortable"
+      )
+      .forEach(
+        (th) => {
+
+          th.classList.remove(
+            "sort-active"
+          );
+
+
+          const icon =
+            th.querySelector(
+              ".sort-icon"
+            );
+
+
+          if (icon) {
+
+            icon.textContent =
+              "↕";
+
+          }
+
+        }
+      );
+
+
+    if (!sortColumn) {
+      return;
+    }
+
+
+    const active =
+      table.querySelector(
+        `th[data-sort="${sortColumn}"]`
+      );
+
+
+    if (!active) {
+      return;
+    }
+
+
+    active.classList.add(
+      "sort-active"
+    );
+
+
+    const icon =
+      active.querySelector(
+        ".sort-icon"
+      );
+
+
+    if (icon) {
+
+      icon.textContent =
+        sortDirection === "asc"
+          ? "↑"
+          : "↓";
+
+    }
+
+  }
+
+
+  /* =================================================
+     RENDER
+  ================================================== */
+
+  function render() {
+
+    const total =
+      filteredRows.length;
+
+
+    const totalPages =
+      Math.max(
+        1,
+        Math.ceil(
+          total /
+          rowsPerPage
+        )
+      );
+
+
+    if (
+      currentPage >
+      totalPages
+    ) {
+
+      currentPage =
+        totalPages;
+
+    }
+
+
+    const start =
+      (currentPage - 1) *
+      rowsPerPage;
+
+
+    const end =
+      Math.min(
+        start +
+        rowsPerPage,
+        total
+      );
+
+
+    /* Sembunyikan semua */
+
+    allRows.forEach(
+      (row) => {
+
+        row.style.display =
+          "none";
+
+      }
+    );
+
+
+    /* Tampilkan halaman */
+
+    filteredRows
+      .slice(
+        start,
+        end
+      )
+      .forEach(
+        (row) => {
+
+          row.style.display =
+            "";
+
+        }
+      );
+
+
+    /* Informasi */
+
+    if (total === 0) {
+
+      tableInfo.textContent =
+        "Tidak ada data yang ditemukan.";
+
+    } else {
+
+      tableInfo.textContent =
+        `Menampilkan ${start + 1}–${end} dari ${total} data`;
+
+    }
+
+
+    renderPagination(
+      totalPages
+    );
+
+
+    prevPage.disabled =
+      currentPage <= 1;
+
+
+    nextPage.disabled =
+      currentPage >=
+      totalPages;
+
+  }
+
+
+  /* =================================================
+     PAGINATION
+  ================================================== */
+
+  function renderPagination(
+    totalPages
+  ) {
+
+    pageNumbers.innerHTML =
+      "";
+
+
+    if (
+      totalPages <= 1
+    ) {
+
+      return;
+
+    }
+
+
+    const pages =
+      getPageNumbers(
+        currentPage,
+        totalPages
+      );
+
+
+    pages.forEach(
+      (page) => {
+
+        if (
+          page === "..."
+        ) {
+
+          const dots =
+            document.createElement(
+              "span"
+            );
+
+
+          dots.className =
+            "page-dots";
+
+
+          dots.textContent =
+            "…";
+
+
+          pageNumbers.appendChild(
+            dots
+          );
+
+
+          return;
+
+        }
+
+
+        const button =
+          document.createElement(
+            "button"
+          );
+
+
+        button.type =
+          "button";
+
+
+        button.className =
+          "page-number";
+
+
+        button.textContent =
+          String(page);
+
+
+        if (
+          page === currentPage
+        ) {
+
+          button.classList.add(
+            "active"
+          );
+
+        }
+
+
+        button.addEventListener(
+          "click",
+          () => {
+
+            currentPage =
+              page;
+
+            render();
+
+          }
+        );
+
+
+        pageNumbers.appendChild(
+          button
+        );
+
+      }
+    );
+
+  }
+
+
+  /* =================================================
+     PAGE NUMBER LOGIC
+  ================================================== */
+
+  function getPageNumbers(
+    current,
+    total
+  ) {
+
+    if (
+      total <= 7
+    ) {
+
+      return Array.from(
+        {
+          length: total
+        },
+        (_, index) =>
+          index + 1
+      );
+
+    }
+
+
+    const pages = [];
+
+
+    pages.push(1);
+
+
+    if (
+      current > 4
+    ) {
+
+      pages.push(
+        "..."
+      );
+
+    }
+
+
+    const start =
+      Math.max(
+        2,
+        current - 1
+      );
+
+
+    const end =
+      Math.min(
+        total - 1,
+        current + 1
+      );
+
+
+    for (
+      let i = start;
+      i <= end;
+      i++
+    ) {
+
+      pages.push(i);
+
+    }
+
+
+    if (
+      current <
+      total - 3
+    ) {
+
+      pages.push(
+        "..."
+      );
+
+    }
+
+
+    pages.push(
+      total
+    );
+
+
+    return pages;
+
+  }
+
+
+  /* =================================================
+     PREVIOUS
+  ================================================== */
+
+  prevPage.addEventListener(
+    "click",
+    () => {
+
+      if (
+        currentPage > 1
+      ) {
+
+        currentPage--;
+
+        render();
+
+      }
+
+    }
+  );
+
+
+  /* =================================================
+     NEXT
+  ================================================== */
+
+  nextPage.addEventListener(
+    "click",
+    () => {
+
+      const totalPages =
+        Math.max(
+          1,
+          Math.ceil(
+            filteredRows.length /
+            rowsPerPage
+          )
+        );
+
+
+      if (
+        currentPage <
+        totalPages
+      ) {
+
+        currentPage++;
+
+        render();
+
+      }
+
+    }
+  );
+
+
+  /* =================================================
+     SEARCH
+  ================================================== */
+
+  searchInput.addEventListener(
+    "input",
+    () => {
+
+      clearSearch?.classList.toggle(
+        "visible",
+        searchInput.value.length >
+        0
+      );
+
+
+      applySearch();
+
+    }
+  );
+
+
+  /* =================================================
+     CLEAR SEARCH
+  ================================================== */
+
+  clearSearch?.addEventListener(
+    "click",
+    () => {
+
+      searchInput.value =
+        "";
+
+
+      clearSearch.classList.remove(
+        "visible"
+      );
+
+
+      applySearch();
+
+
+      searchInput.focus();
+
+    }
+  );
+
+
+  /* =================================================
+     PAGE LENGTH
+  ================================================== */
+
+  pageLength.addEventListener(
+    "change",
+    () => {
+
+      rowsPerPage =
+        Number(
+          pageLength.value
+        ) || 10;
+
+
+      currentPage = 1;
+
+
+      render();
+
+    }
+  );
+
+
+  /* =================================================
+     SORT HEADER
+  ================================================== */
+
+  table
+    .querySelectorAll(
+      "th.sortable"
+    )
+    .forEach(
+      (header) => {
+
+        header.addEventListener(
+          "click",
+          () => {
+
+            const column =
+              header.getAttribute(
+                "data-sort"
+              );
+
+
+            if (column) {
+
+              applySort(
+                column
+              );
+
+            }
+
+          }
+        );
+
+      }
+    );
+
+
+  /* =================================================
+     INIT
+  ================================================== */
+
+  render();
+
+}
+
+</script>

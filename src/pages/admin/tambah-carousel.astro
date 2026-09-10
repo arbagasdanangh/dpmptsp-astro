@@ -1,0 +1,1027 @@
+---
+export const prerender = false;
+
+import AdminShell from "../../components/admin/AdminShell.astro";
+import { db } from "../../lib/db.js";
+import fs from "node:fs/promises";
+import path from "node:path";
+
+let errorMsg = "";
+
+if (Astro.request.method === "POST") {
+  try {
+    /*
+     * =====================================================
+     * CEK CONTENT TYPE
+     * =====================================================
+     */
+
+    const contentType =
+      Astro.request.headers.get("content-type") || "";
+
+    console.log(
+      "CONTENT-TYPE:",
+      contentType
+    );
+
+
+    /*
+     * =====================================================
+     * FORM DATA
+     * =====================================================
+     */
+
+    if (
+      !contentType.includes(
+        "multipart/form-data"
+      )
+    ) {
+      errorMsg =
+        "Form harus dikirim menggunakan multipart/form-data.";
+    } else {
+
+      const formData =
+        await Astro.request.formData();
+
+
+      /*
+       * ===================================================
+       * AMBIL DATA
+       * ===================================================
+       */
+
+      const file =
+        formData.get("gambar");
+
+      const judul =
+        String(
+          formData.get("judul") || ""
+        ).trim();
+
+      const deskripsi =
+        String(
+          formData.get("deskripsi") || ""
+        ).trim();
+
+      const urutanValue =
+        String(
+          formData.get("urutan") || "0"
+        ).trim();
+
+      const urutan =
+        Number(urutanValue);
+
+
+      /*
+       * ===================================================
+       * VALIDASI FILE
+       * ===================================================
+       */
+
+      if (
+        !file ||
+        typeof file === "string" ||
+        file.size === 0
+      ) {
+
+        errorMsg =
+          "File gambar wajib diisi.";
+
+      } else if (
+        ![
+          "image/jpeg",
+          "image/png",
+          "image/webp"
+        ].includes(file.type)
+      ) {
+
+        errorMsg =
+          "Format file tidak didukung. Gunakan JPG, PNG, atau WEBP.";
+
+      } else if (
+        file.size >
+        5 * 1024 * 1024
+      ) {
+
+        errorMsg =
+          "Ukuran file maksimal 5MB.";
+
+      } else if (
+        Number.isNaN(urutan)
+      ) {
+
+        errorMsg =
+          "Urutan harus berupa angka.";
+
+      } else {
+
+        /*
+         * =================================================
+         * EXTENSION
+         * =================================================
+         */
+
+        const mimeExtension: Record<
+          string,
+          string
+        > = {
+
+          "image/jpeg": "jpg",
+
+          "image/png": "png",
+
+          "image/webp": "webp"
+
+        };
+
+
+        const extension =
+          mimeExtension[
+            file.type
+          ] || "jpg";
+
+
+        /*
+         * =================================================
+         * NAMA FILE
+         * =================================================
+         */
+
+        const fileName =
+          `${Date.now()}-${Math.random()
+            .toString(36)
+            .slice(2, 10)}.${extension}`;
+
+
+        /*
+         * =================================================
+         * FOLDER UPLOAD
+         * =================================================
+         */
+
+        const uploadDir =
+          path.join(
+            process.cwd(),
+            "public",
+            "uploads",
+            "slider"
+          );
+
+
+        await fs.mkdir(
+          uploadDir,
+          {
+            recursive: true
+          }
+        );
+
+
+        /*
+         * =================================================
+         * PATH FILE
+         * =================================================
+         */
+
+        const filePath =
+          path.join(
+            uploadDir,
+            fileName
+          );
+
+
+        /*
+         * =================================================
+         * SIMPAN FILE
+         * =================================================
+         */
+
+        const arrayBuffer =
+          await file.arrayBuffer();
+
+
+        const buffer =
+          Buffer.from(
+            arrayBuffer
+          );
+
+
+        await fs.writeFile(
+          filePath,
+          buffer
+        );
+
+
+        /*
+         * =================================================
+         * PATH PUBLIC
+         * =================================================
+         */
+
+        const publicPath =
+          `/uploads/slider/${fileName}`;
+
+
+        /*
+         * =================================================
+         * INSERT DATABASE
+         * =================================================
+         */
+
+        await db.execute(
+          `
+          INSERT INTO beranda_slider
+          (
+            gambar,
+            judul,
+            deskripsi,
+            urutan
+          )
+          VALUES (?, ?, ?, ?)
+          `,
+          [
+            publicPath,
+            judul,
+            deskripsi,
+            urutan
+          ]
+        );
+
+
+        /*
+         * =================================================
+         * BERHASIL
+         * =================================================
+         */
+
+        return Astro.redirect(
+          "/admin/carousel"
+        );
+
+      }
+
+    }
+
+  } catch (error: any) {
+
+    console.error(
+      "======================================"
+    );
+
+    console.error(
+      "TAMBAH CAROUSEL ERROR"
+    );
+
+    console.error(
+      error
+    );
+
+    console.error(
+      "======================================"
+    );
+
+
+    errorMsg =
+      error?.sqlMessage ||
+      error?.message ||
+      "Terjadi kesalahan saat menyimpan data.";
+  }
+}
+---
+
+
+<AdminShell
+  title="Tambah Slide"
+  subtitle="Tambahkan banner baru untuk carousel beranda."
+  actionLabel="Kembali ke Carousel"
+  actionHref="/admin/carousel"
+  actionIcon="<"
+>
+
+  <div class="panel">
+
+
+    <!-- =================================================
+         ERROR
+    ================================================== -->
+
+    {
+      errorMsg && (
+
+        <div class="error">
+
+          <strong>
+            Gagal menyimpan:
+          </strong>
+
+          <span>
+            {errorMsg}
+          </span>
+
+        </div>
+
+      )
+    }
+
+
+    <!-- =================================================
+         FORM
+    ================================================== -->
+
+    <form
+      method="POST"
+      action="/admin/tambah-carousel"
+      enctype="multipart/form-data"
+      class="slide-form"
+      id="slideForm"
+    >
+
+
+      <!-- =================================================
+           GAMBAR
+      ================================================== -->
+
+      <div class="field">
+
+        <label
+          for="gambar"
+        >
+          Gambar
+        </label>
+
+        <input
+          id="gambar"
+          type="file"
+          name="gambar"
+          accept="image/jpeg,image/png,image/webp"
+          required
+        />
+
+        <small>
+          JPG, PNG, atau WEBP. Maksimal 5MB.
+        </small>
+
+      </div>
+
+
+      <!-- =================================================
+           PREVIEW GAMBAR
+      ================================================== -->
+
+      <div
+        id="imagePreview"
+        class="image-preview"
+        hidden
+      >
+
+        <img
+          id="previewImage"
+          src=""
+          alt="Preview gambar"
+        />
+
+      </div>
+
+
+      <!-- =================================================
+           JUDUL
+      ================================================== -->
+
+      <div class="field">
+
+        <label
+          for="judul"
+        >
+          Judul
+        </label>
+
+        <input
+          id="judul"
+          type="text"
+          name="judul"
+          placeholder="Judul slide"
+          maxlength="255"
+        />
+
+      </div>
+
+
+      <!-- =================================================
+           DESKRIPSI
+      ================================================== -->
+
+      <div class="field">
+
+        <label
+          for="deskripsi"
+        >
+          Deskripsi
+        </label>
+
+        <textarea
+          id="deskripsi"
+          name="deskripsi"
+          rows="4"
+          placeholder="Deskripsi singkat"
+        ></textarea>
+
+      </div>
+
+
+      <!-- =================================================
+           URUTAN
+      ================================================== -->
+
+      <div class="field small">
+
+        <label
+          for="urutan"
+        >
+          Urutan
+        </label>
+
+        <input
+          id="urutan"
+          type="number"
+          name="urutan"
+          value="0"
+          min="0"
+          step="1"
+        />
+
+        <small>
+          Angka lebih kecil akan ditampilkan lebih dahulu.
+        </small>
+
+      </div>
+
+
+      <!-- =================================================
+           ACTION
+      ================================================== -->
+
+      <div class="form-actions">
+
+        <a
+          href="/admin/carousel"
+          class="btn-cancel"
+        >
+          Batal
+        </a>
+
+        <button
+          type="submit"
+          class="btn-primary"
+          id="submitButton"
+        >
+          Simpan Slide
+        </button>
+
+      </div>
+
+
+    </form>
+
+  </div>
+
+</AdminShell>
+
+
+<script>
+  /*
+   * =====================================================
+   * PREVIEW GAMBAR
+   * =====================================================
+   */
+
+  const gambar =
+    document.getElementById(
+      "gambar"
+    );
+
+  const imagePreview =
+    document.getElementById(
+      "imagePreview"
+    );
+
+  const previewImage =
+    document.getElementById(
+      "previewImage"
+    );
+
+
+  gambar?.addEventListener(
+    "change",
+    () => {
+
+      const file =
+        gambar.files?.[0];
+
+
+      if (!file) {
+
+        imagePreview.hidden =
+          true;
+
+        previewImage.src =
+          "";
+
+        return;
+
+      }
+
+
+      if (
+        !file.type.startsWith(
+          "image/"
+        )
+      ) {
+
+        imagePreview.hidden =
+          true;
+
+        previewImage.src =
+          "";
+
+        return;
+
+      }
+
+
+      const objectUrl =
+        URL.createObjectURL(
+          file
+        );
+
+
+      previewImage.src =
+        objectUrl;
+
+      imagePreview.hidden =
+        false;
+
+    }
+  );
+
+
+  /*
+   * =====================================================
+   * SUBMIT
+   *
+   * JANGAN menggunakan fetch().
+   * JANGAN mengubah FormData menjadi JSON.
+   *
+   * Biarkan browser mengirim native multipart/form-data.
+   * =====================================================
+   */
+
+  const slideForm =
+    document.getElementById(
+      "slideForm"
+    );
+
+  const submitButton =
+    document.getElementById(
+      "submitButton"
+    );
+
+
+  slideForm?.addEventListener(
+    "submit",
+    () => {
+
+      submitButton.disabled =
+        true;
+
+      submitButton.textContent =
+        "Menyimpan...";
+
+      /*
+       * Tidak ada preventDefault().
+       *
+       * Browser akan melakukan POST
+       * multipart/form-data secara native.
+       */
+
+    }
+  );
+</script>
+
+
+<style>
+
+  /* =====================================================
+     PANEL
+  ===================================================== */
+
+  .panel {
+
+    width: 100%;
+
+    max-width: 680px;
+
+    box-sizing: border-box;
+
+    background: #ffffff;
+
+    padding: 24px;
+
+    border:
+      1px solid
+      #e2e8f0;
+
+    border-radius: 18px;
+
+    box-shadow:
+      0 12px 30px
+      rgba(
+        15,
+        23,
+        42,
+        0.06
+      );
+
+  }
+
+
+  /* =====================================================
+     FORM
+  ===================================================== */
+
+  .slide-form {
+
+    display: grid;
+
+    gap: 16px;
+
+  }
+
+
+  /* =====================================================
+     FIELD
+  ===================================================== */
+
+  .field {
+
+    display: flex;
+
+    flex-direction: column;
+
+  }
+
+
+  .field label {
+
+    display: block;
+
+    margin-bottom: 6px;
+
+    color: #475569;
+
+    font-size: 12.5px;
+
+    font-weight: 700;
+
+  }
+
+
+  .field input,
+  .field textarea {
+
+    width: 100%;
+
+    box-sizing: border-box;
+
+    padding:
+      10px 12px;
+
+    border:
+      1px solid
+      #cbd5e1;
+
+    border-radius: 9px;
+
+    outline: none;
+
+    background: #ffffff;
+
+    color: #1e293b;
+
+    font-family: inherit;
+
+    font-size: 13px;
+
+    transition:
+      border-color 0.15s ease,
+      box-shadow 0.15s ease;
+
+  }
+
+
+  .field input:focus,
+  .field textarea:focus {
+
+    border-color:
+      #2563eb;
+
+    box-shadow:
+      0 0 0 3px
+      rgba(
+        37,
+        99,
+        235,
+        0.08
+      );
+
+  }
+
+
+  .field textarea {
+
+    resize: vertical;
+
+    min-height: 90px;
+
+  }
+
+
+  .field input[type="file"] {
+
+    padding:
+      8px;
+
+    cursor: pointer;
+
+    background:
+      #f8fafc;
+
+  }
+
+
+  .field.small input {
+
+    max-width: 140px;
+
+  }
+
+
+  .field small {
+
+    margin-top: 5px;
+
+    color:
+      #94a3b8;
+
+    font-size:
+      11px;
+
+    line-height:
+      1.4;
+
+  }
+
+
+  /* =====================================================
+     PREVIEW
+  ===================================================== */
+
+  .image-preview {
+
+    width: 100%;
+
+    max-width: 420px;
+
+    border:
+      1px solid
+      #e2e8f0;
+
+    border-radius:
+      12px;
+
+    overflow: hidden;
+
+    background:
+      #f8fafc;
+
+  }
+
+
+  .image-preview img {
+
+    display: block;
+
+    width: 100%;
+
+    max-height: 220px;
+
+    object-fit: cover;
+
+  }
+
+
+  /* =====================================================
+     ERROR
+  ===================================================== */
+
+  .error {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 4px;
+
+    margin-bottom: 18px;
+
+    padding:
+      12px 14px;
+
+    border:
+      1px solid
+      #fecaca;
+
+    border-radius:
+      10px;
+
+    background:
+      #fef2f2;
+
+    color:
+      #991b1b;
+
+    font-size:
+      12.5px;
+
+    line-height:
+      1.5;
+
+  }
+
+
+  .error strong {
+
+    font-weight:
+      700;
+
+  }
+
+
+  /* =====================================================
+     ACTION
+  ===================================================== */
+
+  .form-actions {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content:
+      flex-end;
+
+    gap: 8px;
+
+    padding-top:
+      4px;
+
+  }
+
+
+  .btn-cancel {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    padding:
+      10px 18px;
+
+    border-radius:
+      9px;
+
+    background:
+      #f1f5f9;
+
+    color:
+      #334155;
+
+    text-decoration:
+      none;
+
+    font-size:
+      12.5px;
+
+    font-weight:
+      700;
+
+  }
+
+
+  .btn-cancel:hover {
+
+    background:
+      #e2e8f0;
+
+  }
+
+
+  .btn-primary {
+
+    padding:
+      10px 20px;
+
+    border:
+      none;
+
+    border-radius:
+      9px;
+
+    background:
+      #2563eb;
+
+    color:
+      #ffffff;
+
+    font-size:
+      12.5px;
+
+    font-weight:
+      700;
+
+    cursor:
+      pointer;
+
+    transition:
+      background 0.15s ease,
+      opacity 0.15s ease;
+
+  }
+
+
+  .btn-primary:hover {
+
+    background:
+      #1d4ed8;
+
+  }
+
+
+  .btn-primary:disabled {
+
+    opacity:
+      0.65;
+
+    cursor:
+      wait;
+
+  }
+
+
+  /* =====================================================
+     RESPONSIVE
+  ===================================================== */
+
+  @media (
+    max-width: 600px
+  ) {
+
+    .panel {
+
+      padding:
+        16px;
+
+      border-radius:
+        14px;
+
+    }
+
+
+    .form-actions {
+
+      flex-direction:
+        column-reverse;
+
+      align-items:
+        stretch;
+
+    }
+
+
+    .btn-cancel,
+    .btn-primary {
+
+      width:
+        100%;
+
+      box-sizing:
+        border-box;
+
+      text-align:
+        center;
+
+    }
+
+  }
+
+</style>

@@ -1,0 +1,506 @@
+---
+import AdminShell from "../../components/admin/AdminShell.astro";
+import { db } from "../../lib/db";
+
+export const prerender = false;
+
+let errorMessage = "";
+
+// =========================================================
+// AMBIL KATEGORI PPID
+// =========================================================
+
+let kategoriRows: any[] = [];
+
+try {
+  const [rows] = await db.query(`
+    SELECT
+      id,
+      nama_kategori,
+      slug
+    FROM ppid_kategori
+    ORDER BY id ASC
+  `);
+
+  kategoriRows = rows as any[];
+} catch (error: any) {
+  console.error("Gagal mengambil kategori PPID:", error);
+
+  errorMessage =
+    "Gagal mengambil kategori PPID: " + error.message;
+}
+
+// =========================================================
+// HANDLE POST
+// =========================================================
+
+if (Astro.request.method === "POST") {
+  try {
+    const formData = await Astro.request.formData();
+
+    // -----------------------------------------------------
+    // AMBIL DATA FORM
+    // -----------------------------------------------------
+
+    const kategori_id =
+      parseInt(
+        formData.get("kategori_id")?.toString() || "0"
+      );
+
+    const judul =
+      formData.get("judul")?.toString().trim() || "";
+
+    const isi =
+      formData.get("isi")?.toString() || "";
+
+    const urutan =
+      parseInt(
+        formData.get("urutan")?.toString() || "0"
+      );
+
+    // -----------------------------------------------------
+    // VALIDASI
+    // -----------------------------------------------------
+
+    if (!kategori_id) {
+      throw new Error("Kategori PPID wajib dipilih.");
+    }
+
+    if (!judul) {
+      throw new Error("Judul PPID wajib diisi.");
+    }
+
+    if (!isi.trim()) {
+      throw new Error("Isi PPID wajib diisi.");
+    }
+
+    // -----------------------------------------------------
+    // FILE
+    // -----------------------------------------------------
+
+    const file =
+      formData.get("file") as File;
+
+    let file_url: string | null = null;
+
+    if (
+      file &&
+      file instanceof File &&
+      file.name &&
+      file.size > 0
+    ) {
+      /*
+       * Untuk sementara menyimpan nama file.
+       *
+       * Jika sistem upload kamu menggunakan folder tertentu,
+       * bagian ini bisa disesuaikan.
+       */
+
+      file_url = file.name;
+    }
+
+    // -----------------------------------------------------
+    // INSERT PPID
+    // -----------------------------------------------------
+
+    await db.query(
+      `
+      INSERT INTO ppid_item
+      (
+        kategori_id,
+        judul,
+        isi,
+        file_url,
+        urutan
+      )
+      VALUES (?, ?, ?, ?, ?)
+      `,
+      [
+        kategori_id,
+        judul,
+        isi,
+        file_url,
+        urutan
+      ]
+    );
+
+    // -----------------------------------------------------
+    // REDIRECT
+    // -----------------------------------------------------
+
+    return Astro.redirect(
+      "/admin/ppid?status=success"
+    );
+
+  } catch (error: any) {
+
+    console.error(
+      "Gagal menyimpan PPID:",
+      error
+    );
+
+    errorMessage =
+      "Gagal menyimpan data PPID: " +
+      error.message;
+  }
+}
+---
+
+<AdminShell
+  title=""
+  subtitle=""
+  showHeader={false}
+>
+
+  <!-- =====================================================
+       HEADER
+  ====================================================== -->
+
+  <div class="page-header-simple">
+
+    <div>
+      <h2>Tambah PPID</h2>
+
+      <p class="page-description">
+        Tambahkan informasi PPID baru
+      </p>
+    </div>
+
+    <a
+      href="/admin/ppid"
+      class="btn-back"
+    >
+      ← Kembali
+    </a>
+
+  </div>
+
+  <!-- =====================================================
+       ERROR
+  ====================================================== -->
+
+  {errorMessage && (
+    <div class="alert-error">
+      {errorMessage}
+    </div>
+  )}
+
+  <!-- =====================================================
+       FORM
+  ====================================================== -->
+
+  <div class="card-form-container">
+
+    <form
+      method="POST"
+      enctype="multipart/form-data"
+    >
+
+      <!-- KATEGORI -->
+
+      <div class="form-group">
+
+        <label for="kategori_id">
+          Kategori PPID
+        </label>
+
+        <select
+          id="kategori_id"
+          name="kategori_id"
+          class="form-select"
+          required
+        >
+
+          <option value="">
+            -- Pilih Kategori --
+          </option>
+
+          {
+            kategoriRows.map((kategori) => (
+              <option value={kategori.id}>
+                {kategori.nama_kategori}
+              </option>
+            ))
+          }
+
+        </select>
+
+      </div>
+
+      <!-- JUDUL -->
+
+      <div class="form-group">
+
+        <label for="judul">
+          Judul
+        </label>
+
+        <input
+          type="text"
+          id="judul"
+          name="judul"
+          placeholder="Contoh: Profil Badan Publik"
+          required
+        />
+
+      </div>
+
+      <!-- ISI -->
+
+      <div class="form-group">
+
+        <label for="isi">
+          Isi Informasi
+        </label>
+
+        <textarea
+          id="isi"
+          name="isi"
+          rows="12"
+          placeholder="Masukkan informasi PPID..."
+          required
+        ></textarea>
+
+      </div>
+
+      <!-- FILE -->
+
+      <div class="form-group">
+
+        <label for="file">
+          File / Dokumen
+        </label>
+
+        <input
+          type="file"
+          id="file"
+          name="file"
+        />
+
+        <small class="form-help">
+          Upload dokumen pendukung PPID jika diperlukan.
+        </small>
+
+      </div>
+
+      <!-- URUTAN -->
+
+      <div class="form-group">
+
+        <label for="urutan">
+          Urutan Tampil
+        </label>
+
+        <input
+          type="number"
+          id="urutan"
+          name="urutan"
+          value="0"
+          min="0"
+        />
+
+        <small class="form-help">
+          Semakin kecil angka, semakin awal ditampilkan.
+        </small>
+
+      </div>
+
+      <!-- ACTION -->
+
+      <div class="form-actions">
+
+        <a
+          href="/admin/ppid"
+          class="btn-cancel"
+        >
+          Batal
+        </a>
+
+        <button
+          type="submit"
+          class="btn-submit"
+        >
+          Simpan PPID
+        </button>
+
+      </div>
+
+    </form>
+
+  </div>
+
+</AdminShell>
+
+<style>
+
+.page-header-simple {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.page-header-simple h2 {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.page-description {
+  margin: 5px 0 0;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.btn-back {
+  background: #0284c7;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.btn-back:hover {
+  background: #0369a1;
+}
+
+.card-form-container {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.04);
+  border: 1px solid #f1f5f9;
+  max-height: calc(100vh - 140px);
+  overflow-y: auto;
+}
+
+.form-group {
+  margin-bottom: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.form-group input[type="text"],
+.form-group input[type="number"],
+.form-group textarea,
+.form-group input[type="file"],
+.form-select {
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  font-size: 14px;
+  outline: none;
+  color: #334155;
+  width: 100%;
+  box-sizing: border-box;
+  background-color: white;
+  font-family: inherit;
+}
+
+.form-group textarea {
+  resize: vertical;
+  line-height: 1.6;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-select:focus {
+  border-color: #2563eb;
+  box-shadow:
+    0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.form-help {
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.btn-cancel {
+  padding: 9px 18px;
+  border-radius: 8px;
+  text-decoration: none;
+  background: #f1f5f9;
+  color: #475569;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.btn-cancel:hover {
+  background: #e2e8f0;
+}
+
+.btn-submit {
+  padding: 9px 18px;
+  border-radius: 8px;
+  border: none;
+  background: #2563eb;
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.btn-submit:hover {
+  background: #1d4ed8;
+}
+
+.alert-error {
+  background-color: #fef2f2;
+  border: 1px solid #fca5a5;
+  color: #991b1b;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+
+@media (max-width: 768px) {
+
+  .page-header-simple {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .btn-back {
+    width: 100%;
+    text-align: center;
+  }
+
+  .card-form-container {
+    padding: 18px;
+  }
+
+  .form-actions {
+    flex-direction: column-reverse;
+  }
+
+  .btn-cancel,
+  .btn-submit {
+    width: 100%;
+    text-align: center;
+  }
+
+}
+
+</style>

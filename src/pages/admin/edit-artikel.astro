@@ -1,0 +1,3493 @@
+---
+export const prerender = false;
+
+import Navbar from "../../components/admin/Navbar.astro";
+import Sidebar from "../../components/admin/Sidebar.astro";
+import { db } from "../../lib/db";
+import fs from "node:fs/promises";
+import path from "node:path";
+
+/* =========================================================
+   PARAMETER ID
+========================================================= */
+
+const url = new URL(Astro.request.url);
+const id = url.searchParams.get("id");
+
+if (!id) {
+    return Astro.redirect("/admin/artikel");
+}
+
+
+/* =========================================================
+   DATA ARTIKEL
+========================================================= */
+
+let artikel: any = null;
+let errorMessage = "";
+
+
+/* =========================================================
+   FOLDER UPLOAD
+========================================================= */
+
+const uploadDir = path.join(
+    process.cwd(),
+    "public",
+    "uploads"
+);
+
+
+/* =========================================================
+   HELPER SLUG
+========================================================= */
+
+const createSlug = (
+    value: string
+): string => {
+
+    return value
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9\s-]/g, "")
+        .replace(/\s+/g, "-")
+        .replace(/-+/g, "-")
+        .replace(/^-|-$/g, "");
+};
+
+
+/* =========================================================
+   HELPER PREFIX KATEGORI
+========================================================= */
+
+const getCategoryPrefix = (
+    category: string | number
+): string => {
+
+    const idCategory =
+        String(category).trim();
+
+    /*
+     * 1, 8 = berita
+     * 2, 3 = artikel
+     * selain itu = artikel
+     */
+
+    if (
+        ["1", "8"].includes(
+            idCategory
+        )
+    ) {
+
+        return "berita";
+    }
+
+    if (
+        ["2", "3"].includes(
+            idCategory
+        )
+    ) {
+
+        return "artikel";
+    }
+
+    return "artikel";
+};
+
+
+/* =========================================================
+   HELPER NAMA FILE
+========================================================= */
+
+const getFilename = (
+    picture: string | null | undefined
+): string => {
+
+    if (!picture) {
+        return "";
+    }
+
+    let value =
+        String(picture).trim();
+
+    if (!value) {
+        return "";
+    }
+
+
+    /* ---------------------------------------------------------
+       URL LENGKAP
+    --------------------------------------------------------- */
+
+    try {
+
+        if (
+            value.startsWith("http://") ||
+            value.startsWith("https://")
+        ) {
+
+            const parsed =
+                new URL(value);
+
+            value =
+                parsed.pathname;
+        }
+
+    } catch {
+        // Bukan URL valid
+    }
+
+
+    /* ---------------------------------------------------------
+       Normalisasi slash
+    --------------------------------------------------------- */
+
+    value =
+        value.replace(
+            /\\/g,
+            "/"
+        );
+
+
+    /* ---------------------------------------------------------
+       Ambil nama file saja
+    --------------------------------------------------------- */
+
+    return path.basename(
+        value
+    );
+};
+
+
+/* =========================================================
+   HELPER URL FOTO
+========================================================= */
+
+const getPictureUrl = (
+    picture: string | null | undefined
+): string => {
+
+    const filename =
+        getFilename(picture);
+
+    if (!filename) {
+        return "";
+    }
+
+    return `/uploads/${encodeURIComponent(filename)}`;
+};
+
+
+/* =========================================================
+   AMBIL DATA ARTIKEL
+========================================================= */
+
+try {
+
+    const [rows] =
+        await db.query(
+            `
+            SELECT *
+            FROM post
+            WHERE id_post = ?
+            LIMIT 1
+            `,
+            [id]
+        );
+
+    artikel =
+        (rows as any[])[0] ||
+        null;
+
+} catch (error: any) {
+
+    console.error(
+        "Gagal mengambil artikel:",
+        error
+    );
+
+    errorMessage =
+        error?.message ||
+        "Gagal mengambil data artikel.";
+}
+
+
+/* =========================================================
+   ARTIKEL TIDAK DITEMUKAN
+========================================================= */
+
+if (!artikel) {
+
+    return Astro.redirect(
+        "/admin/artikel"
+    );
+}
+
+
+/* =========================================================
+   FOTO LAMA
+========================================================= */
+
+const pictureDatabase =
+    artikel.picture
+        ? String(
+            artikel.picture
+        ).trim()
+        : "";
+
+
+const pictureFilename =
+    getFilename(
+        pictureDatabase
+    );
+
+
+const pictureUrl =
+    getPictureUrl(
+        pictureDatabase
+    );
+
+
+/* =========================================================
+   CEK FILE FISIK
+========================================================= */
+
+let pictureExists =
+    false;
+
+if (pictureFilename) {
+
+    try {
+
+        await fs.access(
+            path.join(
+                uploadDir,
+                pictureFilename
+            )
+        );
+
+        pictureExists =
+            true;
+
+    } catch {
+
+        pictureExists =
+            false;
+    }
+}
+
+
+/* =========================================================
+   DATA DEFAULT
+========================================================= */
+
+const artikelDate = artikel.date
+    ? new Date(artikel.date).toISOString().slice(0, 10)
+    : "";
+
+
+
+/* =========================================================
+   POST / SIMPAN
+========================================================= */
+
+if (
+    Astro.request.method === "POST"
+) {
+
+    let newUploadedFile = "";
+    let oldFileToDelete = "";
+
+    try {
+
+        const formData =
+            await Astro.request.formData();
+
+
+        /* =================================================
+           DATA FORM
+        ================================================= */
+
+        const title =
+            String(
+                formData.get("title") ||
+                ""
+            ).trim();
+
+
+        const category =
+            String(
+                formData.get("category") ||
+                ""
+            ).trim();
+
+
+        /*
+         * ref_content = ISI ARTIKEL HTML
+         */
+
+        const refContent =
+            String(
+                formData.get("ref_content") ||
+                ""
+            );
+
+
+        /*
+         * content = SLUG
+         */
+
+        const slug =
+            createSlug(
+                title
+            );
+
+
+        const content =
+            slug;
+
+
+        const active =
+            String(
+                formData.get("active") ||
+                "Y"
+            ).trim();
+
+
+        const date =
+            String(
+                formData.get("date") ||
+                ""
+            ).trim();
+
+
+        const tag =
+            String(
+                formData.get("tag") ||
+                ""
+            ).trim();
+
+
+        const seoTitle =
+            String(
+                formData.get("seotitle") ||
+                title
+            ).trim();
+
+
+        const headline =
+            String(
+                formData.get("headline") ||
+                artikel.headline ||
+                "N"
+            ).trim();
+
+
+        /* =================================================
+           VALIDASI JUDUL
+        ================================================= */
+
+        if (!title) {
+
+            throw new Error(
+                "Judul artikel wajib diisi."
+            );
+        }
+
+
+        /* =================================================
+           VALIDASI SLUG
+        ================================================= */
+
+        if (!slug) {
+
+            throw new Error(
+                "Judul menghasilkan slug kosong."
+            );
+        }
+
+
+        /* =================================================
+           VALIDASI KATEGORI
+        ================================================= */
+
+        const allowedCategories = [
+            "1",
+            "2",
+            "3",
+            "8",
+            "10",
+            "11"
+        ];
+
+
+        if (
+            !allowedCategories.includes(
+                category
+            )
+        ) {
+
+            throw new Error(
+                "Kategori artikel tidak valid."
+            );
+        }
+
+
+        /* =================================================
+           VALIDASI STATUS
+        ================================================= */
+
+        const allowedActive = [
+            "Y",
+            "N"
+        ];
+
+
+        if (
+            !allowedActive.includes(
+                active
+            )
+        ) {
+
+            throw new Error(
+                "Status artikel tidak valid."
+            );
+        }
+
+
+        /* =================================================
+           VALIDASI TANGGAL
+        ================================================= */
+
+        let tanggalFile =
+            date;
+
+
+        if (!tanggalFile) {
+
+            tanggalFile =
+                new Date()
+                    .toISOString()
+                    .slice(0, 10);
+        }
+
+
+        /*
+         * Pastikan format YYYY-MM-DD
+         */
+
+        if (
+            !/^\d{4}-\d{2}-\d{2}$/.test(
+                tanggalFile
+            )
+        ) {
+
+            throw new Error(
+                "Format tanggal tidak valid. Gunakan YYYY-MM-DD."
+            );
+        }
+
+
+        /* =================================================
+           FOTO LAMA
+        ================================================= */
+
+        const oldPicture =
+            pictureFilename;
+
+
+        let namaPicture =
+            oldPicture;
+
+
+        /* =================================================
+           CHECKBOX HAPUS FOTO
+        ================================================= */
+
+        const hapusPicture =
+            formData.get(
+                "hapus_picture"
+            ) === "Y";
+
+
+        /* =================================================
+           FILE BARU
+        ================================================= */
+
+        const pictureFile =
+            formData.get("picture");
+
+
+        const hasNewFile =
+            pictureFile instanceof File &&
+            pictureFile.size > 0 &&
+            Boolean(
+                pictureFile.name
+            );
+
+
+        /* =================================================
+           UPLOAD FOTO BARU
+        ================================================= */
+
+        if (hasNewFile) {
+
+            const file =
+                pictureFile as File;
+
+
+            /* =============================================
+               VALIDASI MIME TYPE
+            ============================================= */
+
+            const allowedTypes = [
+                "image/jpeg",
+                "image/jpg",
+                "image/png",
+                "image/webp"
+            ];
+
+
+            if (
+                !allowedTypes.includes(
+                    file.type
+                )
+            ) {
+
+                throw new Error(
+                    "Format gambar harus JPG, JPEG, PNG, atau WEBP."
+                );
+            }
+
+
+            /* =============================================
+               VALIDASI SIZE
+            ============================================= */
+
+            const maxSize =
+                5 * 1024 * 1024;
+
+
+            if (
+                file.size > maxSize
+            ) {
+
+                throw new Error(
+                    "Ukuran gambar maksimal 5 MB."
+                );
+            }
+
+
+            /* =============================================
+               BUAT FOLDER
+            ============================================= */
+
+            await fs.mkdir(
+                uploadDir,
+                {
+                    recursive: true
+                }
+            );
+
+
+            /* =============================================
+               EXTENSION
+            ============================================= */
+
+            let extension =
+                path.extname(
+                    file.name
+                ).toLowerCase();
+
+
+            const allowedExtensions = [
+                ".jpg",
+                ".jpeg",
+                ".png",
+                ".webp"
+            ];
+
+
+            if (
+                !allowedExtensions.includes(
+                    extension
+                )
+            ) {
+
+                if (
+                    file.type ===
+                    "image/jpeg"
+                ) {
+
+                    extension =
+                        ".jpg";
+
+                } else if (
+                    file.type ===
+                    "image/png"
+                ) {
+
+                    extension =
+                        ".png";
+
+                } else if (
+                    file.type ===
+                    "image/webp"
+                ) {
+
+                    extension =
+                        ".webp";
+
+                } else {
+
+                    throw new Error(
+                        "Extension gambar tidak valid."
+                    );
+                }
+            }
+
+
+            /* =============================================
+               PREFIX KATEGORI
+            ============================================= */
+
+            const categoryPrefix =
+                getCategoryPrefix(
+                    category
+                );
+
+
+            /* =============================================
+               NAMA FILE
+               
+               CONTOH:
+               
+               berita-8-mboh-bingung-aku-2026-09-04.jpg
+               
+               artikel-2-investasi-daerah-2026-09-04.jpg
+            ============================================= */
+
+            const newFilename =
+                `${categoryPrefix}-${category}-${slug}-${tanggalFile}${extension}`;
+
+
+            const newFilePath =
+                path.join(
+                    uploadDir,
+                    newFilename
+                );
+
+
+            /* =============================================
+               TULIS FILE
+            ============================================= */
+
+            const buffer =
+                Buffer.from(
+                    await file.arrayBuffer()
+                );
+
+
+            await fs.writeFile(
+                newFilePath,
+                buffer
+            );
+
+
+            /* =============================================
+               CATAT FILE BARU
+            ============================================= */
+
+            newUploadedFile =
+                newFilename;
+
+
+            namaPicture =
+                newFilename;
+
+
+            /* =============================================
+               FILE LAMA DIHAPUS SETELAH DB SUKSES
+            ============================================= */
+
+            if (
+                oldPicture &&
+                oldPicture !==
+                    newFilename
+            ) {
+
+                oldFileToDelete =
+                    oldPicture;
+            }
+
+        }
+
+
+        /* =================================================
+           HAPUS FOTO LAMA TANPA FOTO BARU
+        ================================================= */
+
+        else if (
+            hapusPicture &&
+            oldPicture
+        ) {
+
+            namaPicture =
+                "";
+
+            oldFileToDelete =
+                oldPicture;
+        }
+
+
+        /* =================================================
+           UPDATE DATABASE
+           
+           ref_content = isi HTML
+           content     = slug
+        ================================================= */
+
+        await db.query(
+            `
+            UPDATE post
+            SET
+                title = ?,
+                id_category = ?,
+                content = ?,
+                ref_content = ?,
+                seotitle = ?,
+                tag = ?,
+                date = ?,
+                active = ?,
+                headline = ?,
+                picture = ?
+            WHERE id_post = ?
+            `,
+            [
+                title,
+                category,
+                content,
+                refContent,
+                seoTitle,
+                tag,
+                tanggalFile,
+                active,
+                headline,
+                namaPicture,
+                id
+            ]
+        );
+
+
+        /* =================================================
+           HAPUS FILE LAMA SETELAH DB SUKSES
+        ================================================= */
+
+        if (
+            oldFileToDelete &&
+            oldFileToDelete !==
+                namaPicture
+        ) {
+
+            const oldFilePath =
+                path.join(
+                    uploadDir,
+                    path.basename(
+                        oldFileToDelete
+                    )
+                );
+
+
+            try {
+
+                await fs.unlink(
+                    oldFilePath
+                );
+
+                console.log(
+                    "Foto lama dihapus:",
+                    oldFileToDelete
+                );
+
+            } catch (
+                error: any
+            ) {
+
+                if (
+                    error?.code !==
+                    "ENOENT"
+                ) {
+
+                    console.warn(
+                        "Gagal menghapus foto lama:",
+                        error
+                    );
+                }
+            }
+        }
+
+
+        /* =================================================
+           REDIRECT
+        ================================================= */
+
+        return Astro.redirect(
+            "/admin/artikel"
+        );
+
+
+    } catch (
+        error: any
+    ) {
+
+        console.error(
+            "Gagal menyimpan artikel:",
+            error
+        );
+
+
+        /* =================================================
+           CLEANUP FILE BARU JIKA DB GAGAL
+        ================================================= */
+
+        if (
+            newUploadedFile
+        ) {
+
+            try {
+
+                await fs.unlink(
+                    path.join(
+                        uploadDir,
+                        path.basename(
+                            newUploadedFile
+                        )
+                    )
+                );
+
+            } catch {
+                // Abaikan cleanup
+            }
+        }
+
+
+        errorMessage =
+            `Gagal menyimpan perubahan: ${
+                error?.message ||
+                error ||
+                "Unknown error"
+            }`;
+    }
+}
+---
+
+<style>
+
+/* =========================================================
+   LAYOUT
+========================================================= */
+
+.wrapper {
+    display: flex;
+    min-height: 100vh;
+}
+
+.content {
+    flex: 1;
+    min-width: 0;
+    min-height: 100vh;
+    background: #f5f7fb;
+}
+
+.isi {
+    padding: 30px;
+}
+
+.box {
+    background: #ffffff;
+    border-radius: 14px;
+    padding: 30px;
+    box-shadow:
+        0 2px 10px rgba(0, 0, 0, .06);
+}
+
+h2.page-title {
+    margin: 0 0 25px;
+    color: #1e293b;
+    font-size: 24px;
+}
+
+
+/* =========================================================
+   FORM
+========================================================= */
+
+.form-group {
+    margin-bottom: 22px;
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #334155;
+}
+
+input[type="text"],
+input[type="date"],
+select {
+    width: 100%;
+    padding: 13px 14px;
+    border: 1px solid #cbd5e1;
+    border-radius: 9px;
+    font-size: 14px;
+    box-sizing: border-box;
+    outline: none;
+    background: #ffffff;
+    color: #1e293b;
+    transition: .2s;
+}
+
+input[type="text"]:focus,
+input[type="date"]:focus,
+select:focus {
+    border-color: #2563eb;
+    box-shadow:
+        0 0 0 3px rgba(37, 99, 235, .08);
+}
+
+
+/* =========================================================
+   PICTURE
+========================================================= */
+
+.picture-wrapper {
+    display: grid;
+    grid-template-columns: 300px minmax(0, 1fr);
+    gap: 22px;
+    align-items: start;
+}
+
+.picture-preview-box {
+    width: 100%;
+    height: 190px;
+    border: 1px solid #dbe3ef;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #f8fafc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.picture-preview {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: .2s;
+}
+
+.no-picture {
+    padding: 20px;
+    text-align: center;
+    color: #94a3b8;
+    font-size: 13px;
+}
+
+.picture-input {
+    min-width: 0;
+}
+
+.picture-input input[type="file"] {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 9px;
+    background: #ffffff;
+    color: #334155;
+}
+
+.file-name {
+    display: block;
+    margin-top: 9px;
+    font-size: 12px;
+    color: #64748b;
+    word-break: break-all;
+}
+
+.picture-help {
+    display: block;
+    margin-top: 6px;
+    font-size: 11px;
+    color: #94a3b8;
+}
+
+
+/* =========================================================
+   STATUS FOTO
+========================================================= */
+
+.picture-status {
+    margin-top: 9px;
+    padding: 8px 10px;
+    border-radius: 7px;
+    font-size: 11px;
+}
+
+.picture-status.ok {
+    background: #ecfdf5;
+    color: #047857;
+    border: 1px solid #a7f3d0;
+}
+
+.picture-status.missing {
+    background: #fff7ed;
+    color: #c2410c;
+    border: 1px solid #fed7aa;
+}
+
+
+/* =========================================================
+   HAPUS FOTO
+========================================================= */
+
+.hapus-picture-wrapper {
+    margin-top: 14px;
+}
+
+.hapus-picture-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #b91c1c;
+    font-size: 13px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.hapus-picture-label input {
+    width: auto;
+    margin: 0;
+    accent-color: #dc2626;
+}
+
+
+/* =========================================================
+   INFO NAMA FILE
+========================================================= */
+
+.filename-example {
+    margin-top: 12px;
+    padding: 11px 13px;
+    border-radius: 8px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #475569;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.filename-example strong {
+    color: #1e293b;
+}
+
+.filename-example code {
+    display: block;
+    margin-top: 5px;
+    padding: 7px 9px;
+    background: #0f172a;
+    color: #e2e8f0;
+    border-radius: 6px;
+    word-break: break-all;
+}
+
+
+/* =========================================================
+   HTML EDITOR
+========================================================= */
+
+.editor-wrapper {
+    width: 100%;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #ffffff;
+}
+
+
+/* =========================================================
+   TOOLBAR
+========================================================= */
+
+.editor-toolbar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 8px;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.toolbar-group {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    padding-right: 7px;
+    margin-right: 3px;
+    border-right: 1px solid #e2e8f0;
+}
+
+.toolbar-group:last-child {
+    border-right: none;
+}
+
+.toolbar-right {
+    margin-left: auto;
+}
+
+
+/* =========================================================
+   EDITOR BUTTON
+========================================================= */
+
+.editor-btn {
+    min-width: 34px;
+    width: auto;
+    height: 32px;
+    padding: 0 8px;
+    border: none;
+    background: transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    color: #334155;
+    font-size: 13px;
+    font-family: Arial, Helvetica, sans-serif;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    transition:
+        background .15s ease,
+        color .15s ease;
+}
+
+.editor-btn:hover {
+    background: #e2e8f0;
+}
+
+.editor-btn:active {
+    background: #cbd5e1;
+}
+
+.editor-btn.active {
+    background: #dbeafe;
+    color: #2563eb;
+}
+
+.editor-btn svg {
+    width: 17px;
+    height: 17px;
+    display: block;
+}
+
+
+/* =========================================================
+   FORMAT SELECT
+========================================================= */
+
+.editor-select {
+    height: 32px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background: #ffffff;
+    padding: 0 30px 0 9px;
+    font-size: 13px;
+    color: #334155;
+    cursor: pointer;
+    outline: none;
+}
+
+.editor-select:focus {
+    border-color: #2563eb;
+}
+
+
+/* =========================================================
+   VISUAL EDITOR
+========================================================= */
+
+.html-editor {
+    min-height: 420px;
+    padding: 20px;
+    outline: none;
+    font-size: 15px;
+    line-height: 1.7;
+    color: #1e293b;
+    background: #ffffff;
+    overflow-y: auto;
+}
+
+.html-editor:focus {
+    box-shadow:
+        inset 0 0 0 2px rgba(37, 99, 235, .08);
+}
+
+
+/* =========================================================
+   EDITOR TYPOGRAPHY
+========================================================= */
+
+.html-editor h1 {
+    font-size: 30px;
+    line-height: 1.25;
+    margin: 20px 0 12px;
+}
+
+.html-editor h2 {
+    font-size: 25px;
+    line-height: 1.3;
+    margin: 18px 0 10px;
+}
+
+.html-editor h3 {
+    font-size: 21px;
+    line-height: 1.35;
+    margin: 16px 0 8px;
+}
+
+.html-editor p {
+    margin: 0 0 12px;
+}
+
+.html-editor blockquote {
+    margin: 20px 0;
+    padding: 12px 18px;
+    border-left: 4px solid #2563eb;
+    background: #f8fafc;
+    color: #475569;
+}
+
+.html-editor ul,
+.html-editor ol {
+    margin: 10px 0 15px 25px;
+    padding-left: 20px;
+}
+
+.html-editor li {
+    margin-bottom: 5px;
+}
+
+.html-editor a {
+    color: #2563eb;
+    text-decoration: underline;
+}
+
+.html-editor img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+}
+
+.html-editor table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 15px 0;
+}
+
+.html-editor table th,
+.html-editor table td {
+    border: 1px solid #cbd5e1;
+    padding: 8px;
+}
+
+
+/* =========================================================
+   SOURCE HTML
+========================================================= */
+
+.html-source {
+    width: 100%;
+    min-height: 420px;
+    border: none;
+    outline: none;
+    resize: vertical;
+    padding: 20px;
+    box-sizing: border-box;
+    font-family:
+        "SFMono-Regular",
+        Consolas,
+        "Liberation Mono",
+        monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #e2e8f0;
+    background: #0f172a;
+    tab-size: 2;
+}
+
+
+/* =========================================================
+   EDITOR FOOTER
+========================================================= */
+
+.editor-footer {
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+    padding: 7px 12px;
+    border-top: 1px solid #e2e8f0;
+    background: #f8fafc;
+    color: #64748b;
+    font-size: 11px;
+}
+
+
+/* =========================================================
+   BUTTON
+========================================================= */
+
+.button-group {
+    display: flex;
+    gap: 10px;
+    margin-top: 30px;
+}
+
+.btn-simpan {
+    background: #2563eb;
+    color: #ffffff;
+    border: none;
+    padding: 13px 23px;
+    border-radius: 9px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: .2s;
+}
+
+.btn-simpan:hover {
+    background: #1d4ed8;
+}
+
+.btn-simpan:disabled {
+    opacity: .6;
+    cursor: not-allowed;
+}
+
+.btn-batal {
+    background: #e2e8f0;
+    color: #334155;
+    padding: 13px 23px;
+    border-radius: 9px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    transition: .2s;
+}
+
+.btn-batal:hover {
+    background: #cbd5e1;
+}
+
+
+/* =========================================================
+   ALERT
+========================================================= */
+
+.alert {
+    padding: 13px 15px;
+    border-radius: 9px;
+    margin-bottom: 20px;
+    font-size: 13px;
+}
+
+.alert-error {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 900px) {
+
+    .picture-wrapper {
+        grid-template-columns: 1fr;
+    }
+
+    .picture-preview-box {
+        max-width: 350px;
+    }
+
+    .toolbar-right {
+        margin-left: 0;
+    }
+}
+
+
+@media (max-width: 768px) {
+
+    .isi {
+        padding: 15px;
+    }
+
+    .box {
+        padding: 20px;
+    }
+
+    h2.page-title {
+        font-size: 21px;
+    }
+
+    .editor-toolbar {
+        gap: 3px;
+    }
+
+    .toolbar-group {
+        padding-right: 3px;
+        margin-right: 2px;
+    }
+
+    .editor-btn {
+        min-width: 31px;
+        height: 30px;
+        padding: 0 7px;
+    }
+
+    .editor-select {
+        max-width: 145px;
+    }
+
+    .html-editor {
+        min-height: 350px;
+        padding: 15px;
+    }
+
+    .html-source {
+        min-height: 350px;
+        padding: 15px;
+    }
+
+    .editor-footer {
+        flex-direction: column;
+        gap: 3px;
+    }
+
+    .button-group {
+        flex-direction: column;
+    }
+
+    .btn-simpan,
+    .btn-batal {
+        text-align: center;
+        width: 100%;
+        box-sizing: border-box;
+    }
+}
+
+</style>
+
+
+<div class="wrapper">
+
+    <Sidebar />
+
+    <div class="content">
+
+        <Navbar />
+
+        <div class="isi">
+
+            <div class="box">
+
+                <h2 class="page-title">
+                    Edit Artikel / Berita
+                </h2>
+
+
+                <!-- =================================================
+                     ERROR
+                ================================================== -->
+
+                {errorMessage && (
+
+                    <div class="alert alert-error">
+                        {errorMessage}
+                    </div>
+
+                )}
+
+
+                <form
+                    method="POST"
+                    enctype="multipart/form-data"
+                    id="formArtikel"
+                >
+
+
+                    <!-- =================================================
+                         JUDUL
+                    ================================================== -->
+
+                    <div class="form-group">
+
+                        <label for="title">
+                            Judul Artikel
+                        </label>
+
+                        <input
+                            type="text"
+                            id="title"
+                            name="title"
+                            value={artikel.title || ""}
+                            placeholder="Masukkan judul artikel"
+                            required
+                        />
+
+                    </div>
+
+
+                    <!-- =================================================
+                         TANGGAL
+                    ================================================== -->
+
+                    <div class="form-group">
+
+                        <label for="date">
+                            Tanggal
+                        </label>
+
+                        
+                        <input
+    type="date"
+    id="date"
+    name="date"
+    value={artikelDate}
+    required
+/>
+
+
+                    </div>
+
+
+                    <!-- =================================================
+                         GAMBAR
+                    ================================================== -->
+
+                    <div class="form-group">
+
+                        <label>
+                            Gambar Berita
+                        </label>
+
+                        <div class="picture-wrapper">
+
+
+                            <!-- PREVIEW -->
+
+                            <div>
+
+                                <div class="picture-preview-box">
+
+                                    {pictureExists && pictureUrl ? (
+
+                                        <img
+                                            id="previewPicture"
+                                            class="picture-preview"
+                                            src={pictureUrl}
+                                            alt={
+                                                artikel.title ||
+                                                "Gambar berita"
+                                            }
+                                            loading="eager"
+                                        />
+
+                                    ) : (
+
+                                        <div
+                                            id="noPicture"
+                                            class="no-picture"
+                                        >
+                                            Belum ada gambar
+                                        </div>
+
+                                    )}
+
+                                </div>
+
+
+                                {pictureDatabase && (
+
+                                    <div
+                                        class:list={[
+                                            "picture-status",
+                                            pictureExists
+                                                ? "ok"
+                                                : "missing"
+                                        ]}
+                                    >
+
+                                        {pictureExists
+                                            ? "Gambar ditemukan di /uploads/"
+                                            : "File gambar tidak ditemukan di /uploads/"}
+
+                                    </div>
+
+                                )}
+
+                            </div>
+
+
+                            <!-- INPUT -->
+
+                            <div class="picture-input">
+
+                                <input
+                                    type="file"
+                                    id="picture"
+                                    name="picture"
+                                    accept="image/jpeg,image/jpg,image/png,image/webp"
+                                />
+
+                                <span
+                                    id="fileName"
+                                    class="file-name"
+                                >
+
+                                    {pictureDatabase
+                                        ? `File saat ini: ${pictureFilename}`
+                                        : "Belum ada file"}
+
+                                </span>
+
+                                <span class="picture-help">
+                                    JPG, JPEG, PNG atau WEBP.
+                                    Maksimal 5 MB.
+                                </span>
+
+
+                                <!-- CONTOH NAMA FILE -->
+
+                                <div class="filename-example">
+
+                                    <strong>
+                                        Format nama gambar:
+                                    </strong>
+
+                                    <code id="filenameExample">
+                                        berita-{String(
+                                            artikel.id_category
+                                        )}-{createSlug(
+                                            artikel.title || ""
+                                        )}-{artikelDate || "YYYY-MM-DD"}.jpg
+                                    </code>
+
+                                </div>
+
+
+                                {pictureDatabase && (
+
+                                    <div class="hapus-picture-wrapper">
+
+                                        <label
+                                            class="hapus-picture-label"
+                                        >
+
+                                            <input
+                                                type="checkbox"
+                                                id="hapus_picture"
+                                                name="hapus_picture"
+                                                value="Y"
+                                            />
+
+                                            Hapus gambar lama
+
+                                        </label>
+
+                                    </div>
+
+                                )}
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- =================================================
+                         KATEGORI
+                    ================================================== -->
+
+                    <div class="form-group">
+
+                        <label for="category">
+                            Kategori
+                        </label>
+
+                        <select
+                            id="category"
+                            name="category"
+                        >
+
+                            <option
+                                value="8"
+                                selected={
+                                    String(
+                                        artikel.id_category
+                                    ) === "8"
+                                }
+                            >
+                                Berita Baru
+                            </option>
+
+                            <option
+                                value="2"
+                                selected={
+                                    String(
+                                        artikel.id_category
+                                    ) === "2"
+                                }
+                            >
+                                Artikel Penanaman Modal
+                            </option>
+
+                            <option
+                                value="3"
+                                selected={
+                                    String(
+                                        artikel.id_category
+                                    ) === "3"
+                                }
+                            >
+                                Artikel Perizinan
+                            </option>
+
+                            <option
+                                value="1"
+                                selected={
+                                    String(
+                                        artikel.id_category
+                                    ) === "1"
+                                }
+                            >
+                                Berita Lama
+                            </option>
+
+                            <option
+                                value="10"
+                                selected={
+                                    String(
+                                        artikel.id_category
+                                    ) === "10"
+                                }
+                            >
+                                Youtube
+                            </option>
+
+                            <option
+                                value="11"
+                                selected={
+                                    String(
+                                        artikel.id_category
+                                    ) === "11"
+                                }
+                            >
+                                Video
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <!-- =================================================
+                         SEO TITLE
+                    ================================================== -->
+
+                    <!-- <div class="form-group">
+
+                        <label for="seotitle">
+                            SEO Title
+                        </label>
+
+                        <input
+                            type="text"
+                            id="seotitle"
+                            name="seotitle"
+                            value={
+                                artikel.seotitle ||
+                                artikel.title ||
+                                ""
+                            }
+                        />
+
+                    </div>-->
+
+
+                    <!-- =================================================
+                         TAG
+                    ================================================== -->
+
+                    <!--<div class="form-group">
+
+                        <label for="tag">
+                            Tag
+                        </label>
+
+                        <input
+                            type="text"
+                            id="tag"
+                            name="tag"
+                            value={
+                                artikel.tag ||
+                                ""
+                            }
+                            placeholder="Contoh: investasi, perizinan, berita"
+                        />
+
+                    </div>-->
+
+
+                    <!-- =================================================
+                         HEADLINE
+                    ================================================== -->
+
+                    <div class="form-group">
+
+                        <label for="headline">
+                            Headline
+                        </label>
+
+                        <select
+                            id="headline"
+                            name="headline"
+                        >
+
+                            <option
+                                value="Y"
+                                selected={
+                                    artikel.headline === "Y"
+                                }
+                            >
+                                Ya
+                            </option>
+
+                            <option
+                                value="N"
+                                selected={
+                                    artikel.headline !== "Y"
+                                }
+                            >
+                                Tidak
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <!-- =================================================
+                         ISI ARTIKEL
+                         
+                         DATABASE:
+                         ref_content
+                    ================================================== -->
+
+                    <div class="form-group">
+
+                        <label>
+                            Isi Artikel
+                        </label>
+
+
+                        <div class="editor-wrapper">
+
+
+                            <!-- =================================================
+                                 TOOLBAR
+                            ================================================== -->
+
+                            <div class="editor-toolbar">
+
+
+                                <!-- UNDO / REDO -->
+
+                                <div class="toolbar-group">
+
+                                    <button
+                                        type="button"
+                                        class="editor-btn"
+                                        data-command="undo"
+                                        title="Undo"
+                                        aria-label="Undo"
+                                    >
+                                        <svg
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            stroke-width="2"
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            aria-hidden="true"
+                                        >
+                                            <path d="M9 14 4 9l5-5" />
+                                            <path d="M4 9h10a6 6 0 0 1 6 6v1" />
+                                        </svg>
+                                    </button>
+
+
+                                    <button
+                                        type="button"
+                                        class="editor-btn"
+                                        data-command="redo"
+                                        title="Redo"
+                                        aria-label="Redo"
+                                    >
+                                        <svg
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            stroke-width="2"
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            aria-hidden="true"
+                                        >
+                                            <path d="m15 14 5-5-5-5" />
+                                            <path d="M20 9H10a6 6 0 0 0-6 6v1" />
+                                        </svg>
+                                    </button>
+
+                                </div>
+
+
+                                <!-- FORMAT -->
+
+                                <div class="toolbar-group">
+
+                                    <select
+                                        id="formatBlock"
+                                        class="editor-select"
+                                        title="Format"
+                                        aria-label="Format"
+                                    >
+
+                                        <option value="p">
+                                            Paragraph
+                                        </option>
+
+                                        <option value="h1">
+                                            Heading 1
+                                        </option>
+
+                                        <option value="h2">
+                                            Heading 2
+                                        </option>
+
+                                        <option value="h3">
+                                            Heading 3
+                                        </option>
+
+                                        <option value="blockquote">
+                                            Blockquote
+                                        </option>
+
+                                    </select>
+
+                                </div>
+
+
+                                <!-- TEXT STYLE -->
+
+                                <div class="toolbar-group">
+
+                                    <button
+                                        type="button"
+                                        class="editor-btn"
+                                        data-command="bold"
+                                        title="Bold"
+                                        aria-label="Bold"
+                                    >
+                                        <strong>B</strong>
+                                    </button>
+
+
+                                    <button
+                                        type="button"
+                                        class="editor-btn"
+                                        data-command="italic"
+                                        title="Italic"
+                                        aria-label="Italic"
+                                    >
+                                        <em>I</em>
+                                    </button>
+
+
+                                    <button
+                                        type="button"
+                                        class="editor-btn"
+                                        data-command="underline"
+                                        title="Underline"
+                                        aria-label="Underline"
+                                    >
+                                        <u>U</u>
+                                    </button>
+
+
+                                    <button
+                                        type="button"
+                                        class="editor-btn"
+                                        data-command="strikeThrough"
+                                        title="Strike"
+                                        aria-label="Strike"
+                                    >
+                                        <s>S</s>
+                                    </button>
+
+                                </div>
+
+
+                                <!-- ALIGNMENT -->
+
+                                <div class="toolbar-group">
+
+                                    <button
+                                        type="button"
+                                        class="editor-btn"
+                                        data-command="justifyLeft"
+                                        title="Rata kiri"
+                                        aria-label="Rata kiri"
+                                    >
+                                        <svg
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            stroke-width="2"
+                                            stroke-linecap="round"
+                                            aria-hidden="true"
+                                        >
+                                            <line x1="4" y1="6" x2="20" y2="6" />
+                                            <line x1="4" y1="12" x2="15" y2="12" />
+                                            <line x1="4" y1="18" x2="18" y2="18" />
+                                        </svg>
+                                    </button>
+
+
+                                    <button
+                                        type="button"
+                                        class="editor-btn"
+                                        data-command="justifyCenter"
+                                        title="Rata tengah"
+                                        aria-label="Rata tengah"
+                                    >
+                                        <svg
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            stroke-width="2"
+                                            stroke-linecap="round"
+                                            aria-hidden="true"
+                                        >
+                                            <line x1="5" y1="6" x2="19" y2="6" />
+                                            <line x1="8" y1="12" x2="16" y2="12" />
+                                            <line x1="5" y1="18" x2="19" y2="18" />
+                                        </svg>
+                                    </button>
+
+
+                                    <button
+                                        type="button"
+                                        class="editor-btn"
+                                        data-command="justifyRight"
+                                        title="Rata kanan"
+                                        aria-label="Rata kanan"
+                                    >
+                                        <svg
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            stroke-width="2"
+                                            stroke-linecap="round"
+                                            aria-hidden="true"
+                                        >
+                                            <line x1="4" y1="6" x2="20" y2="6" />
+                                            <line x1="9" y1="12" x2="20" y2="12" />
+                                            <line x1="6" y1="18" x2="20" y2="18" />
+                                        </svg>
+                                    </button>
+
+                                </div>
+
+
+                                <!-- LIST -->
+
+                                <div class="toolbar-group">
+
+                                    <button
+                                        type="button"
+                                        class="editor-btn"
+                                        data-command="insertUnorderedList"
+                                        title="Bullet List"
+                                        aria-label="Bullet List"
+                                    >
+                                        <svg
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            stroke-width="2"
+                                            stroke-linecap="round"
+                                            aria-hidden="true"
+                                        >
+                                            <circle
+                                                cx="5"
+                                                cy="6"
+                                                r="1"
+                                            />
+                                            <circle
+                                                cx="5"
+                                                cy="12"
+                                                r="1"
+                                            />
+                                            <circle
+                                                cx="5"
+                                                cy="18"
+                                                r="1"
+                                            />
+                                            <line
+                                                x1="10"
+                                                y1="6"
+                                                x2="20"
+                                                y2="6"
+                                            />
+                                            <line
+                                                x1="10"
+                                                y1="12"
+                                                x2="20"
+                                                y2="12"
+                                            />
+                                            <line
+                                                x1="10"
+                                                y1="18"
+                                                x2="20"
+                                                y2="18"
+                                            />
+                                        </svg>
+                                    </button>
+
+
+                                    <button
+                                        type="button"
+                                        class="editor-btn"
+                                        data-command="insertOrderedList"
+                                        title="Numbered List"
+                                        aria-label="Numbered List"
+                                    >
+                                        <strong>1.</strong>
+                                    </button>
+
+                                </div>
+
+
+                                <!-- LINK -->
+
+                                <div class="toolbar-group">
+
+                                    <button
+                                        type="button"
+                                        class="editor-btn"
+                                        id="btnLink"
+                                        title="Insert Link"
+                                        aria-label="Insert Link"
+                                    >
+                                        <svg
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            stroke-width="2"
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            aria-hidden="true"
+                                        >
+                                            <path
+                                                d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"
+                                            />
+                                            <path
+                                                d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"
+                                            />
+                                        </svg>
+                                    </button>
+
+
+                                    <button
+                                        type="button"
+                                        class="editor-btn"
+                                        data-command="unlink"
+                                        title="Hapus Link"
+                                        aria-label="Hapus Link"
+                                    >
+                                        <span style="font-size: 13px;">
+                                            Unlink
+                                        </span>
+                                    </button>
+
+                                </div>
+
+
+                                <!-- CLEAR FORMAT -->
+
+                                <div class="toolbar-group">
+
+                                    <button
+                                        type="button"
+                                        class="editor-btn"
+                                        data-command="removeFormat"
+                                        title="Clear Formatting"
+                                        aria-label="Clear Formatting"
+                                    >
+                                        Tx
+                                    </button>
+
+                                </div>
+
+
+                                <!-- HTML -->
+
+                                <div class="toolbar-group toolbar-right">
+
+                                    <button
+                                        type="button"
+                                        class="editor-btn"
+                                        id="btnHtml"
+                                        title="HTML Source"
+                                        aria-label="HTML Source"
+                                    >
+                                        &lt;/&gt;
+                                    </button>
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- =================================================
+                                 VISUAL EDITOR
+                                 ISI DARI ref_content
+                            ================================================== -->
+
+                            <div
+                                id="htmlEditor"
+                                class="html-editor"
+                                contenteditable="true"
+                                spellcheck="true"
+                                role="textbox"
+                                aria-multiline="true"
+                            >
+                                <Fragment
+                                    set:html={
+                                        artikel.ref_content || ""
+                                    }
+                                />
+                            </div>
+
+
+                            <!-- =================================================
+                                 HTML SOURCE
+                            ================================================== -->
+
+                            <textarea
+                                id="htmlSource"
+                                class="html-source"
+                                style="display: none;"
+                                spellcheck="false"
+                            ></textarea>
+
+
+                            <!-- =================================================
+                                 VALUE DATABASE
+                                 ref_content
+                            ================================================== -->
+
+                            <textarea
+                                id="ref_content"
+                                name="ref_content"
+                                hidden
+                            >{artikel.ref_content || ""}</textarea>
+
+
+                            <!-- =================================================
+                                 FOOTER
+                            ================================================== -->
+
+                            <div class="editor-footer">
+
+                                <span id="editorStatus">
+                                    Siap
+                                </span>
+
+                                <span id="wordCount">
+                                    0 kata
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- =================================================
+                         STATUS
+                    ================================================== -->
+
+                    <div class="form-group">
+
+                        <label for="active">
+                            Status Berita
+                        </label>
+
+                        <select
+                            id="active"
+                            name="active"
+                        >
+
+                            <option
+                                value="Y"
+                                selected={
+                                    artikel.active === "Y"
+                                }
+                            >
+                                Aktif
+                            </option>
+
+                            <option
+                                value="N"
+                                selected={
+                                    artikel.active === "N"
+                                }
+                            >
+                                Nonaktif
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <!-- =================================================
+                         BUTTON
+                    ================================================== -->
+
+                    <div class="button-group">
+
+                        <button
+                            type="submit"
+                            class="btn-simpan"
+                            id="btnSimpan"
+                        >
+                            Simpan Perubahan
+                        </button>
+
+                        <a
+                            href="/admin/artikel"
+                            class="btn-batal"
+                        >
+                            Batal
+                        </a>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+/* =========================================================
+   ELEMENT
+========================================================= */
+
+const pictureInput =
+    document.getElementById(
+        "picture"
+    ) as HTMLInputElement | null;
+
+
+const fileName =
+    document.getElementById(
+        "fileName"
+    );
+
+
+const hapusPicture =
+    document.getElementById(
+        "hapus_picture"
+    ) as HTMLInputElement | null;
+
+
+const editor =
+    document.getElementById(
+        "htmlEditor"
+    ) as HTMLElement | null;
+
+
+const refContentInput =
+    document.getElementById(
+        "ref_content"
+    ) as HTMLTextAreaElement | null;
+
+
+const htmlSource =
+    document.getElementById(
+        "htmlSource"
+    ) as HTMLTextAreaElement | null;
+
+
+const form =
+    document.getElementById(
+        "formArtikel"
+    ) as HTMLFormElement | null;
+
+
+const btnHtml =
+    document.getElementById(
+        "btnHtml"
+    ) as HTMLButtonElement | null;
+
+
+const formatBlock =
+    document.getElementById(
+        "formatBlock"
+    ) as HTMLSelectElement | null;
+
+
+const btnLink =
+    document.getElementById(
+        "btnLink"
+    ) as HTMLButtonElement | null;
+
+
+const editorStatus =
+    document.getElementById(
+        "editorStatus"
+    );
+
+
+const wordCount =
+    document.getElementById(
+        "wordCount"
+    );
+
+
+const btnSimpan =
+    document.getElementById(
+        "btnSimpan"
+    ) as HTMLButtonElement | null;
+
+
+const titleInput =
+    document.getElementById(
+        "title"
+    ) as HTMLInputElement | null;
+
+
+const categoryInput =
+    document.getElementById(
+        "category"
+    ) as HTMLSelectElement | null;
+
+
+const dateInput =
+    document.getElementById(
+        "date"
+    ) as HTMLInputElement | null;
+
+
+const filenameExample =
+    document.getElementById(
+        "filenameExample"
+    );
+
+
+/* =========================================================
+   STATE
+========================================================= */
+
+let sourceMode =
+    false;
+
+
+/* =========================================================
+   HELPER SLUG CLIENT
+========================================================= */
+
+function createSlugClient(
+    value: string
+): string {
+
+    return value
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(
+            /[\u0300-\u036f]/g,
+            ""
+        )
+        .replace(
+            /[^a-z0-9\s-]/g,
+            ""
+        )
+        .replace(
+            /\s+/g,
+            "-"
+        )
+        .replace(
+            /-+/g,
+            "-"
+        )
+        .replace(
+            /^-|-$/g,
+            "");
+}
+
+
+/* =========================================================
+   PREFIX KATEGORI CLIENT
+========================================================= */
+
+function getCategoryPrefixClient(
+    category: string
+): string {
+
+    if (
+        ["1", "8"].includes(
+            category
+        )
+    ) {
+
+        return "berita";
+    }
+
+    if (
+        ["2", "3"].includes(
+            category
+        )
+    ) {
+
+        return "artikel";
+    }
+
+    return "artikel";
+}
+
+
+/* =========================================================
+   UPDATE CONTOH NAMA FILE
+========================================================= */
+
+function updateFilenameExample() {
+
+    if (
+        !filenameExample ||
+        !titleInput ||
+        !categoryInput ||
+        !dateInput
+    ) {
+        return;
+    }
+
+
+    const title =
+        titleInput.value.trim();
+
+
+    const category =
+        categoryInput.value;
+
+
+    const date =
+        dateInput.value ||
+        "YYYY-MM-DD";
+
+
+    const slug =
+        createSlugClient(
+            title
+        );
+
+
+    const prefix =
+        getCategoryPrefixClient(
+            category
+        );
+
+
+    filenameExample.textContent =
+        `${prefix}-${category}-${slug || "judul-artikel"}-${date}.jpg`;
+}
+
+
+/* =========================================================
+   UPDATE NAMA FILE SAAT INPUT
+========================================================= */
+
+titleInput?.addEventListener(
+    "input",
+    updateFilenameExample
+);
+
+
+categoryInput?.addEventListener(
+    "change",
+    updateFilenameExample
+);
+
+
+dateInput?.addEventListener(
+    "change",
+    updateFilenameExample
+);
+
+
+/* =========================================================
+   PICTURE - VALIDASI & PREVIEW
+========================================================= */
+
+pictureInput?.addEventListener(
+    "change",
+    function () {
+
+        const file =
+            this.files?.[0];
+
+
+        if (!file) {
+            return;
+        }
+
+
+        const allowedTypes = [
+            "image/jpeg",
+            "image/jpg",
+            "image/png",
+            "image/webp"
+        ];
+
+
+        /* =============================================
+           TYPE
+        ============================================= */
+
+        if (
+            !allowedTypes.includes(
+                file.type
+            )
+        ) {
+
+            alert(
+                "Format gambar harus JPG, JPEG, PNG, atau WEBP."
+            );
+
+            this.value = "";
+
+            return;
+        }
+
+
+        /* =============================================
+           SIZE
+        ============================================= */
+
+        const maxSize =
+            5 * 1024 * 1024;
+
+
+        if (
+            file.size > maxSize
+        ) {
+
+            alert(
+                "Ukuran gambar maksimal 5 MB."
+            );
+
+            this.value = "";
+
+            return;
+        }
+
+
+        /* =============================================
+           NAMA FILE
+        ============================================= */
+
+        if (fileName) {
+
+            const size =
+                (
+                    file.size /
+                    (1024 * 1024)
+                ).toFixed(2);
+
+
+            fileName.textContent =
+                `File baru: ${file.name} (${size} MB)`;
+        }
+
+
+        /* =============================================
+           MATIKAN CHECKBOX HAPUS
+        ============================================= */
+
+        if (hapusPicture) {
+
+            hapusPicture.checked =
+                false;
+        }
+
+
+        /* =============================================
+           PREVIEW
+        ============================================= */
+
+        const reader =
+            new FileReader();
+
+
+        reader.onload =
+            function (event) {
+
+                const box =
+                    document.querySelector(
+                        ".picture-preview-box"
+                    );
+
+
+                if (!box) {
+                    return;
+                }
+
+
+                box.innerHTML =
+                    "";
+
+
+                const img =
+                    document.createElement(
+                        "img"
+                    );
+
+
+                img.id =
+                    "previewPicture";
+
+
+                img.className =
+                    "picture-preview";
+
+
+                img.alt =
+                    "Preview gambar baru";
+
+
+                img.src =
+                    String(
+                        event.target?.result ||
+                        ""
+                    );
+
+
+                box.appendChild(
+                    img
+                );
+
+            };
+
+
+        reader.readAsDataURL(
+            file
+        );
+
+    }
+);
+
+
+/* =========================================================
+   CHECKBOX HAPUS FOTO
+========================================================= */
+
+hapusPicture?.addEventListener(
+    "change",
+    function () {
+
+        const preview =
+            document.getElementById(
+                "previewPicture"
+            );
+
+
+        if (this.checked) {
+
+            if (pictureInput) {
+
+                pictureInput.value =
+                    "";
+            }
+
+
+            if (preview) {
+
+                preview.style.opacity =
+                    "0.3";
+
+                preview.style.filter =
+                    "grayscale(1)";
+            }
+
+
+            if (fileName) {
+
+                fileName.textContent =
+                    "Gambar lama akan dihapus saat disimpan";
+            }
+
+        } else {
+
+            if (preview) {
+
+                preview.style.opacity =
+                    "1";
+
+                preview.style.filter =
+                    "none";
+            }
+
+
+            if (fileName) {
+
+                fileName.textContent =
+                    "Gambar lama tetap digunakan";
+            }
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   EXECUTE COMMAND
+========================================================= */
+
+function execEditorCommand(
+    command: string,
+    value: string | null = null
+) {
+
+    if (!editor) {
+        return;
+    }
+
+
+    editor.focus();
+
+
+    try {
+
+        document.execCommand(
+            command,
+            false,
+            value
+        );
+
+    } catch (error) {
+
+        console.warn(
+            `Command "${command}" tidak didukung.`,
+            error
+        );
+    }
+
+
+    updateContent();
+    updateToolbar();
+    updateWordCount();
+}
+
+
+/* =========================================================
+   TOOLBAR COMMAND
+========================================================= */
+
+document
+    .querySelectorAll<HTMLButtonElement>(
+        "[data-command]"
+    )
+    .forEach(
+        button => {
+
+            button.addEventListener(
+                "mousedown",
+                function (
+                    event
+                ) {
+
+                    event.preventDefault();
+
+                }
+            );
+
+
+            button.addEventListener(
+                "click",
+                function () {
+
+                    const command =
+                        this.dataset.command;
+
+
+                    if (!command) {
+                        return;
+                    }
+
+
+                    execEditorCommand(
+                        command
+                    );
+
+                }
+            );
+
+        }
+    );
+
+
+/* =========================================================
+   FORMAT BLOCK
+========================================================= */
+
+formatBlock?.addEventListener(
+    "change",
+    function () {
+
+        if (!this.value) {
+            return;
+        }
+
+
+        execEditorCommand(
+            "formatBlock",
+            this.value
+        );
+
+    }
+);
+
+
+/* =========================================================
+   LINK
+========================================================= */
+
+btnLink?.addEventListener(
+    "mousedown",
+    function (
+        event
+    ) {
+
+        event.preventDefault();
+
+    }
+);
+
+
+btnLink?.addEventListener(
+    "click",
+    function () {
+
+        if (!editor) {
+            return;
+        }
+
+
+        editor.focus();
+
+
+        const url =
+            prompt(
+                "Masukkan URL:",
+                "https://"
+            );
+
+
+        if (!url) {
+            return;
+        }
+
+
+        const cleanUrl =
+            url.trim();
+
+
+        if (
+            !/^https?:\/\//i.test(
+                cleanUrl
+            )
+        ) {
+
+            alert(
+                "URL harus diawali http:// atau https://"
+            );
+
+            return;
+        }
+
+
+        try {
+
+            new URL(
+                cleanUrl
+            );
+
+        } catch {
+
+            alert(
+                "URL tidak valid."
+            );
+
+            return;
+        }
+
+
+        execEditorCommand(
+            "createLink",
+            cleanUrl
+        );
+
+    }
+);
+
+
+/* =========================================================
+   EDITOR INPUT
+========================================================= */
+
+editor?.addEventListener(
+    "input",
+    function () {
+
+        updateContent();
+
+        updateWordCount();
+
+    }
+);
+
+
+/* =========================================================
+   PASTE
+========================================================= */
+
+editor?.addEventListener(
+    "paste",
+    function () {
+
+        window.setTimeout(
+            function () {
+
+                updateContent();
+                updateWordCount();
+
+            },
+            0
+        );
+
+    }
+);
+
+
+/* =========================================================
+   UPDATE REF_CONTENT
+========================================================= */
+
+function updateContent() {
+
+    if (
+        !editor ||
+        !refContentInput
+    ) {
+        return;
+    }
+
+
+    /*
+     * SIMPAN HTML KE ref_content
+     */
+
+    refContentInput.value =
+        editor.innerHTML;
+
+
+    if (editorStatus) {
+
+        editorStatus.textContent =
+            "Perubahan siap disimpan";
+    }
+
+}
+
+
+/* =========================================================
+   WORD COUNT
+========================================================= */
+
+function updateWordCount() {
+
+    if (
+        !editor ||
+        !wordCount
+    ) {
+        return;
+    }
+
+
+    const text =
+        editor.innerText
+            .trim()
+            .replace(
+                /\s+/g,
+                " "
+            );
+
+
+    const words =
+        text
+            ? text.split(" ").length
+            : 0;
+
+
+    wordCount.textContent =
+        `${words} kata`;
+
+}
+
+
+/* =========================================================
+   HTML SOURCE MODE
+========================================================= */
+
+btnHtml?.addEventListener(
+    "click",
+    function () {
+
+        if (
+            !editor ||
+            !htmlSource
+        ) {
+            return;
+        }
+
+
+        /* =============================================
+           VISUAL → SOURCE
+        ============================================= */
+
+        if (!sourceMode) {
+
+            htmlSource.value =
+                editor.innerHTML;
+
+
+            editor.style.display =
+                "none";
+
+
+            htmlSource.style.display =
+                "block";
+
+
+            btnHtml.classList.add(
+                "active"
+            );
+
+
+            btnHtml.title =
+                "Kembali ke Visual Editor";
+
+
+            if (editorStatus) {
+
+                editorStatus.textContent =
+                    "Mode HTML Source";
+            }
+
+
+            sourceMode =
+                true;
+
+
+            return;
+        }
+
+
+        /* =============================================
+           SOURCE → VISUAL
+        ============================================= */
+
+        editor.innerHTML =
+            htmlSource.value;
+
+
+        htmlSource.style.display =
+            "none";
+
+
+        editor.style.display =
+            "block";
+
+
+        btnHtml.classList.remove(
+            "active"
+        );
+
+
+        btnHtml.title =
+            "HTML Source";
+
+
+        sourceMode =
+            false;
+
+
+        updateContent();
+        updateWordCount();
+        updateToolbar();
+
+    }
+);
+
+
+/* =========================================================
+   SOURCE HTML INPUT
+========================================================= */
+
+htmlSource?.addEventListener(
+    "input",
+    function () {
+
+        if (refContentInput) {
+
+            refContentInput.value =
+                this.value;
+        }
+
+
+        if (editorStatus) {
+
+            editorStatus.textContent =
+                "HTML sedang diedit";
+        }
+
+    }
+);
+
+
+/* =========================================================
+   TOOLBAR ACTIVE STATE
+========================================================= */
+
+function updateToolbar() {
+
+    if (
+        !editor ||
+        sourceMode
+    ) {
+        return;
+    }
+
+
+    document
+        .querySelectorAll<HTMLButtonElement>(
+            "[data-command]"
+        )
+        .forEach(
+            button => {
+
+                const command =
+                    button.dataset.command;
+
+
+                if (!command) {
+                    return;
+                }
+
+
+                const supported = [
+                    "bold",
+                    "italic",
+                    "underline",
+                    "strikeThrough",
+                    "insertUnorderedList",
+                    "insertOrderedList"
+                ];
+
+
+                if (
+                    !supported.includes(
+                        command
+                    )
+                ) {
+                    return;
+                }
+
+
+                try {
+
+                    const active =
+                        document.queryCommandState(
+                            command
+                        );
+
+
+                    button.classList.toggle(
+                        "active",
+                        active
+                    );
+
+                } catch {
+                    // Browser compatibility
+                }
+
+            }
+        );
+
+}
+
+
+/* =========================================================
+   SELECTION CHANGE
+========================================================= */
+
+document.addEventListener(
+    "selectionchange",
+    function () {
+
+        if (!editor) {
+            return;
+        }
+
+
+        if (
+            document.activeElement ===
+            editor
+        ) {
+
+            updateToolbar();
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   FORM SUBMIT
+========================================================= */
+
+form?.addEventListener(
+    "submit",
+    function () {
+
+        /* =============================================
+           MODE HTML SOURCE
+        ============================================= */
+
+        if (
+            sourceMode &&
+            htmlSource &&
+            refContentInput
+        ) {
+
+            refContentInput.value =
+                htmlSource.value;
+
+        } else {
+
+            updateContent();
+
+        }
+
+
+        /* =============================================
+           VALIDASI REF_CONTENT
+        ============================================= */
+
+        const content =
+            refContentInput?.value
+                ?.trim() || "";
+
+
+        if (!content) {
+
+            alert(
+                "Isi artikel wajib diisi."
+            );
+
+            editor?.focus();
+
+            return;
+        }
+
+
+        /* =============================================
+           DISABLE BUTTON
+        ============================================= */
+
+        if (btnSimpan) {
+
+            btnSimpan.disabled =
+                true;
+
+            btnSimpan.textContent =
+                "Menyimpan...";
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   INITIAL
+========================================================= */
+
+function initializeEditor() {
+
+    if (!editor) {
+        return;
+    }
+
+
+    updateContent();
+
+    updateWordCount();
+
+    updateToolbar();
+
+    updateFilenameExample();
+
+}
+
+
+initializeEditor();
+
+</script>

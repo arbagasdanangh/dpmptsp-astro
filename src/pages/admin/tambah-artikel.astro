@@ -1,0 +1,2110 @@
+---
+import Navbar from "../../components/admin/Navbar.astro";
+import Sidebar from "../../components/admin/Sidebar.astro";
+
+export const prerender = false;
+---
+
+<style>
+/* =========================================================
+   LAYOUT
+========================================================= */
+
+.wrapper {
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+    background: #f4f7fc;
+}
+
+.content {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+    background: #f4f7fc;
+}
+
+.isi {
+    flex: 1;
+    min-width: 0;
+    overflow-y: auto;
+    padding: 30px 36px 50px;
+}
+
+.box {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 30px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 20px;
+    box-shadow: 0 12px 35px rgba(15, 23, 42, 0.07);
+    box-sizing: border-box;
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.header-form {
+    margin-bottom: 28px;
+}
+
+.header-form h2 {
+    margin: 0;
+    font-size: 23px;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.header-form p {
+    margin: 6px 0 0;
+    font-size: 14px;
+    color: #64748b;
+}
+
+
+/* =========================================================
+   FORM
+========================================================= */
+
+.form-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 220px;
+    gap: 20px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #334155;
+}
+
+input,
+select {
+    width: 100%;
+    min-height: 46px;
+    padding: 11px 14px;
+    box-sizing: border-box;
+    border: 1px solid #dbe2ea;
+    border-radius: 11px;
+    outline: none;
+    background: #f8fafc;
+    color: #0f172a;
+    font-size: 14px;
+    transition:
+        border-color .2s,
+        background .2s,
+        box-shadow .2s;
+}
+
+input:focus,
+select:focus {
+    border-color: #2563eb;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+input[type="file"] {
+    padding: 9px 12px;
+    cursor: pointer;
+}
+
+
+/* =========================================================
+   PICTURE
+========================================================= */
+
+.picture-layout {
+    display: grid;
+    grid-template-columns: 280px minmax(0, 1fr);
+    gap: 20px;
+    align-items: start;
+}
+
+.picture-preview-box {
+    width: 100%;
+    height: 180px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    border: 1px solid #dbe2ea;
+    border-radius: 12px;
+    background: #f8fafc;
+}
+
+.picture-preview {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+}
+
+.no-picture {
+    padding: 20px;
+    text-align: center;
+    color: #94a3b8;
+    font-size: 13px;
+}
+
+.picture-info {
+    margin-top: 8px;
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.picture-error {
+    display: none;
+    margin-top: 8px;
+    padding: 9px 11px;
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    background: #fef2f2;
+    color: #b91c1c;
+    font-size: 12px;
+}
+
+.picture-error.show {
+    display: block;
+}
+
+
+/* =========================================================
+   HTML EDITOR
+========================================================= */
+
+.editor {
+    width: 100%;
+    overflow: hidden;
+    border: 1px solid #dbe2ea;
+    border-radius: 12px;
+    background: #fff;
+}
+
+
+/* =========================================================
+   TOOLBAR
+========================================================= */
+
+.editor-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    padding: 8px;
+    border-bottom: 1px solid #e2e8f0;
+    background: #f8fafc;
+}
+
+.toolbar-group {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    padding-right: 6px;
+    margin-right: 3px;
+    border-right: 1px solid #e2e8f0;
+}
+
+.toolbar-group:last-child {
+    border-right: 0;
+    padding-right: 0;
+    margin-right: 0;
+}
+
+.toolbar-spacer {
+    flex: 1;
+}
+
+
+/* =========================================================
+   TOOLBAR BUTTON
+========================================================= */
+
+.editor-toolbar button {
+    min-width: 34px;
+    height: 34px;
+    padding: 0 8px;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    color: #334155;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    box-sizing: border-box;
+    transition:
+        background .15s,
+        color .15s;
+}
+
+.editor-toolbar button:hover {
+    background: #e2e8f0;
+}
+
+.editor-toolbar button.active {
+    background: #dbeafe;
+    color: #2563eb;
+}
+
+.editor-toolbar button:active {
+    transform: translateY(1px);
+}
+
+
+/* =========================================================
+   FORMAT SELECT
+========================================================= */
+
+.editor-toolbar select {
+    width: auto;
+    min-width: 125px;
+    height: 34px;
+    min-height: 34px;
+    padding: 5px 28px 5px 9px;
+    border: 1px solid #dbe2ea;
+    border-radius: 7px;
+    background: #fff;
+    color: #334155;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+
+/* =========================================================
+   VISUAL EDITOR
+========================================================= */
+
+.editor-content {
+    width: 100%;
+    min-height: 450px;
+    padding: 20px;
+    box-sizing: border-box;
+    outline: none;
+    overflow-y: auto;
+    background: #fff;
+    color: #1e293b;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 16px;
+    line-height: 1.7;
+}
+
+.editor-content:focus {
+    box-shadow: inset 0 0 0 2px rgba(37, 99, 235, 0.08);
+}
+
+.editor-content:empty::before {
+    content: attr(data-placeholder);
+    color: #94a3b8;
+    pointer-events: none;
+}
+
+
+/* =========================================================
+   EDITOR TYPOGRAPHY
+========================================================= */
+
+.editor-content p {
+    margin: 0 0 14px;
+}
+
+.editor-content h1 {
+    margin: 20px 0 12px;
+    color: #111827;
+    font-size: 30px;
+    line-height: 1.25;
+}
+
+.editor-content h2 {
+    margin: 18px 0 10px;
+    color: #111827;
+    font-size: 25px;
+    line-height: 1.3;
+}
+
+.editor-content h3 {
+    margin: 16px 0 9px;
+    color: #111827;
+    font-size: 21px;
+    line-height: 1.35;
+}
+
+.editor-content h4 {
+    margin: 15px 0 8px;
+    color: #111827;
+    font-size: 18px;
+    line-height: 1.4;
+}
+
+.editor-content blockquote {
+    margin: 20px 0;
+    padding: 12px 18px;
+    border-left: 4px solid #2563eb;
+    background: #f8fafc;
+    color: #475569;
+}
+
+.editor-content ul,
+.editor-content ol {
+    margin: 10px 0 15px 25px;
+    padding: 0;
+}
+
+.editor-content li {
+    margin-bottom: 5px;
+}
+
+.editor-content a {
+    color: #2563eb;
+    text-decoration: underline;
+}
+
+.editor-content img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 12px 0;
+    border-radius: 8px;
+}
+
+.editor-content table {
+    width: 100%;
+    margin: 15px 0;
+    border-collapse: collapse;
+}
+
+.editor-content table th,
+.editor-content table td {
+    padding: 8px;
+    border: 1px solid #d1d5db;
+}
+
+
+/* =========================================================
+   SOURCE HTML
+========================================================= */
+
+.editor-source {
+    display: none;
+    width: 100%;
+    min-height: 450px;
+    padding: 20px;
+    box-sizing: border-box;
+    border: 0;
+    outline: none;
+    resize: vertical;
+    background: #0f172a;
+    color: #e2e8f0;
+    font-family:
+        "SFMono-Regular",
+        Consolas,
+        "Liberation Mono",
+        monospace;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.editor-source.show {
+    display: block;
+}
+
+.editor-content.hide {
+    display: none;
+}
+
+
+/* =========================================================
+   EDITOR FOOTER
+========================================================= */
+
+.editor-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 8px 12px;
+    border-top: 1px solid #e2e8f0;
+    background: #f8fafc;
+    color: #64748b;
+    font-size: 11px;
+}
+
+
+/* =========================================================
+   HELP
+========================================================= */
+
+.editor-help {
+    padding: 8px 12px;
+    border-top: 1px solid #e2e8f0;
+    background: #f8fafc;
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+
+/* =========================================================
+   BUTTON
+========================================================= */
+
+.button-group {
+    display: flex;
+    gap: 12px;
+    margin-top: 28px;
+}
+
+.btn-simpan,
+.btn-batal {
+    min-height: 46px;
+    padding: 0 22px;
+    border-radius: 11px;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.btn-simpan {
+    border: 0;
+    color: #fff;
+    background: #2563eb;
+    cursor: pointer;
+}
+
+.btn-simpan:hover {
+    background: #1d4ed8;
+}
+
+.btn-simpan:disabled {
+    opacity: .7;
+    cursor: not-allowed;
+}
+
+.btn-batal {
+    text-decoration: none;
+    color: #334155;
+    background: #f1f5f9;
+}
+
+.btn-batal:hover {
+    background: #e2e8f0;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 900px) {
+
+    .isi {
+        padding: 22px 18px 40px;
+    }
+
+    .box {
+        padding: 24px 20px;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 0;
+    }
+
+    .picture-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .picture-preview-box {
+        max-width: 350px;
+    }
+}
+
+
+@media (max-width: 600px) {
+
+    .isi {
+        padding: 14px 10px 30px;
+    }
+
+    .box {
+        padding: 20px 14px;
+        border-radius: 15px;
+    }
+
+    .header-form h2 {
+        font-size: 19px;
+    }
+
+    .editor-content,
+    .editor-source {
+        min-height: 350px;
+    }
+
+    .editor-toolbar {
+        gap: 3px;
+        padding: 6px;
+    }
+
+    .toolbar-group {
+        padding-right: 3px;
+        margin-right: 2px;
+    }
+
+    .toolbar-spacer {
+        display: none;
+    }
+
+    .editor-toolbar button {
+        min-width: 31px;
+        height: 31px;
+        padding: 0 6px;
+    }
+
+    .editor-toolbar select {
+        min-width: 110px;
+        height: 31px;
+        min-height: 31px;
+    }
+
+    .editor-footer {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .button-group {
+        flex-direction: column;
+    }
+
+    .btn-simpan,
+    .btn-batal {
+        width: 100%;
+    }
+}
+</style>
+
+
+<div class="wrapper">
+
+    <Sidebar />
+
+    <div class="content">
+
+        <Navbar />
+
+        <main class="isi">
+
+            <div class="box">
+
+                <!-- =====================================================
+                     HEADER
+                ====================================================== -->
+
+                <div class="header-form">
+
+                    <h2>
+                        Tambah Artikel / Berita
+                    </h2>
+
+                    <p>
+                        Buat artikel baru dengan editor HTML.
+                    </p>
+
+                </div>
+
+
+                <!-- =====================================================
+                     FORM
+                ====================================================== -->
+
+                <form
+                    id="artikelForm"
+                    method="POST"
+                    action="/api/artikel"
+                    enctype="multipart/form-data"
+                >
+
+                    <!-- =================================================
+                         JUDUL + TANGGAL
+                    ================================================== -->
+
+                    <div class="form-row">
+
+                        <div class="form-group">
+
+                            <label for="title">
+                                Judul Artikel
+                            </label>
+
+                            <input
+                                id="title"
+                                name="title"
+                                type="text"
+                                placeholder="Masukkan judul artikel"
+                                autocomplete="off"
+                                required
+                            />
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="date">
+                                Tanggal Posting
+                            </label>
+
+                            <input
+                                id="date"
+                                name="date"
+                                type="date"
+                                required
+                            />
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- =================================================
+                         KATEGORI
+                    ================================================== -->
+
+                    <div class="form-group">
+
+                        <label for="category">
+                            Kategori
+                        </label>
+
+                        <select
+                            id="category"
+                            name="category"
+                            required
+                        >
+
+                            <option value="8">
+                                Berita Baru
+                            </option>
+
+                            <option value="2">
+                                Artikel Penanaman Modal
+                            </option>
+
+                            <option value="3">
+                                Artikel Perizinan
+                            </option>
+
+                            <option value="1">
+                                Berita Lama
+                            </option>
+
+                            <option value="10">
+                                Youtube
+                            </option>
+
+                            <option value="11">
+                                Video
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <!-- =================================================
+                         ISI ARTIKEL
+                    ================================================== -->
+
+                    <div class="form-group">
+
+                        <label>
+                            Isi Artikel
+                        </label>
+
+
+                        <div class="editor">
+
+
+                            <!-- =========================================
+                                 TOOLBAR
+                            ========================================== -->
+
+                            <div class="editor-toolbar">
+
+
+                                <!-- UNDO / REDO -->
+
+                                <div class="toolbar-group">
+
+                                    <button
+                                        type="button"
+                                        data-command="undo"
+                                        title="Undo"
+                                        aria-label="Undo"
+                                    >
+                                        &#8617;
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        data-command="redo"
+                                        title="Redo"
+                                        aria-label="Redo"
+                                    >
+                                        &#8618;
+                                    </button>
+
+                                </div>
+
+
+                                <!-- FORMAT -->
+
+                                <div class="toolbar-group">
+
+                                    <select
+                                        id="formatBlock"
+                                        title="Format teks"
+                                    >
+
+                                        <option value="p">
+                                            Paragraf
+                                        </option>
+
+                                        <option value="h1">
+                                            Heading 1
+                                        </option>
+
+                                        <option value="h2">
+                                            Heading 2
+                                        </option>
+
+                                        <option value="h3">
+                                            Heading 3
+                                        </option>
+
+                                        <option value="h4">
+                                            Heading 4
+                                        </option>
+
+                                        <option value="blockquote">
+                                            Kutipan
+                                        </option>
+
+                                    </select>
+
+                                </div>
+
+
+                                <!-- TEXT STYLE -->
+
+                                <div class="toolbar-group">
+
+                                    <button
+                                        type="button"
+                                        data-command="bold"
+                                        title="Tebal"
+                                        aria-label="Tebal"
+                                    >
+                                        <strong>B</strong>
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        data-command="italic"
+                                        title="Miring"
+                                        aria-label="Miring"
+                                    >
+                                        <em>I</em>
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        data-command="underline"
+                                        title="Garis bawah"
+                                        aria-label="Garis bawah"
+                                    >
+                                        <u>U</u>
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        data-command="strikeThrough"
+                                        title="Coret"
+                                        aria-label="Coret"
+                                    >
+                                        <s>S</s>
+                                    </button>
+
+                                </div>
+
+
+                                <!-- ALIGNMENT -->
+
+                                <div class="toolbar-group">
+
+                                    <button
+                                        type="button"
+                                        data-command="justifyLeft"
+                                        title="Rata kiri"
+                                        aria-label="Rata kiri"
+                                    >
+                                        &#8676;
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        data-command="justifyCenter"
+                                        title="Rata tengah"
+                                        aria-label="Rata tengah"
+                                    >
+                                        &#8596;
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        data-command="justifyRight"
+                                        title="Rata kanan"
+                                        aria-label="Rata kanan"
+                                    >
+                                        &#8677;
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        data-command="justifyFull"
+                                        title="Rata penuh"
+                                        aria-label="Rata penuh"
+                                    >
+                                        &#8801;
+                                    </button>
+
+                                </div>
+
+
+                                <!-- LIST -->
+
+                                <div class="toolbar-group">
+
+                                    <button
+                                        type="button"
+                                        data-command="insertUnorderedList"
+                                        title="Bullet list"
+                                        aria-label="Bullet list"
+                                    >
+                                        &#8226; List
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        data-command="insertOrderedList"
+                                        title="Numbered list"
+                                        aria-label="Numbered list"
+                                    >
+                                        1. List
+                                    </button>
+
+                                </div>
+
+
+                                <!-- LINK -->
+
+                                <div class="toolbar-group">
+
+                                    <button
+                                        type="button"
+                                        id="linkButton"
+                                        title="Masukkan link"
+                                    >
+                                        Link
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        data-command="unlink"
+                                        title="Hapus link"
+                                    >
+                                        Unlink
+                                    </button>
+
+                                </div>
+
+
+                                <!-- CLEAR -->
+
+                                <div class="toolbar-group">
+
+                                    <button
+                                        type="button"
+                                        data-command="removeFormat"
+                                        title="Hapus format"
+                                    >
+                                        Tx
+                                    </button>
+
+                                </div>
+
+
+                                <!-- SPACER -->
+
+                                <div class="toolbar-spacer"></div>
+
+
+                                <!-- HTML -->
+
+                                <div class="toolbar-group">
+
+                                    <button
+                                        type="button"
+                                        id="htmlButton"
+                                        title="Mode HTML"
+                                        aria-label="Mode HTML"
+                                    >
+                                        &lt;/&gt;
+                                    </button>
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- =========================================
+                                 VISUAL EDITOR
+                            ========================================== -->
+
+                            <div
+                                id="editorContent"
+                                class="editor-content"
+                                contenteditable="true"
+                                spellcheck="true"
+                                data-placeholder="Tulis isi artikel di sini..."
+                            ></div>
+
+
+                            <!-- =========================================
+                                 SOURCE HTML
+                            ========================================== -->
+
+                            <textarea
+                                id="editorSource"
+                                class="editor-source"
+                                spellcheck="false"
+                                aria-label="HTML source"
+                            ></textarea>
+
+
+                            <!-- =========================================
+                                 FOOTER
+                            ========================================== -->
+
+                            <div class="editor-footer">
+
+                                <span id="editorStatus">
+                                    Siap menulis
+                                </span>
+
+                                <span id="wordCount">
+                                    0 kata
+                                </span>
+
+                            </div>
+
+
+                            <!-- =========================================
+                                 HELP
+                            ========================================== -->
+
+                            <div class="editor-help">
+
+                                Gunakan mode visual untuk menulis.
+                                Klik
+                                <strong>&lt;/&gt;</strong>
+                                untuk melihat atau mengubah HTML secara langsung.
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- FIELD YANG DIKIRIM KE API -->
+
+                        <textarea
+                            id="content"
+                            name="content"
+                            hidden
+                        ></textarea>
+
+                    </div>
+
+
+                    <!-- =================================================
+                         GAMBAR UTAMA
+                    ================================================== -->
+
+                    <div class="form-group">
+
+                        <label>
+                            Gambar Utama
+                        </label>
+
+
+                        <div class="picture-layout">
+
+                            <!-- PREVIEW -->
+
+                            <div>
+
+                                <div
+                                    id="picturePreviewBox"
+                                    class="picture-preview-box"
+                                >
+
+                                    <div
+                                        id="noPicture"
+                                        class="no-picture"
+                                    >
+                                        Belum ada gambar
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- INPUT -->
+
+                            <div>
+
+                                <input
+                                    id="picture"
+                                    name="picture"
+                                    type="file"
+                                    accept="image/jpeg,image/jpg,image/png,image/webp"
+                                />
+
+
+                                <div
+                                    id="pictureInfo"
+                                    class="picture-info"
+                                >
+                                    JPG, JPEG, PNG atau WEBP.
+                                    Maksimal 5 MB.
+                                </div>
+
+
+                                <div
+                                    id="pictureError"
+                                    class="picture-error"
+                                ></div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- =================================================
+                         STATUS
+                    ================================================== -->
+
+                    <div class="form-group">
+
+                        <label for="active">
+                            Status Berita
+                        </label>
+
+                        <select
+                            id="active"
+                            name="active"
+                        >
+
+                            <option value="Y">
+                                Aktif
+                            </option>
+
+                            <option value="N">
+                                Nonaktif
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <!-- =================================================
+                         BUTTON
+                    ================================================== -->
+
+                    <div class="button-group">
+
+                        <button
+                            type="submit"
+                            id="submitButton"
+                            class="btn-simpan"
+                        >
+                            Simpan Artikel
+                        </button>
+
+                        <a
+                            href="/admin/artikel"
+                            class="btn-batal"
+                        >
+                            Batal
+                        </a>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </main>
+
+    </div>
+
+</div>
+
+
+<script>
+/* =========================================================
+   ELEMENT
+========================================================= */
+
+const editor =
+    document.getElementById("editorContent");
+
+const source =
+    document.getElementById("editorSource");
+
+const hiddenContent =
+    document.getElementById("content");
+
+const htmlButton =
+    document.getElementById("htmlButton");
+
+const form =
+    document.getElementById("artikelForm");
+
+const formatBlock =
+    document.getElementById("formatBlock");
+
+const linkButton =
+    document.getElementById("linkButton");
+
+const pictureInput =
+    document.getElementById("picture");
+
+const picturePreviewBox =
+    document.getElementById("picturePreviewBox");
+
+const pictureInfo =
+    document.getElementById("pictureInfo");
+
+const pictureError =
+    document.getElementById("pictureError");
+
+const dateInput =
+    document.getElementById("date");
+
+const editorStatus =
+    document.getElementById("editorStatus");
+
+const wordCount =
+    document.getElementById("wordCount");
+
+const submitButton =
+    document.getElementById("submitButton");
+
+
+/* =========================================================
+   STATE
+========================================================= */
+
+let htmlMode = false;
+
+
+/* =========================================================
+   HELPER STATUS
+========================================================= */
+
+function setEditorStatus(message) {
+
+    if (!editorStatus) {
+        return;
+    }
+
+    editorStatus.textContent =
+        message;
+
+}
+
+
+/* =========================================================
+   UPDATE CONTENT
+========================================================= */
+
+function updateContent() {
+
+    if (!editor || !hiddenContent) {
+        return;
+    }
+
+    if (htmlMode && source) {
+
+        hiddenContent.value =
+            source.value;
+
+    } else {
+
+        hiddenContent.value =
+            editor.innerHTML;
+
+    }
+
+}
+
+
+/* =========================================================
+   WORD COUNT
+========================================================= */
+
+function updateWordCount() {
+
+    if (!editor || !wordCount) {
+        return;
+    }
+
+    const text =
+        editor.innerText
+            .replace(/\s+/g, " ")
+            .trim();
+
+    const words =
+        text
+            ? text.split(" ").length
+            : 0;
+
+    wordCount.textContent =
+        `${words} kata`;
+
+}
+
+
+/* =========================================================
+   TOOLBAR STATE
+========================================================= */
+
+function updateToolbar() {
+
+    const commands = [
+        "bold",
+        "italic",
+        "underline",
+        "strikeThrough",
+        "insertUnorderedList",
+        "insertOrderedList"
+    ];
+
+    document
+        .querySelectorAll(
+            "[data-command]"
+        )
+        .forEach((button) => {
+
+            const command =
+                button.dataset.command;
+
+            if (!commands.includes(command)) {
+                return;
+            }
+
+            try {
+
+                const active =
+                    document.queryCommandState(
+                        command
+                    );
+
+                button.classList.toggle(
+                    "active",
+                    active
+                );
+
+            } catch {
+                // Browser tidak mendukung queryCommandState
+            }
+
+        });
+
+}
+
+
+/* =========================================================
+   EXECUTE COMMAND
+========================================================= */
+
+function executeCommand(command, value = null) {
+
+    if (!editor) {
+        return;
+    }
+
+    editor.focus();
+
+    try {
+
+        document.execCommand(
+            command,
+            false,
+            value
+        );
+
+    } catch (error) {
+
+        console.warn(
+            "Command editor gagal:",
+            command,
+            error
+        );
+
+    }
+
+    updateContent();
+    updateWordCount();
+    updateToolbar();
+
+    setEditorStatus(
+        "Perubahan siap disimpan"
+    );
+
+}
+
+
+/* =========================================================
+   TOOLBAR COMMAND
+========================================================= */
+
+document
+    .querySelectorAll("[data-command]")
+    .forEach((button) => {
+
+        button.addEventListener(
+            "mousedown",
+            (event) => {
+
+                /*
+                 * Mencegah selection editor
+                 * hilang ketika tombol toolbar diklik.
+                 */
+
+                event.preventDefault();
+
+            }
+        );
+
+
+        button.addEventListener(
+            "click",
+            () => {
+
+                if (htmlMode) {
+                    return;
+                }
+
+                executeCommand(
+                    button.dataset.command || ""
+                );
+
+            }
+        );
+
+    });
+
+
+/* =========================================================
+   FORMAT BLOCK
+========================================================= */
+
+formatBlock?.addEventListener(
+    "change",
+    () => {
+
+        if (htmlMode) {
+            return;
+        }
+
+        executeCommand(
+            "formatBlock",
+            formatBlock.value
+        );
+
+    }
+);
+
+
+/* =========================================================
+   LINK
+========================================================= */
+
+linkButton?.addEventListener(
+    "mousedown",
+    (event) => {
+
+        event.preventDefault();
+
+    }
+);
+
+
+linkButton?.addEventListener(
+    "click",
+    () => {
+
+        if (!editor || htmlMode) {
+            return;
+        }
+
+        editor.focus();
+
+        const selection =
+            window.getSelection();
+
+        const hasSelection =
+            selection &&
+            selection.toString().trim().length > 0;
+
+        if (!hasSelection) {
+
+            alert(
+                "Blok teks yang ingin dijadikan link terlebih dahulu."
+            );
+
+            return;
+
+        }
+
+        const url =
+            window.prompt(
+                "Masukkan URL:",
+                "https://"
+            );
+
+        if (!url) {
+            return;
+        }
+
+        const cleanUrl =
+            url.trim();
+
+        if (!cleanUrl) {
+            return;
+        }
+
+        executeCommand(
+            "createLink",
+            cleanUrl
+        );
+
+    }
+);
+
+
+/* =========================================================
+   EDITOR INPUT
+========================================================= */
+
+editor?.addEventListener(
+    "input",
+    () => {
+
+        if (htmlMode) {
+            return;
+        }
+
+        updateContent();
+        updateWordCount();
+
+        setEditorStatus(
+            "Perubahan siap disimpan"
+        );
+
+    }
+);
+
+
+/* =========================================================
+   KEYBOARD SHORTCUT
+========================================================= */
+
+editor?.addEventListener(
+    "keydown",
+    (event) => {
+
+        if (!event.ctrlKey && !event.metaKey) {
+            return;
+        }
+
+        const key =
+            event.key.toLowerCase();
+
+        /*
+         * Ctrl + S
+         */
+
+        if (key === "s") {
+
+            event.preventDefault();
+
+            updateContent();
+
+            setEditorStatus(
+                "Isi artikel diperbarui"
+            );
+
+            return;
+        }
+
+        /*
+         * Ctrl + B
+         * Ctrl + I
+         * Ctrl + U
+         */
+
+        if (key === "b") {
+
+            event.preventDefault();
+
+            executeCommand("bold");
+
+        }
+
+        if (key === "i") {
+
+            event.preventDefault();
+
+            executeCommand("italic");
+
+        }
+
+        if (key === "u") {
+
+            event.preventDefault();
+
+            executeCommand("underline");
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   HTML SOURCE MODE
+========================================================= */
+
+htmlButton?.addEventListener(
+    "mousedown",
+    (event) => {
+
+        event.preventDefault();
+
+    }
+);
+
+
+htmlButton?.addEventListener(
+    "click",
+    () => {
+
+        if (!editor || !source) {
+            return;
+        }
+
+
+        /* =============================================
+           VISUAL -> HTML
+        ============================================= */
+
+        if (!htmlMode) {
+
+            source.value =
+                editor.innerHTML;
+
+
+            editor.classList.add(
+                "hide"
+            );
+
+            source.classList.add(
+                "show"
+            );
+
+            htmlButton.classList.add(
+                "active"
+            );
+
+            htmlButton.title =
+                "Kembali ke editor visual";
+
+            setEditorStatus(
+                "Mode HTML Source"
+            );
+
+            htmlMode = true;
+
+            source.focus();
+
+            return;
+        }
+
+
+        /* =============================================
+           HTML -> VISUAL
+        ============================================= */
+
+        editor.innerHTML =
+            source.value;
+
+
+        source.classList.remove(
+            "show"
+        );
+
+        editor.classList.remove(
+            "hide"
+        );
+
+        htmlButton.classList.remove(
+            "active"
+        );
+
+        htmlButton.title =
+            "Mode HTML";
+
+        htmlMode = false;
+
+        updateContent();
+        updateWordCount();
+        updateToolbar();
+
+        setEditorStatus(
+            "Kembali ke editor visual"
+        );
+
+        editor.focus();
+
+    }
+);
+
+
+/* =========================================================
+   SOURCE INPUT
+========================================================= */
+
+source?.addEventListener(
+    "input",
+    () => {
+
+        if (!htmlMode) {
+            return;
+        }
+
+        hiddenContent.value =
+            source.value;
+
+        setEditorStatus(
+            "HTML sedang diedit"
+        );
+
+    }
+);
+
+
+/* =========================================================
+   SELECTION CHANGE
+========================================================= */
+
+document.addEventListener(
+    "selectionchange",
+    () => {
+
+        if (
+            !editor ||
+            htmlMode
+        ) {
+            return;
+        }
+
+        if (
+            document.activeElement === editor ||
+            editor.contains(
+                document.activeElement
+            )
+        ) {
+
+            updateToolbar();
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   TANGGAL HARI INI
+========================================================= */
+
+function setToday() {
+
+    if (!dateInput) {
+        return;
+    }
+
+    const now =
+        new Date();
+
+    const year =
+        now.getFullYear();
+
+    const month =
+        String(
+            now.getMonth() + 1
+        ).padStart(2, "0");
+
+    const day =
+        String(
+            now.getDate()
+        ).padStart(2, "0");
+
+    dateInput.value =
+        `${year}-${month}-${day}`;
+
+}
+
+setToday();
+
+
+/* =========================================================
+   PICTURE PREVIEW
+========================================================= */
+
+pictureInput?.addEventListener(
+    "change",
+    () => {
+
+        const file =
+            pictureInput.files?.[0];
+
+
+        if (!file) {
+
+            resetPicturePreview();
+
+            return;
+
+        }
+
+
+        const allowedTypes = [
+            "image/jpeg",
+            "image/jpg",
+            "image/png",
+            "image/webp"
+        ];
+
+
+        /* =============================================
+           VALIDASI TYPE
+        ============================================= */
+
+        if (
+            !allowedTypes.includes(
+                file.type
+            )
+        ) {
+
+            showPictureError(
+                "Format gambar harus JPG, JPEG, PNG, atau WEBP."
+            );
+
+            pictureInput.value =
+                "";
+
+            return;
+
+        }
+
+
+        /* =============================================
+           VALIDASI SIZE
+        ============================================= */
+
+        const maxSize =
+            5 * 1024 * 1024;
+
+
+        if (file.size > maxSize) {
+
+            showPictureError(
+                "Ukuran gambar maksimal 5 MB."
+            );
+
+            pictureInput.value =
+                "";
+
+            return;
+
+        }
+
+
+        clearPictureError();
+
+
+        const size =
+            (
+                file.size /
+                (1024 * 1024)
+            ).toFixed(2);
+
+
+        if (pictureInfo) {
+
+            pictureInfo.textContent =
+                `File: ${file.name} (${size} MB)`;
+
+        }
+
+
+        /* =============================================
+           PREVIEW
+        ============================================= */
+
+        const reader =
+            new FileReader();
+
+
+        reader.onload =
+            () => {
+
+                if (!picturePreviewBox) {
+                    return;
+                }
+
+
+                picturePreviewBox.innerHTML =
+                    "";
+
+
+                const img =
+                    document.createElement(
+                        "img"
+                    );
+
+
+                img.className =
+                    "picture-preview";
+
+                img.alt =
+                    "Preview gambar utama";
+
+                img.src =
+                    String(
+                        reader.result || ""
+                    );
+
+
+                picturePreviewBox.appendChild(
+                    img
+                );
+
+            };
+
+
+        reader.onerror =
+            () => {
+
+                showPictureError(
+                    "Gambar tidak dapat dibaca."
+                );
+
+            };
+
+
+        reader.readAsDataURL(
+            file
+        );
+
+    }
+);
+
+
+/* =========================================================
+   PICTURE ERROR
+========================================================= */
+
+function showPictureError(message) {
+
+    if (!pictureError) {
+        return;
+    }
+
+    pictureError.textContent =
+        message;
+
+    pictureError.classList.add(
+        "show"
+    );
+
+}
+
+
+function clearPictureError() {
+
+    if (!pictureError) {
+        return;
+    }
+
+    pictureError.textContent =
+        "";
+
+    pictureError.classList.remove(
+        "show"
+    );
+
+}
+
+
+/* =========================================================
+   RESET PICTURE
+========================================================= */
+
+function resetPicturePreview() {
+
+    clearPictureError();
+
+
+    if (pictureInfo) {
+
+        pictureInfo.textContent =
+            "JPG, JPEG, PNG atau WEBP. Maksimal 5 MB.";
+
+    }
+
+
+    if (picturePreviewBox) {
+
+        picturePreviewBox.innerHTML = `
+            <div class="no-picture">
+                Belum ada gambar
+            </div>
+        `;
+
+    }
+
+}
+
+
+/* =========================================================
+   FORM SUBMIT
+========================================================= */
+
+form?.addEventListener(
+    "submit",
+    (event) => {
+
+        /*
+         * Pastikan isi editor masuk
+         * ke textarea content.
+         */
+
+        if (htmlMode && source) {
+
+            hiddenContent.value =
+                source.value;
+
+        } else if (editor) {
+
+            hiddenContent.value =
+                editor.innerHTML;
+
+        }
+
+
+        /*
+         * Jangan simpan editor kosong
+         * sebagai HTML kosong yang tidak jelas.
+         */
+
+        const plainText =
+            editor?.innerText
+                ?.replace(/\s+/g, " ")
+                ?.trim() || "";
+
+
+        const html =
+            hiddenContent?.value
+                ?.trim() || "";
+
+
+        if (
+            !plainText &&
+            !html
+        ) {
+
+            event.preventDefault();
+
+            alert(
+                "Isi artikel belum diisi."
+            );
+
+            editor?.focus();
+
+            return;
+
+        }
+
+
+        /*
+         * Cegah double submit.
+         */
+
+        if (submitButton) {
+
+            submitButton.disabled =
+                true;
+
+            submitButton.textContent =
+                "Menyimpan...";
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   INITIAL
+========================================================= */
+
+updateContent();
+updateWordCount();
+updateToolbar();

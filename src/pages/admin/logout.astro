@@ -1,0 +1,27 @@
+---
+export const prerender = false;
+
+// Hapus cookie login
+Astro.cookies.delete("admin-auth", {
+  path: "/",
+});
+
+// Jangan izinkan browser menyimpan halaman
+Astro.response.headers.set(
+  "Cache-Control",
+  "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"
+);
+
+Astro.response.headers.set(
+  "Pragma",
+  "no-cache"
+);
+
+Astro.response.headers.set(
+  "Expires",
+  "0"
+);
+
+// Balik ke login
+return Astro.redirect("/admin/login", 303);
+---

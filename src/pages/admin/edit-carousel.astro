@@ -1,0 +1,1156 @@
+---
+export const prerender = false;
+
+import AdminShell from "../../components/admin/AdminShell.astro";
+import { db } from "../../lib/db.js";
+import fs from "node:fs/promises";
+import path from "node:path";
+
+let errorMsg = "";
+let slide: any = null;
+
+/* =========================================================
+   AMBIL ID DARI URL
+========================================================= */
+
+const idParam = Astro.url.searchParams.get("id");
+const id = Number(idParam);
+
+/* =========================================================
+   VALIDASI ID
+========================================================= */
+
+if (!idParam || Number.isNaN(id) || id <= 0) {
+  return Astro.redirect("/admin/carousel");
+}
+
+/* =========================================================
+   PROSES POST / UPDATE
+========================================================= */
+
+if (Astro.request.method === "POST") {
+  try {
+    const formData = await Astro.request.formData();
+
+    const judul = String(
+      formData.get("judul") || ""
+    ).trim();
+
+    const deskripsi = String(
+      formData.get("deskripsi") || ""
+    ).trim();
+
+    const urutanValue = String(
+      formData.get("urutan") || "0"
+    ).trim();
+
+    const urutan = Number(urutanValue);
+
+    const fileValue = formData.get("gambar");
+
+    /* =====================================================
+       VALIDASI URUTAN
+    ===================================================== */
+
+    if (Number.isNaN(urutan)) {
+      errorMsg = "Urutan harus berupa angka.";
+    } else {
+
+      /* ===================================================
+         AMBIL DATA LAMA
+      =================================================== */
+
+      const [rows]: any = await db.execute(
+        `
+        SELECT *
+        FROM beranda_slider
+        WHERE id = ?
+        LIMIT 1
+        `,
+        [id]
+      );
+
+      if (!rows || rows.length === 0) {
+        return Astro.redirect("/admin/carousel");
+      }
+
+      const oldSlide = rows[0];
+
+      let gambarPath = oldSlide.gambar || "";
+
+      /* ===================================================
+         JIKA ADA GAMBAR BARU
+      =================================================== */
+
+      if (
+        fileValue &&
+        typeof fileValue !== "string" &&
+        fileValue.size > 0
+      ) {
+
+        const allowedTypes = [
+          "image/jpeg",
+          "image/png",
+          "image/webp"
+        ];
+
+        if (!allowedTypes.includes(fileValue.type)) {
+
+          errorMsg =
+            "Format gambar tidak didukung. Gunakan JPG, PNG, atau WEBP.";
+
+        } else if (
+          fileValue.size > 5 * 1024 * 1024
+        ) {
+
+          errorMsg =
+            "Ukuran gambar maksimal 5MB.";
+
+        } else {
+
+          /* ===============================================
+             EXTENSION
+          =============================================== */
+
+          const extensionMap: Record<string, string> = {
+            "image/jpeg": "jpg",
+            "image/png": "png",
+            "image/webp": "webp"
+          };
+
+          const extension =
+            extensionMap[fileValue.type] || "jpg";
+
+
+          /* ===============================================
+             NAMA FILE BARU
+          =============================================== */
+
+          const fileName =
+            `${Date.now()}-${Math.random()
+              .toString(36)
+              .slice(2, 10)}.${extension}`;
+
+
+          /* ===============================================
+             FOLDER
+          =============================================== */
+
+          const uploadDir =
+            path.join(
+              process.cwd(),
+              "public",
+              "uploads",
+              "slider"
+            );
+
+
+          await fs.mkdir(
+            uploadDir,
+            {
+              recursive: true
+            }
+          );
+
+
+          /* ===============================================
+             SIMPAN FILE
+          =============================================== */
+
+          const filePath =
+            path.join(
+              uploadDir,
+              fileName
+            );
+
+          const buffer =
+            Buffer.from(
+              await fileValue.arrayBuffer()
+            );
+
+          await fs.writeFile(
+            filePath,
+            buffer
+          );
+
+
+          gambarPath =
+            `/uploads/slider/${fileName}`;
+
+
+          /* ===============================================
+             HAPUS GAMBAR LAMA
+          =============================================== */
+
+          if (
+            oldSlide.gambar &&
+            typeof oldSlide.gambar === "string"
+          ) {
+
+            try {
+
+              const oldFileName =
+                path.basename(
+                  oldSlide.gambar
+                );
+
+              const oldFilePath =
+                path.join(
+                  process.cwd(),
+                  "public",
+                  "uploads",
+                  "slider",
+                  oldFileName
+                );
+
+              await fs.unlink(
+                oldFilePath
+              );
+
+              console.log(
+                "Gambar lama dihapus:",
+                oldFilePath
+              );
+
+            } catch {
+              /*
+               * Jika file lama tidak ditemukan,
+               * update database tetap dilanjutkan.
+               */
+            }
+
+          }
+
+        }
+
+      }
+
+
+      /* ===================================================
+         JIKA VALIDASI GAMBAR GAGAL
+      =================================================== */
+
+      if (!errorMsg) {
+
+        /* ================================================
+           UPDATE DATABASE
+        ================================================ */
+
+        await db.execute(
+          `
+          UPDATE beranda_slider
+          SET
+            gambar = ?,
+            judul = ?,
+            deskripsi = ?,
+            urutan = ?
+          WHERE id = ?
+          `,
+          [
+            gambarPath,
+            judul,
+            deskripsi,
+            urutan,
+            id
+          ]
+        );
+
+
+        /* ================================================
+           SELESAI
+        ================================================ */
+
+        return Astro.redirect(
+          "/admin/carousel"
+        );
+
+      }
+
+    }
+
+  } catch (error: any) {
+
+    console.error(
+      "================================="
+    );
+
+    console.error(
+      "EDIT CAROUSEL ERROR:"
+    );
+
+    console.error(
+      error
+    );
+
+    console.error(
+      "================================="
+    );
+
+    errorMsg =
+      error?.sqlMessage ||
+      error?.message ||
+      "Terjadi kesalahan saat menyimpan perubahan.";
+
+  }
+}
+
+
+/* =========================================================
+   AMBIL DATA SLIDE
+   Dipanggil setelah POST juga jika terjadi error,
+   supaya form tetap berisi data.
+========================================================= */
+
+try {
+
+  const [rows]: any =
+    await db.execute(
+      `
+      SELECT *
+      FROM beranda_slider
+      WHERE id = ?
+      LIMIT 1
+      `,
+      [id]
+    );
+
+  if (
+    rows &&
+    rows.length > 0
+  ) {
+
+    slide =
+      rows[0];
+
+  }
+
+} catch (error) {
+
+  console.error(
+    "Gagal mengambil slide:",
+    error
+  );
+
+  errorMsg =
+    "Gagal mengambil data slide.";
+
+}
+
+
+/* =========================================================
+   JIKA DATA TIDAK ADA
+========================================================= */
+
+if (!slide) {
+  return Astro.redirect(
+    "/admin/carousel"
+  );
+}
+---
+
+<AdminShell
+  title="Edit Slide"
+  subtitle={`Mengubah banner carousel`}
+  actionLabel="Kembali ke Carousel"
+  actionHref="/admin/carousel"
+  actionIcon="<"
+>
+
+  <div class="panel">
+
+    <!-- ===================================================
+         HEADER
+    ==================================================== -->
+
+    <div class="panel-header">
+
+      <div>
+
+        <h2>
+          Edit Slide
+        </h2>
+
+        <p>
+          Ubah informasi banner carousel di bawah ini.
+        </p>
+
+      </div>
+
+    </div>
+
+
+    <!-- ===================================================
+         ERROR
+    ==================================================== -->
+
+    {
+      errorMsg && (
+
+        <div class="error">
+
+          <strong>
+            Gagal menyimpan:
+          </strong>
+
+          <span>
+            {errorMsg}
+          </span>
+
+        </div>
+
+      )
+    }
+
+
+    <!-- ===================================================
+         FORM
+    ==================================================== -->
+
+    <form
+      method="POST"
+      enctype="multipart/form-data"
+      class="slide-form"
+    >
+
+      <!-- =================================================
+           GAMBAR LAMA
+      ================================================== -->
+
+      <div class="field">
+
+        <label>
+          Gambar Saat Ini
+        </label>
+
+        {
+          slide.gambar ? (
+
+            <div class="current-image">
+
+              <img
+                src={slide.gambar}
+                alt={slide.judul || "Slide"}
+              />
+
+              <div class="current-image-info">
+
+                <strong>
+                  Gambar saat ini
+                </strong>
+
+                <span>
+                  {slide.gambar}
+                </span>
+
+              </div>
+
+            </div>
+
+          ) : (
+
+            <div class="no-image">
+              Belum ada gambar.
+            </div>
+
+          )
+        }
+
+      </div>
+
+
+      <!-- =================================================
+           GAMBAR BARU
+      ================================================== -->
+
+      <div class="field">
+
+        <label
+          for="gambar"
+        >
+          Ganti Gambar
+        </label>
+
+        <input
+          id="gambar"
+          type="file"
+          name="gambar"
+          accept="image/jpeg,image/png,image/webp"
+        />
+
+        <small>
+          Kosongkan jika tidak ingin mengganti gambar.
+          JPG, PNG, atau WEBP. Maksimal 5MB.
+        </small>
+
+      </div>
+
+
+      <!-- =================================================
+           JUDUL
+      ================================================== -->
+
+      <div class="field">
+
+        <label
+          for="judul"
+        >
+          Judul
+        </label>
+
+        <input
+          id="judul"
+          type="text"
+          name="judul"
+          value={slide.judul || ""}
+          placeholder="Judul slide"
+          maxlength="255"
+        />
+
+      </div>
+
+
+      <!-- =================================================
+           DESKRIPSI
+      ================================================== -->
+
+      <div class="field">
+
+        <label
+          for="deskripsi"
+        >
+          Deskripsi
+        </label>
+
+        <textarea
+          id="deskripsi"
+          name="deskripsi"
+          rows="4"
+          placeholder="Deskripsi singkat"
+        >{slide.deskripsi || ""}</textarea>
+
+      </div>
+
+
+      <!-- =================================================
+           URUTAN
+      ================================================== -->
+
+      <div class="field small">
+
+        <label
+          for="urutan"
+        >
+          Urutan
+        </label>
+
+        <input
+          id="urutan"
+          type="number"
+          name="urutan"
+          value={slide.urutan ?? 0}
+          min="0"
+        />
+
+      </div>
+
+
+      <!-- =================================================
+           BUTTON
+      ================================================== -->
+
+      <div class="form-actions">
+
+        <a
+          href="/admin/carousel"
+          class="btn-cancel"
+        >
+          Batal
+        </a>
+
+        <button
+          type="submit"
+          class="btn-primary"
+        >
+          Simpan Perubahan
+        </button>
+
+      </div>
+
+    </form>
+
+  </div>
+
+</AdminShell>
+
+
+<style>
+
+.panel {
+
+  background:
+    #ffffff;
+
+  padding:
+    22px;
+
+  border-radius:
+    18px;
+
+  box-shadow:
+    0 12px 30px
+    rgba(
+      15,
+      23,
+      42,
+      0.06
+    );
+
+  width:
+    100%;
+
+  max-width:
+    760px;
+
+  box-sizing:
+    border-box;
+
+}
+
+
+.panel-header {
+
+  padding-bottom:
+    15px;
+
+  margin-bottom:
+    18px;
+
+  border-bottom:
+    1px solid
+    #e2e8f0;
+
+}
+
+
+.panel-header h2 {
+
+  margin:
+    0 0 4px;
+
+  color:
+    #0f172a;
+
+  font-size:
+    18px;
+
+  font-weight:
+    750;
+
+}
+
+
+.panel-header p {
+
+  margin:
+    0;
+
+  color:
+    #64748b;
+
+  font-size:
+    13px;
+
+}
+
+
+.error {
+
+  display:
+    flex;
+
+  flex-direction:
+    column;
+
+  gap:
+    3px;
+
+  background:
+    #fee2e2;
+
+  color:
+    #991b1b;
+
+  padding:
+    11px 14px;
+
+  border-radius:
+    10px;
+
+  margin-bottom:
+    16px;
+
+  font-size:
+    13px;
+
+  border:
+    1px solid
+    #fecaca;
+
+}
+
+
+.error strong {
+
+  font-weight:
+    700;
+
+}
+
+
+/* =========================================================
+   FORM
+========================================================= */
+
+.slide-form {
+
+  display:
+    grid;
+
+  gap:
+    16px;
+
+}
+
+
+.field {
+
+  display:
+    flex;
+
+  flex-direction:
+    column;
+
+}
+
+
+.field label {
+
+  display:
+    block;
+
+  margin-bottom:
+    6px;
+
+  color:
+    #475569;
+
+  font-size:
+    12.5px;
+
+  font-weight:
+    700;
+
+}
+
+
+.field input,
+.field textarea {
+
+  width:
+    100%;
+
+  box-sizing:
+    border-box;
+
+  padding:
+    10px 12px;
+
+  border:
+    1px solid
+    #cbd5e1;
+
+  border-radius:
+    10px;
+
+  outline:
+    none;
+
+  background:
+    #ffffff;
+
+  color:
+    #1e293b;
+
+  font:
+    inherit;
+
+  font-size:
+    13px;
+
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+
+}
+
+
+.field textarea {
+
+  resize:
+    vertical;
+
+  min-height:
+    100px;
+
+}
+
+
+.field input:focus,
+.field textarea:focus {
+
+  border-color:
+    #2563eb;
+
+  box-shadow:
+    0 0 0 3px
+    rgba(
+      37,
+      99,
+      235,
+      0.08
+    );
+
+}
+
+
+.field input[type="file"] {
+
+  padding:
+    8px;
+
+  cursor:
+    pointer;
+
+}
+
+
+.field small {
+
+  margin-top:
+    5px;
+
+  color:
+    #94a3b8;
+
+  font-size:
+    11px;
+
+  line-height:
+    1.5;
+
+}
+
+
+.field.small input {
+
+  max-width:
+    140px;
+
+}
+
+
+/* =========================================================
+   CURRENT IMAGE
+========================================================= */
+
+.current-image {
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  gap:
+    14px;
+
+  padding:
+    12px;
+
+  background:
+    #f8fafc;
+
+  border:
+    1px solid
+    #e2e8f0;
+
+  border-radius:
+    12px;
+
+}
+
+
+.current-image img {
+
+  width:
+    180px;
+
+  height:
+    105px;
+
+  object-fit:
+    cover;
+
+  border-radius:
+    9px;
+
+  border:
+    1px solid
+    #e2e8f0;
+
+  background:
+    #f1f5f9;
+
+}
+
+
+.current-image-info {
+
+  min-width:
+    0;
+
+  display:
+    flex;
+
+  flex-direction:
+    column;
+
+  gap:
+    4px;
+
+}
+
+
+.current-image-info strong {
+
+  color:
+    #334155;
+
+  font-size:
+    12px;
+
+}
+
+
+.current-image-info span {
+
+  color:
+    #94a3b8;
+
+  font-size:
+    11px;
+
+  overflow:
+    hidden;
+
+  text-overflow:
+    ellipsis;
+
+  word-break:
+    break-all;
+
+}
+
+
+.no-image {
+
+  padding:
+    18px;
+
+  text-align:
+    center;
+
+  color:
+    #94a3b8;
+
+  background:
+    #f8fafc;
+
+  border:
+    1px dashed
+    #cbd5e1;
+
+  border-radius:
+    10px;
+
+  font-size:
+    12px;
+
+}
+
+
+/* =========================================================
+   ACTION
+========================================================= */
+
+.form-actions {
+
+  display:
+    flex;
+
+  justify-content:
+    flex-end;
+
+  gap:
+    8px;
+
+  padding-top:
+    8px;
+
+}
+
+
+.btn-cancel,
+.btn-primary {
+
+  display:
+    inline-flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  min-height:
+    38px;
+
+  padding:
+    0 16px;
+
+  border-radius:
+    9px;
+
+  font-size:
+    12.5px;
+
+  font-weight:
+    700;
+
+  text-decoration:
+    none;
+
+  box-sizing:
+    border-box;
+
+  cursor:
+    pointer;
+
+}
+
+
+.btn-cancel {
+
+  background:
+    #f1f5f9;
+
+  color:
+    #334155;
+
+  border:
+    1px solid
+    #e2e8f0;
+
+}
+
+
+.btn-cancel:hover {
+
+  background:
+    #e2e8f0;
+
+}
+
+
+.btn-primary {
+
+  border:
+    0;
+
+  background:
+    #1d4ed8;
+
+  color:
+    #ffffff;
+
+}
+
+
+.btn-primary:hover {
+
+  background:
+    #1e40af;
+
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (
+  max-width: 600px
+) {
+
+  .panel {
+
+    padding:
+      16px;
+
+    border-radius:
+      14px;
+
+  }
+
+
+  .current-image {
+
+    align-items:
+      flex-start;
+
+    flex-direction:
+      column;
+
+  }
+
+
+  .current-image img {
+
+    width:
+      100%;
+
+    height:
+      180px;
+
+  }
+
+
+  .form-actions {
+
+    flex-direction:
+      column-reverse;
+
+  }
+
+
+  .btn-cancel,
+  .btn-primary {
+
+    width:
+      100%;
+
+  }
+
+}
+
+</style>

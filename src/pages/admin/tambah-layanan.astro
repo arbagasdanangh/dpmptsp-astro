@@ -1,0 +1,1342 @@
+---
+export const prerender = false;
+
+import AdminShell from "../../components/admin/AdminShell.astro";
+---
+
+<AdminShell
+  title="Tambah Tempat Layanan"
+  subtitle="Tambahkan tempat layanan baru ke dalam sistem."
+>
+
+  <div class="form-container">
+
+    <!-- =====================================================
+         HEADER
+    ====================================================== -->
+
+    <div class="form-header">
+
+      <div class="form-icon">
+
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <rect
+            x="3"
+            y="3"
+            width="18"
+            height="18"
+            rx="2"
+          />
+
+          <path d="M3 9h18" />
+
+          <path d="M9 21V9" />
+
+        </svg>
+
+      </div>
+
+      <div>
+
+        <h1>
+          Tambah Tempat Layanan Website
+        </h1>
+
+        <p>
+          Gambar akan otomatis di-resize dan dikompres sebelum diupload.
+        </p>
+
+      </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         FORM
+    ====================================================== -->
+
+    <form
+      id="layanan-form"
+      enctype="multipart/form-data"
+    >
+
+      <!-- ===================================================
+           JUDUL
+      ==================================================== -->
+
+      <div class="form-group">
+
+        <label for="judul">
+          Title <span>*</span>
+        </label>
+
+        <input
+          type="text"
+          id="judul"
+          name="judul"
+          placeholder="Judul"
+          required
+          autocomplete="off"
+        />
+
+      </div>
+
+
+      <!-- ===================================================
+           GAMBAR
+      ==================================================== -->
+
+      <div class="form-group">
+
+        <label for="gambar">
+          Gambar Layanan <span>*</span>
+        </label>
+
+        <p class="form-info">
+          Format: PNG, JPG, JPEG.
+          Gambar otomatis di-resize maksimal 1600×1600 px
+          dan dikompres maksimal 2 MB.
+        </p>
+
+
+        <div class="file-upload">
+
+          <input
+            type="file"
+            id="gambar"
+            name="gambar"
+            accept=".png,.jpg,.jpeg,image/png,image/jpeg"
+            required
+          />
+
+
+          <label
+            for="gambar"
+            class="file-label"
+          >
+
+            <span id="file-name">
+              Pilih gambar
+            </span>
+
+          </label>
+
+        </div>
+
+
+        <div
+          id="image-info"
+          class="image-info"
+        ></div>
+
+      </div>
+
+
+      <!-- ===================================================
+           ALT TEXT
+      ==================================================== -->
+
+      <div class="form-group">
+
+        <label for="alt">
+          Alt Text <span>*</span>
+        </label>
+
+        <input
+          type="text"
+          id="alt"
+          name="alt_text"
+          placeholder="Alt Text"
+          required
+          autocomplete="off"
+        />
+
+      </div>
+
+
+      <!-- ===================================================
+           LOKASI
+      ==================================================== -->
+
+      <div class="form-group">
+
+        <label for="lokasi">
+          Location <span>*</span>
+        </label>
+
+        <input
+          type="url"
+          id="lokasi"
+          name="lokasi"
+          placeholder="https://www.google.com/maps"
+          required
+        />
+
+      </div>
+
+
+      <!-- ===================================================
+           ALAMAT
+      ==================================================== -->
+
+      <div class="form-group">
+
+        <label for="alamat">
+          Alamat <span>*</span>
+        </label>
+
+        <textarea
+          id="alamat"
+          name="alamat"
+          placeholder="Alamat"
+          required
+        ></textarea>
+
+      </div>
+
+
+      <!-- ===================================================
+           ACTION
+      ==================================================== -->
+
+      <div class="form-actions">
+
+        <button
+          type="button"
+          class="btn-kembali"
+          id="btn-kembali"
+        >
+          Kembali
+        </button>
+
+
+        <button
+          type="submit"
+          class="btn-tambah"
+          id="btn-tambah"
+        >
+          Tambah
+        </button>
+
+      </div>
+
+    </form>
+
+  </div>
+
+</AdminShell>
+
+
+<script>
+
+const form =
+  document.getElementById(
+    "layanan-form"
+  ) as HTMLFormElement;
+
+
+const gambarInput =
+  document.getElementById(
+    "gambar"
+  ) as HTMLInputElement;
+
+
+const fileName =
+  document.getElementById(
+    "file-name"
+  ) as HTMLElement;
+
+
+const imageInfo =
+  document.getElementById(
+    "image-info"
+  ) as HTMLElement;
+
+
+const submitButton =
+  document.getElementById(
+    "btn-tambah"
+  ) as HTMLButtonElement;
+
+
+/* =========================================================
+   CONSTANT
+========================================================= */
+
+const MAX_FILE_SIZE =
+  2 * 1024 * 1024;
+
+const MAX_WIDTH = 1600;
+
+const MAX_HEIGHT = 1600;
+
+
+/* =========================================================
+   FORMAT SIZE
+========================================================= */
+
+function formatSize(
+  bytes: number
+) {
+
+  if (
+    bytes < 1024
+  ) {
+
+    return `${bytes} B`;
+
+  }
+
+
+  if (
+    bytes < 1024 * 1024
+  ) {
+
+    return `${(
+      bytes / 1024
+    ).toFixed(1)} KB`;
+
+  }
+
+
+  return `${(
+    bytes /
+    (1024 * 1024)
+  ).toFixed(2)} MB`;
+
+}
+
+
+/* =========================================================
+   RESIZE + COMPRESS
+========================================================= */
+
+async function resizeAndCompressImage(
+  file: File
+): Promise<Blob> {
+
+  const bitmap =
+    await createImageBitmap(
+      file
+    );
+
+
+  let width =
+    bitmap.width;
+
+
+  let height =
+    bitmap.height;
+
+
+  /* =======================================================
+     HITUNG RESIZE PROPORSIONAL
+  ======================================================== */
+
+  if (
+    width > MAX_WIDTH ||
+    height > MAX_HEIGHT
+  ) {
+
+    const ratio =
+      Math.min(
+        MAX_WIDTH / width,
+        MAX_HEIGHT / height
+      );
+
+
+    width =
+      Math.round(
+        width * ratio
+      );
+
+
+    height =
+      Math.round(
+        height * ratio
+      );
+
+  }
+
+
+  /* =======================================================
+     CANVAS
+  ======================================================== */
+
+  const canvas =
+    document.createElement(
+      "canvas"
+    );
+
+
+  canvas.width =
+    width;
+
+
+  canvas.height =
+    height;
+
+
+  const ctx =
+    canvas.getContext(
+      "2d"
+    );
+
+
+  if (!ctx) {
+
+    bitmap.close();
+
+    throw new Error(
+      "Browser tidak mendukung Canvas."
+    );
+
+  }
+
+
+  /* =======================================================
+     BACKGROUND PUTIH
+     
+     Supaya PNG transparan tidak menjadi hitam
+     ketika dikonversi menjadi JPG.
+  ======================================================== */
+
+  ctx.fillStyle =
+    "#ffffff";
+
+
+  ctx.fillRect(
+    0,
+    0,
+    width,
+    height
+  );
+
+
+  ctx.drawImage(
+    bitmap,
+    0,
+    0,
+    width,
+    height
+  );
+
+
+  bitmap.close();
+
+
+  /* =======================================================
+     COMPRESS
+  ======================================================== */
+
+  let quality =
+    0.85;
+
+
+  let blob =
+    await new Promise<Blob | null>(
+      resolve => {
+
+        canvas.toBlob(
+          resolve,
+          "image/jpeg",
+          quality
+        );
+
+      }
+    );
+
+
+  if (!blob) {
+
+    throw new Error(
+      "Gagal melakukan compress gambar."
+    );
+
+  }
+
+
+  /* =======================================================
+     TURUNKAN QUALITY JIKA MASIH > 2 MB
+  ======================================================== */
+
+  while (
+    blob.size > MAX_FILE_SIZE &&
+    quality > 0.30
+  ) {
+
+    quality -= 0.05;
+
+
+    blob =
+      await new Promise<Blob | null>(
+        resolve => {
+
+          canvas.toBlob(
+            resolve,
+            "image/jpeg",
+            quality
+          );
+
+        }
+      );
+
+
+    if (!blob) {
+
+      throw new Error(
+        "Gagal melakukan compress gambar."
+      );
+
+    }
+
+  }
+
+
+  /* =======================================================
+     JIKA MASIH BESAR
+     TURUNKAN RESOLUSI
+  ======================================================== */
+
+  let currentWidth =
+    width;
+
+
+  let currentHeight =
+    height;
+
+
+  while (
+    blob.size > MAX_FILE_SIZE &&
+    currentWidth > 800
+  ) {
+
+    currentWidth =
+      Math.round(
+        currentWidth * 0.85
+      );
+
+
+    currentHeight =
+      Math.round(
+        currentHeight * 0.85
+      );
+
+
+    canvas.width =
+      currentWidth;
+
+
+    canvas.height =
+      currentHeight;
+
+
+    const resizedBitmap =
+      await createImageBitmap(
+        file
+      );
+
+
+    ctx.fillStyle =
+      "#ffffff";
+
+
+    ctx.fillRect(
+      0,
+      0,
+      currentWidth,
+      currentHeight
+    );
+
+
+    ctx.drawImage(
+      resizedBitmap,
+      0,
+      0,
+      currentWidth,
+      currentHeight
+    );
+
+
+    resizedBitmap.close();
+
+
+    blob =
+      await new Promise<Blob | null>(
+        resolve => {
+
+          canvas.toBlob(
+            resolve,
+            "image/jpeg",
+            0.75
+          );
+
+        }
+      );
+
+
+    if (!blob) {
+
+      throw new Error(
+        "Gagal melakukan resize gambar."
+      );
+
+    }
+
+  }
+
+
+  /* =======================================================
+     FINAL CHECK
+  ======================================================== */
+
+  if (
+    blob.size > MAX_FILE_SIZE
+  ) {
+
+    throw new Error(
+      "Gambar masih lebih besar dari 2 MB setelah resize."
+    );
+
+  }
+
+
+  console.log(
+    "================================="
+  );
+
+
+  console.log(
+    "Gambar asli:",
+    formatSize(file.size)
+  );
+
+
+  console.log(
+    "Gambar hasil:",
+    formatSize(blob.size)
+  );
+
+
+  console.log(
+    "Resolusi:",
+    `${canvas.width} × ${canvas.height}`
+  );
+
+
+  console.log(
+    "Quality:",
+    quality.toFixed(2)
+  );
+
+
+  console.log(
+    "================================="
+  );
+
+
+  imageInfo.innerHTML = `
+    <span>
+      ${canvas.width} × ${canvas.height}px
+    </span>
+    <span>•</span>
+    <span>
+      ${formatSize(blob.size)}
+    </span>
+  `;
+
+
+  return blob;
+
+}
+
+
+/* =========================================================
+   FILE CHANGE
+========================================================= */
+
+gambarInput.addEventListener(
+  "change",
+  async () => {
+
+    const file =
+      gambarInput.files?.[0];
+
+
+    imageInfo.innerHTML =
+      "";
+
+
+    if (!file) {
+
+      fileName.textContent =
+        "Pilih gambar";
+
+      return;
+
+    }
+
+
+    fileName.textContent =
+      file.name;
+
+
+    /* =====================================================
+       FORMAT
+    ===================================================== */
+
+    if (
+      file.type !== "image/jpeg" &&
+      file.type !== "image/png"
+    ) {
+
+      alert(
+        "Format gambar harus JPG, JPEG, atau PNG."
+      );
+
+
+      gambarInput.value =
+        "";
+
+
+      fileName.textContent =
+        "Pilih gambar";
+
+
+      return;
+
+    }
+
+
+    /* =====================================================
+       PREVIEW INFO
+    ===================================================== */
+
+    imageInfo.innerHTML =
+      `
+        <span>Ukuran asli: ${formatSize(file.size)}</span>
+      `;
+
+
+    try {
+
+      await resizeAndCompressImage(
+        file
+      );
+
+    } catch (error) {
+
+      console.error(
+        error
+      );
+
+      imageInfo.innerHTML =
+        "";
+
+
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Gagal memproses gambar."
+      );
+
+    }
+
+  }
+);
+
+
+/* =========================================================
+   KEMBALI
+========================================================= */
+
+document
+  .getElementById(
+    "btn-kembali"
+  )
+  ?.addEventListener(
+    "click",
+    () => {
+
+      window.location.href =
+        "/admin/layanan";
+
+    }
+  );
+
+
+/* =========================================================
+   SUBMIT
+========================================================= */
+
+form.addEventListener(
+  "submit",
+  async (
+    event
+  ) => {
+
+    event.preventDefault();
+
+
+    const file =
+      gambarInput.files?.[0];
+
+
+    if (!file) {
+
+      alert(
+        "Pilih gambar terlebih dahulu."
+      );
+
+      return;
+
+    }
+
+
+    /* =====================================================
+       VALIDASI FORMAT
+    ===================================================== */
+
+    if (
+      file.type !== "image/jpeg" &&
+      file.type !== "image/png"
+    ) {
+
+      alert(
+        "Format gambar harus JPG, JPEG, atau PNG."
+      );
+
+      return;
+
+    }
+
+
+    /* =====================================================
+       BUTTON LOADING
+    ===================================================== */
+
+    submitButton.disabled =
+      true;
+
+
+    submitButton.textContent =
+      "Memproses gambar...";
+
+
+    try {
+
+      /* ===================================================
+         RESIZE + COMPRESS
+      =================================================== */
+
+      const compressedBlob =
+        await resizeAndCompressImage(
+          file
+        );
+
+
+      console.log(
+        "Gambar asli:",
+        formatSize(
+          file.size
+        )
+      );
+
+
+      console.log(
+        "Gambar hasil compress:",
+        formatSize(
+          compressedBlob.size
+        )
+      );
+
+
+      /* ===================================================
+         CEK FINAL
+      =================================================== */
+
+      if (
+        compressedBlob.size >
+        MAX_FILE_SIZE
+      ) {
+
+        throw new Error(
+          "Ukuran gambar hasil compress masih lebih dari 2 MB."
+        );
+
+      }
+
+
+      /* ===================================================
+         FORM DATA
+         
+         PENTING:
+         TIDAK ADA HEADERS CONTENT-TYPE.
+      =================================================== */
+
+      const formData =
+        new FormData();
+
+
+      formData.append(
+        "judul",
+        (
+          document.getElementById(
+            "judul"
+          ) as HTMLInputElement
+        ).value.trim()
+      );
+
+
+      formData.append(
+        "deskripsi",
+        ""
+      );
+
+
+      formData.append(
+        "gambar",
+        compressedBlob,
+        "gambar.jpg"
+      );
+
+
+      formData.append(
+        "alt_text",
+        (
+          document.getElementById(
+            "alt"
+          ) as HTMLInputElement
+        ).value.trim()
+      );
+
+
+      formData.append(
+        "lokasi",
+        (
+          document.getElementById(
+            "lokasi"
+          ) as HTMLInputElement
+        ).value.trim()
+      );
+
+
+      formData.append(
+        "alamat",
+        (
+          document.getElementById(
+            "alamat"
+          ) as HTMLTextAreaElement
+        ).value.trim()
+      );
+
+
+      /* ===================================================
+         DEBUG
+      =================================================== */
+
+      console.log(
+        "===== FORM DATA ====="
+      );
+
+
+      for (
+        const [
+          key,
+          value
+        ]
+        of formData.entries()
+      ) {
+
+        if (
+          value instanceof File
+        ) {
+
+          console.log(
+            key,
+            {
+              name:
+                value.name,
+
+              type:
+                value.type,
+
+              size:
+                formatSize(
+                  value.size
+                )
+            }
+          );
+
+        } else {
+
+          console.log(
+            key,
+            value
+          );
+
+        }
+
+      }
+
+
+      /* ===================================================
+         SUBMIT
+      =================================================== */
+
+      submitButton.textContent =
+        "Menyimpan...";
+
+
+      const response =
+        await fetch(
+          "/api/layanan",
+          {
+            method: "POST",
+            body: formData
+          }
+        );
+
+
+      const result =
+        await response.json();
+
+
+      console.log(
+        "API RESULT:",
+        result
+      );
+
+
+      /* ===================================================
+         SUCCESS
+      =================================================== */
+
+      if (
+        response.ok &&
+        result.success
+      ) {
+
+        window.location.href =
+          "/admin/layanan";
+
+        return;
+
+      }
+
+
+      /* ===================================================
+         ERROR API
+      =================================================== */
+
+      alert(
+        result.error ||
+        "Gagal menambahkan data."
+      );
+
+
+    } catch (error) {
+
+      console.error(
+        "ERROR:",
+        error
+      );
+
+
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Gagal memproses gambar."
+      );
+
+
+    } finally {
+
+      submitButton.disabled =
+        false;
+
+
+      submitButton.textContent =
+        "Tambah";
+
+    }
+
+  }
+);
+
+</script>
+
+
+<style>
+
+.form-container {
+  background: white;
+  border-radius: 20px;
+  padding: 36px 42px;
+  box-shadow:
+    0 12px 30px rgba(
+      15,
+      23,
+      42,
+      0.06
+    );
+  margin-top: 20px;
+}
+
+
+.form-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 42px;
+}
+
+
+.form-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  background: #2563eb;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+
+.form-header h1 {
+  margin: 0;
+  font-size: 1.8rem;
+  color: #0f172a;
+  font-weight: 700;
+}
+
+
+.form-header p {
+  margin: 5px 0 0;
+  color: #94a3b8;
+  font-size: 0.9rem;
+}
+
+
+.form-group {
+  margin-bottom: 30px;
+}
+
+
+.form-group label {
+  display: block;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #172033;
+  margin-bottom: 10px;
+}
+
+
+.form-group label span {
+  color: #ef4444;
+}
+
+
+.form-info {
+  color: #94a3b8;
+  margin: 0 0 12px;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+
+.form-group input[type="text"],
+.form-group input[type="url"],
+.form-group textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: none;
+  outline: none;
+  background: #f1f5f9;
+  border-radius: 10px;
+  padding: 16px 20px;
+  font-size: 1rem;
+  color: #172033;
+  font-family: inherit;
+}
+
+
+.form-group input[type="text"],
+.form-group input[type="url"] {
+  height: 60px;
+}
+
+
+.form-group textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+
+.form-group input:focus,
+.form-group textarea:focus {
+  box-shadow:
+    0 0 0 2px #bfdbfe;
+}
+
+
+/* =========================================================
+   FILE UPLOAD
+========================================================= */
+
+.file-upload {
+  position: relative;
+  width: 100%;
+  min-height: 160px;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 2px dashed #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+
+.file-upload input {
+  display: none;
+}
+
+
+.file-label {
+  cursor: pointer;
+  width: 100%;
+  height: 160px;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8 !important;
+  font-weight: 500 !important;
+  margin: 0 !important;
+}
+
+
+.file-label:hover {
+  background: #f1f5f9;
+}
+
+
+/* =========================================================
+   IMAGE INFO
+========================================================= */
+
+.image-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+
+.image-info:empty {
+  display: none;
+}
+
+
+/* =========================================================
+   ACTION
+========================================================= */
+
+.form-actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+  margin-top: 40px;
+}
+
+
+.btn-tambah,
+.btn-kembali {
+  border: none;
+  border-radius: 10px;
+  padding: 14px 32px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+
+.btn-tambah {
+  background: #0ea5e9;
+  color: white;
+}
+
+
+.btn-tambah:hover {
+  background: #0284c7;
+}
+
+
+.btn-tambah:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+
+.btn-kembali {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+
+.btn-kembali:hover {
+  background: #cbd5e1;
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (
+  max-width: 768px
+) {
+
+  .form-container {
+    padding: 24px 20px;
+  }
+
+
+  .form-header {
+    align-items: flex-start;
+  }
+
+
+  .form-header h1 {
+    font-size: 1.4rem;
+  }
+
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+
+  .btn-tambah,
+  .btn-kembali {
+    width: 100%;
+  }
+
+}
+
+</style>

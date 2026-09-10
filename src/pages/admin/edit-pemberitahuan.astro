@@ -1,0 +1,1678 @@
+---
+export const prerender = false;
+
+import AdminShell from "../../components/admin/AdminShell.astro";
+import { db } from "../../lib/db.js";
+import fs from "fs/promises";
+import path from "path";
+
+// ============================================================
+// AMBIL ID
+// ============================================================
+
+const url = new URL(Astro.request.url);
+const id = url.searchParams.get("id");
+
+if (!id) {
+  return Astro.redirect("/admin/pemberitahuan");
+}
+
+// ============================================================
+// DATA AWAL
+// ============================================================
+
+let item = null;
+let errorMessage = "";
+
+try {
+  const [rows] = await db.query(
+    `
+      SELECT
+        id,
+        judul,
+        isi,
+        gambar,
+        tipe,
+        icon,
+        link,
+        teks_link,
+        urutan,
+        active,
+        mulai,
+        selesai
+      FROM notifikasi_beranda
+      WHERE id = ?
+      LIMIT 1
+    `,
+    [id]
+  );
+
+  if (!rows || rows.length === 0) {
+    return Astro.redirect("/admin/pemberitahuan");
+  }
+
+  item = rows[0];
+
+} catch (error) {
+
+  console.error(
+    "Error mengambil pemberitahuan:",
+    error
+  );
+
+  return Astro.redirect("/admin/pemberitahuan");
+}
+
+// ============================================================
+// PROSES UPDATE
+// ============================================================
+
+if (Astro.request.method === "POST") {
+
+  try {
+
+    const formData =
+      await Astro.request.formData();
+
+    const judul =
+      String(
+        formData.get("judul") || ""
+      ).trim();
+
+    const isi =
+      String(
+        formData.get("isi") || ""
+      ).trim();
+
+    const tipe =
+      String(
+        formData.get("tipe") || "info"
+      ).trim();
+
+    const icon =
+      String(
+        formData.get("icon") || "fa-circle-info"
+      ).trim();
+
+    const link =
+      String(
+        formData.get("link") || ""
+      ).trim();
+
+    const teks_link =
+      String(
+        formData.get("teks_link") || ""
+      ).trim();
+
+    const urutanValue =
+      String(
+        formData.get("urutan") || "0"
+      ).trim();
+
+    const urutan =
+      parseInt(
+        urutanValue,
+        10
+      ) || 0;
+
+    const active =
+      String(
+        formData.get("active") || "Y"
+      ).trim();
+
+    const mulaiRaw =
+      String(
+        formData.get("mulai") || ""
+      ).trim();
+
+    const selesaiRaw =
+      String(
+        formData.get("selesai") || ""
+      ).trim();
+
+    // ========================================================
+    // VALIDASI
+    // ========================================================
+
+    if (!judul) {
+      errorMessage =
+        "Judul wajib diisi.";
+    } else {
+
+      // ======================================================
+      // GAMBAR LAMA
+      // ======================================================
+
+      let gambar =
+        item.gambar || null;
+
+      // ======================================================
+      // HAPUS GAMBAR
+      // ======================================================
+
+      const hapusGambar =
+        formData.get("hapus_gambar") === "Y";
+
+      if (hapusGambar) {
+        gambar = null;
+      }
+
+      // ======================================================
+      // UPLOAD GAMBAR BARU
+      // ======================================================
+
+      const file =
+        formData.get("gambar");
+
+      if (
+        file &&
+        typeof file === "object" &&
+        "size" in file &&
+        file.size > 0
+      ) {
+
+        // Maksimal 5 MB
+        if (
+          file.size >
+          5 * 1024 * 1024
+        ) {
+
+          errorMessage =
+            "Ukuran gambar maksimal 5 MB.";
+
+        } else {
+
+          const allowedTypes = [
+            "image/jpeg",
+            "image/png",
+            "image/gif",
+            "image/webp"
+          ];
+
+          if (
+            !allowedTypes.includes(
+              file.type
+            )
+          ) {
+
+            errorMessage =
+              "Format gambar harus JPG, PNG, GIF, atau WEBP.";
+
+          } else {
+
+            const originalName =
+              file.name || "";
+
+            const originalExt =
+              path.extname(
+                originalName
+              ).toLowerCase();
+
+            const allowedExt =
+              [
+                ".jpg",
+                ".jpeg",
+                ".png",
+                ".gif",
+                ".webp"
+              ];
+
+            if (
+              !allowedExt.includes(
+                originalExt
+              )
+            ) {
+
+              errorMessage =
+                "Ekstensi gambar tidak valid.";
+
+            } else {
+
+              const uploadDir =
+                path.join(
+                  process.cwd(),
+                  "public/uploads"
+                );
+
+              await fs.mkdir(
+                uploadDir,
+                {
+                  recursive: true
+                }
+              );
+
+              const filename =
+                `pemberitahuan_${Date.now()}${originalExt}`;
+
+              const uploadPath =
+                path.join(
+                  uploadDir,
+                  filename
+                );
+
+              const buffer =
+                await file.arrayBuffer();
+
+              await fs.writeFile(
+                uploadPath,
+                Buffer.from(buffer)
+              );
+
+              gambar =
+                `/uploads/${filename}`;
+
+              console.log(
+                `✓ Gambar berhasil diupload: ${filename}`
+              );
+            }
+          }
+        }
+      }
+
+      // ======================================================
+      // UPDATE DATABASE
+      // ======================================================
+
+      if (!errorMessage) {
+
+        await db.query(
+          `
+            UPDATE notifikasi_beranda
+            SET
+              judul = ?,
+              isi = ?,
+              gambar = ?,
+              tipe = ?,
+              icon = ?,
+              link = ?,
+              teks_link = ?,
+              urutan = ?,
+              active = ?,
+              mulai = ?,
+              selesai = ?
+            WHERE id = ?
+          `,
+          [
+            judul,
+            isi,
+            gambar,
+            tipe,
+            icon,
+            link || null,
+            teks_link || null,
+            urutan,
+            active,
+            mulaiRaw || null,
+            selesaiRaw || null,
+            id
+          ]
+        );
+
+        return Astro.redirect(
+          "/admin/pemberitahuan"
+        );
+      }
+    }
+
+  } catch (error) {
+
+    console.error(
+      "Error update pemberitahuan:",
+      error
+    );
+
+    errorMessage =
+      "Terjadi kesalahan saat menyimpan perubahan.";
+  }
+}
+
+// ============================================================
+// FORMAT DATETIME UNTUK INPUT
+// ============================================================
+
+function formatDateTime(value) {
+
+  if (!value) {
+    return "";
+  }
+
+  const date =
+    new Date(value);
+
+  if (isNaN(date.getTime())) {
+    return "";
+  }
+
+  const year =
+    date.getFullYear();
+
+  const month =
+    String(
+      date.getMonth() + 1
+    ).padStart(2, "0");
+
+  const day =
+    String(
+      date.getDate()
+    ).padStart(2, "0");
+
+  const hours =
+    String(
+      date.getHours()
+    ).padStart(2, "0");
+
+  const minutes =
+    String(
+      date.getMinutes()
+    ).padStart(2, "0");
+
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
+const mulaiValue =
+  formatDateTime(item.mulai);
+
+const selesaiValue =
+  formatDateTime(item.selesai);
+---
+
+<AdminShell
+  title="Edit Pemberitahuan"
+  subtitle="Perbarui pemberitahuan yang ditampilkan pada halaman beranda."
+  actionLabel="Kembali"
+  actionHref="/admin/pemberitahuan"
+>
+
+  <div class="form-container">
+
+    <!-- ======================================================
+         ERROR
+    ======================================================= -->
+
+    {errorMessage && (
+
+      <div class="alert-error">
+
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="19"
+          height="19"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <circle
+            cx="12"
+            cy="12"
+            r="10"
+          ></circle>
+
+          <line
+            x1="12"
+            y1="8"
+            x2="12"
+            y2="12"
+          ></line>
+
+          <line
+            x1="12"
+            y1="16"
+            x2="12.01"
+            y2="16"
+          ></line>
+        </svg>
+
+        <span>
+          {errorMessage}
+        </span>
+
+      </div>
+
+    )}
+
+
+    <!-- ======================================================
+         FORM
+    ======================================================= -->
+
+    <form
+      method="POST"
+      enctype="multipart/form-data"
+      class="form"
+    >
+
+      <!-- ====================================================
+           GAMBAR
+      ===================================================== -->
+
+      <div class="form-group">
+
+        <label
+          for="gambar"
+          class="form-label"
+        >
+
+          <span class="label-icon">
+
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="17"
+              height="17"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <rect
+                x="3"
+                y="3"
+                width="18"
+                height="18"
+                rx="2"
+                ry="2"
+              ></rect>
+
+              <circle
+                cx="8.5"
+                cy="8.5"
+                r="1.5"
+              ></circle>
+
+              <polyline
+                points="21 15 16 10 5 21"
+              ></polyline>
+            </svg>
+
+          </span>
+
+          Gambar
+
+        </label>
+
+
+        <div
+          class="file-upload"
+          id="fileUpload"
+        >
+
+          <input
+            type="file"
+            id="gambar"
+            name="gambar"
+            accept="image/jpeg,image/png,image/gif,image/webp"
+          />
+
+          <label
+            for="gambar"
+            class="file-label"
+          >
+
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="42"
+              height="42"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.7"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+
+              <path
+                d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+              ></path>
+
+              <polyline
+                points="17 8 12 3 7 8"
+              ></polyline>
+
+              <line
+                x1="12"
+                y1="3"
+                x2="12"
+                y2="15"
+              ></line>
+
+            </svg>
+
+            <span class="upload-text">
+              Klik untuk memilih gambar baru
+            </span>
+
+            <span class="upload-hint">
+              JPG, PNG, GIF, WEBP · Maksimal 5 MB
+            </span>
+
+          </label>
+
+        </div>
+
+
+        <!-- PREVIEW -->
+
+        <div
+          id="preview-container"
+          class="preview-container"
+        >
+
+          {item.gambar && (
+
+            <div
+              class="preview-image current-image"
+              id="currentPreview"
+            >
+
+              <img
+                src={item.gambar}
+                alt={item.judul || "Gambar pemberitahuan"}
+              />
+
+              <span class="preview-label">
+                Gambar saat ini
+              </span>
+
+              <button
+                type="button"
+                class="preview-remove"
+                id="removeCurrentImage"
+                title="Hapus gambar"
+              >
+                ×
+              </button>
+
+            </div>
+
+          )}
+
+        </div>
+
+        <input
+          type="hidden"
+          name="hapus_gambar"
+          id="hapusGambar"
+          value="N"
+        />
+
+      </div>
+
+
+      <!-- ====================================================
+           JUDUL
+      ===================================================== -->
+
+      <div class="form-group">
+
+        <label
+          for="judul"
+          class="form-label"
+        >
+          Judul <span>*</span>
+        </label>
+
+        <input
+          type="text"
+          id="judul"
+          name="judul"
+          value={item.judul || ""}
+          placeholder="Masukkan judul pemberitahuan"
+          required
+        />
+
+      </div>
+
+
+      <!-- ====================================================
+           ISI
+      ===================================================== -->
+
+      <div class="form-group">
+
+        <label
+          for="isi"
+          class="form-label"
+        >
+          Isi Pemberitahuan
+        </label>
+
+        <textarea
+          id="isi"
+          name="isi"
+          rows="6"
+          placeholder="Masukkan isi pemberitahuan..."
+        >{item.isi || ""}</textarea>
+
+      </div>
+
+
+      <!-- ====================================================
+           TIPE + ICON
+      ===================================================== -->
+
+      <div class="form-row">
+
+        <div class="form-group">
+
+          <label
+            for="tipe"
+            class="form-label"
+          >
+            Tipe
+          </label>
+
+          <select
+            id="tipe"
+            name="tipe"
+          >
+
+            <option
+              value="info"
+              selected={item.tipe === "info"}
+            >
+              Info
+            </option>
+
+            <option
+              value="warning"
+              selected={item.tipe === "warning"}
+            >
+              Warning
+            </option>
+
+            <option
+              value="success"
+              selected={item.tipe === "success"}
+            >
+              Success
+            </option>
+
+            <option
+              value="danger"
+              selected={item.tipe === "danger"}
+            >
+              Danger
+            </option>
+
+            <option
+              value="modal"
+              selected={item.tipe === "modal"}
+            >
+              Modal
+            </option>
+
+          </select>
+
+        </div>
+
+
+        <div class="form-group">
+
+          <label
+            for="icon"
+            class="form-label"
+          >
+            Icon
+          </label>
+
+          <div class="icon-input">
+
+            <span id="iconPreview">
+              <i class={`fa ${item.icon || "fa-circle-info"}`}></i>
+            </span>
+
+            <input
+              type="text"
+              id="icon"
+              name="icon"
+              value={item.icon || "fa-circle-info"}
+              placeholder="fa-circle-info"
+            />
+
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <!-- ====================================================
+           LINK + TEKS LINK
+      ===================================================== -->
+
+      <div class="form-row">
+
+        <div class="form-group">
+
+          <label
+            for="link"
+            class="form-label"
+          >
+            Link URL
+          </label>
+
+          <input
+            type="text"
+            id="link"
+            name="link"
+            value={item.link || ""}
+            placeholder="/berita atau https://example.com"
+          />
+
+        </div>
+
+
+        <div class="form-group">
+
+          <label
+            for="teks_link"
+            class="form-label"
+          >
+            Teks Tombol
+          </label>
+
+          <input
+            type="text"
+            id="teks_link"
+            name="teks_link"
+            value={item.teks_link || ""}
+            placeholder="Selengkapnya"
+          />
+
+        </div>
+
+      </div>
+
+
+      <!-- ====================================================
+           URUTAN + STATUS
+      ===================================================== -->
+
+      <div class="form-row">
+
+        <div class="form-group">
+
+          <label
+            for="urutan"
+            class="form-label"
+          >
+            Urutan
+          </label>
+
+          <input
+            type="number"
+            id="urutan"
+            name="urutan"
+            value={item.urutan ?? 0}
+            min="0"
+            step="1"
+          />
+
+          <small class="form-hint">
+            Semakin kecil angka, semakin awal ditampilkan.
+          </small>
+
+        </div>
+
+
+        <div class="form-group">
+
+          <label
+            for="active"
+            class="form-label"
+          >
+            Status
+          </label>
+
+          <select
+            id="active"
+            name="active"
+          >
+
+            <option
+              value="Y"
+              selected={item.active === "Y"}
+            >
+              Aktif
+            </option>
+
+            <option
+              value="N"
+              selected={item.active === "N"}
+            >
+              Nonaktif
+            </option>
+
+          </select>
+
+        </div>
+
+      </div>
+
+
+      <!-- ====================================================
+           PERIODE
+      ===================================================== -->
+
+      <div class="section-title">
+
+        <div>
+          <strong>
+            Periode Tampilan
+          </strong>
+
+          <span>
+            Kosongkan jika tidak ingin membatasi waktu tampil.
+          </span>
+        </div>
+
+      </div>
+
+
+      <div class="form-row">
+
+        <div class="form-group">
+
+          <label
+            for="mulai"
+            class="form-label"
+          >
+            Mulai
+          </label>
+
+          <input
+            type="datetime-local"
+            id="mulai"
+            name="mulai"
+            value={mulaiValue}
+          />
+
+        </div>
+
+
+        <div class="form-group">
+
+          <label
+            for="selesai"
+            class="form-label"
+          >
+            Selesai
+          </label>
+
+          <input
+            type="datetime-local"
+            id="selesai"
+            name="selesai"
+            value={selesaiValue}
+          />
+
+        </div>
+
+      </div>
+
+
+      <!-- ====================================================
+           ACTION
+      ===================================================== -->
+
+      <div class="form-actions">
+
+        <a
+          href="/admin/pemberitahuan"
+          class="btn-cancel"
+        >
+          Batal
+        </a>
+
+        <button
+          type="submit"
+          class="btn-submit"
+          id="submitButton"
+        >
+
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="17"
+            height="17"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+
+            <path
+              d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"
+            ></path>
+
+            <polyline
+              points="17 21 17 13 7 13 7 21"
+            ></polyline>
+
+            <polyline
+              points="7 3 7 8 15 8"
+            ></polyline>
+
+          </svg>
+
+          Simpan Perubahan
+
+        </button>
+
+      </div>
+
+    </form>
+
+  </div>
+
+</AdminShell>
+
+
+<style>
+
+.form-container {
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid #e8edf3;
+  border-radius: 18px;
+  padding: 28px;
+  box-shadow:
+    0 2px 4px rgba(15, 23, 42, 0.03),
+    0 18px 45px rgba(15, 23, 42, 0.06);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 21px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #334155;
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+.form-label span {
+  color: #ef4444;
+}
+
+.label-icon {
+  display: inline-flex;
+  align-items: center;
+  color: #2563eb;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  box-sizing: border-box;
+
+  padding: 11px 13px;
+
+  border: 1px solid #dbe2ea;
+  border-radius: 10px;
+
+  background: #f8fafc;
+  color: #0f172a;
+
+  font-family: inherit;
+  font-size: 14px;
+
+  outline: none;
+
+  transition:
+    border-color .15s ease,
+    box-shadow .15s ease,
+    background .15s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  border-color: #2563eb;
+  background: #ffffff;
+
+  box-shadow:
+    0 0 0 3px rgba(37, 99, 235, .08);
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 130px;
+  line-height: 1.55;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+.form-hint {
+  color: #94a3b8;
+  font-size: 11.5px;
+}
+
+
+/* ==========================================================
+   ALERT
+========================================================== */
+
+.alert-error {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  margin-bottom: 22px;
+  padding: 13px 15px;
+
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+
+  background: #fef2f2;
+  color: #b91c1c;
+
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.alert-error svg {
+  flex-shrink: 0;
+}
+
+
+/* ==========================================================
+   UPLOAD
+========================================================== */
+
+.file-upload {
+  border: 2px dashed #bfdbfe;
+  border-radius: 14px;
+
+  background: #f8fbff;
+
+  transition:
+    border-color .2s ease,
+    background .2s ease;
+}
+
+.file-upload:hover {
+  border-color: #2563eb;
+  background: #f0f7ff;
+}
+
+.file-upload input {
+  display: none !important;
+}
+
+.file-label {
+  min-height: 155px;
+
+  display: flex;
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 9px;
+
+  cursor: pointer;
+}
+
+.file-label svg {
+  color: #2563eb;
+}
+
+.upload-text {
+  color: #1e293b;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.upload-hint {
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+
+/* ==========================================================
+   PREVIEW
+========================================================== */
+
+.preview-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+
+  margin-top: 3px;
+}
+
+.preview-image {
+  position: relative;
+
+  width: 150px;
+  height: 115px;
+
+  overflow: hidden;
+
+  border: 1px solid #dbe2ea;
+  border-radius: 12px;
+
+  background: #f8fafc;
+}
+
+.preview-image img {
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+}
+
+.preview-label {
+  position: absolute;
+  left: 7px;
+  bottom: 7px;
+
+  padding: 4px 7px;
+
+  border-radius: 5px;
+
+  background: rgba(15, 23, 42, .78);
+  color: #ffffff;
+
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.preview-remove {
+  position: absolute;
+
+  top: 7px;
+  right: 7px;
+
+  width: 27px;
+  height: 27px;
+
+  border: none;
+  border-radius: 7px;
+
+  background: #ef4444;
+  color: #ffffff;
+
+  font-size: 18px;
+  line-height: 1;
+
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.preview-remove:hover {
+  background: #dc2626;
+}
+
+
+/* ==========================================================
+   ICON INPUT
+========================================================== */
+
+.icon-input {
+  position: relative;
+}
+
+.icon-input > span {
+  position: absolute;
+
+  left: 13px;
+  top: 50%;
+
+  transform: translateY(-50%);
+
+  width: 24px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: #2563eb;
+
+  pointer-events: none;
+}
+
+.icon-input input {
+  padding-left: 43px;
+}
+
+
+/* ==========================================================
+   SECTION
+========================================================== */
+
+.section-title {
+  padding-top: 4px;
+  padding-bottom: 2px;
+
+  border-bottom: 1px solid #eef2f7;
+}
+
+.section-title div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.section-title strong {
+  color: #1e293b;
+  font-size: 14px;
+}
+
+.section-title span {
+  color: #94a3b8;
+  font-size: 11.5px;
+}
+
+
+/* ==========================================================
+   ACTION
+========================================================== */
+
+.form-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+
+  gap: 10px;
+
+  padding-top: 20px;
+
+  border-top: 1px solid #eef2f7;
+}
+
+.btn-submit,
+.btn-cancel {
+  min-height: 42px;
+
+  padding: 0 20px;
+
+  border-radius: 10px;
+
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  text-decoration: none;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+
+  transition:
+    transform .15s ease,
+    background .15s ease,
+    box-shadow .15s ease;
+}
+
+.btn-submit {
+  border: none;
+
+  background: #2563eb;
+  color: #ffffff;
+
+  box-shadow:
+    0 7px 16px rgba(37, 99, 235, .18);
+}
+
+.btn-submit:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+.btn-submit:disabled {
+  opacity: .6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-cancel {
+  border: 1px solid #dbe2ea;
+
+  background: #ffffff;
+  color: #475569;
+}
+
+.btn-cancel:hover {
+  background: #f8fafc;
+}
+
+
+/* ==========================================================
+   MOBILE
+========================================================== */
+
+@media (max-width: 768px) {
+
+  .form-container {
+    padding: 18px;
+    border-radius: 14px;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .form-actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .btn-submit,
+  .btn-cancel {
+    width: 100%;
+  }
+
+  .preview-container {
+    justify-content: center;
+  }
+
+}
+
+</style>
+
+
+<script>
+
+const fileInput =
+  document.getElementById("gambar");
+
+const previewContainer =
+  document.getElementById(
+    "preview-container"
+  );
+
+const currentPreview =
+  document.getElementById(
+    "currentPreview"
+  );
+
+const removeCurrentImage =
+  document.getElementById(
+    "removeCurrentImage"
+  );
+
+const hapusGambar =
+  document.getElementById(
+    "hapusGambar"
+  );
+
+const iconInput =
+  document.getElementById("icon");
+
+const iconPreview =
+  document.getElementById(
+    "iconPreview"
+  );
+
+
+// ==========================================================
+// PREVIEW GAMBAR BARU
+// ==========================================================
+
+if (fileInput) {
+
+  fileInput.addEventListener(
+    "change",
+    () => {
+
+      const file =
+        fileInput.files?.[0];
+
+      if (!file) {
+        return;
+      }
+
+      // Validasi ukuran
+      if (
+        file.size >
+        5 * 1024 * 1024
+      ) {
+
+        alert(
+          "Ukuran gambar maksimal 5 MB."
+        );
+
+        fileInput.value = "";
+
+        return;
+      }
+
+      // Validasi tipe
+      const allowedTypes = [
+        "image/jpeg",
+        "image/png",
+        "image/gif",
+        "image/webp"
+      ];
+
+      if (
+        !allowedTypes.includes(
+          file.type
+        )
+      ) {
+
+        alert(
+          "Format gambar harus JPG, PNG, GIF, atau WEBP."
+        );
+
+        fileInput.value = "";
+
+        return;
+      }
+
+      const reader =
+        new FileReader();
+
+      reader.onload = (event) => {
+
+        // Sembunyikan gambar lama
+        if (currentPreview) {
+          currentPreview.style.display =
+            "none";
+        }
+
+        const oldNewPreview =
+          document.getElementById(
+            "newPreview"
+          );
+
+        if (oldNewPreview) {
+          oldNewPreview.remove();
+        }
+
+        const newPreview =
+          document.createElement(
+            "div"
+          );
+
+        newPreview.id =
+          "newPreview";
+
+        newPreview.className =
+          "preview-image";
+
+        newPreview.innerHTML = `
+          <img
+            src="${event.target.result}"
+            alt="Preview gambar baru"
+          />
+
+          <span class="preview-label">
+            Gambar baru
+          </span>
+
+          <button
+            type="button"
+            class="preview-remove"
+            title="Batalkan gambar baru"
+          >
+            ×
+          </button>
+        `;
+
+        newPreview
+          .querySelector(
+            ".preview-remove"
+          )
+          .addEventListener(
+            "click",
+            () => {
+
+              fileInput.value = "";
+
+              newPreview.remove();
+
+              if (currentPreview) {
+                currentPreview.style.display =
+                  "block";
+              }
+
+            }
+          );
+
+        previewContainer.appendChild(
+          newPreview
+        );
+
+      };
+
+      reader.readAsDataURL(file);
+
+    }
+  );
+
+}
+
+
+// ==========================================================
+// HAPUS GAMBAR LAMA
+// ==========================================================
+
+if (removeCurrentImage) {
+
+  removeCurrentImage.addEventListener(
+    "click",
+    () => {
+
+      if (hapusGambar) {
+        hapusGambar.value = "Y";
+      }
+
+      currentPreview.style.display =
+        "none";
+
+    }
+  );
+
+}
+
+
+// ==========================================================
+// ICON PREVIEW
+// ==========================================================
+
+function updateIconPreview() {
+
+  if (!iconPreview) {
+    return;
+  }
+
+  const value =
+    iconInput?.value?.trim() ||
+    "fa-circle-info";
+
+  iconPreview.innerHTML =
+    `<i class="fa ${value}"></i>`;
+
+}
+
+iconInput?.addEventListener(
+  "input",
+  updateIconPreview
+);
+
+
+// ==========================================================
+// SUBMIT
+// ==========================================================
+
+const form =
+  document.querySelector(".form");
+
+const submitButton =
+  document.getElementById(
+    "submitButton"
+  );
+
+form?.addEventListener(
+  "submit",
+  () => {
+
+    if (submitButton) {
+
+      submitButton.disabled =
+        true;
+
+      submitButton.innerHTML = `
+        <span
+          style="
+            width:16px;
+            height:16px;
+            border:2px solid rgba(255,255,255,.4);
+            border-top-color:#fff;
+            border-radius:50%;
+            animation:spin .7s linear infinite;
+          "
+        ></span>
+
+        Menyimpan...
+      `;
+
+    }
+
+  }
+);
+
+</script>
+
+
+<style>
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+</style>

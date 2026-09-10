@@ -1,0 +1,1125 @@
+---
+export const prerender = false;
+
+import AdminShell from "../../components/admin/AdminShell.astro";
+import { db } from "../../lib/db";
+import {
+    writeFile,
+    mkdir,
+    unlink,
+    access,
+    rename
+} from "fs/promises";
+import path from "path";
+
+
+/* =========================================================
+   ID
+========================================================= */
+
+const id =
+    Number(
+        Astro.url.searchParams.get("id")
+    );
+
+
+if (
+    !id ||
+    Number.isNaN(id)
+) {
+    return Astro.redirect(
+        "/admin/kinerja"
+    );
+}
+
+
+/* =========================================================
+   FUNGSI BUAT NAMA FILE
+========================================================= */
+
+function buatNamaFile(
+    judul: string
+) {
+
+    /* =====================================================
+       BERSIHKAN JUDUL
+       
+       Contoh:
+       Kinerja Investasi 2026
+
+       menjadi:
+       Kinerja-Investasi-2026
+    ===================================================== */
+
+    const safeTitle =
+        judul
+            .normalize("NFKD")
+            .replace(
+                /[\u0300-\u036f]/g,
+                ""
+            )
+            .replace(
+                /[^a-zA-Z0-9]+/g,
+                "-"
+            )
+            .replace(
+                /^-+|-+$/g,
+                "" 
+            );
+
+
+    /* =====================================================
+       TANGGAL INDONESIA
+       
+       Format:
+       YYYYMMDD
+
+       Contoh:
+       20260906
+    ===================================================== */
+
+    const now =
+        new Date();
+
+
+    const tahun =
+        now.getFullYear();
+
+
+    const bulan =
+        String(
+            now.getMonth() + 1
+        ).padStart(
+            2,
+            "0"
+        );
+
+
+    const tanggal =
+        String(
+            now.getDate()
+        ).padStart(
+            2,
+            "0"
+        );
+
+
+    const tanggalUpload =
+        `${tahun}${bulan}${tanggal}`;
+
+
+    return (
+        `${safeTitle}-${tanggalUpload}`
+    );
+
+}
+
+
+/* =========================================================
+   FUNGSI CEK NAMA FILE UNIK
+========================================================= */
+
+async function cariNamaFileUnik(
+    uploadDir: string,
+    baseFileName: string,
+    namaFileLama?: string
+) {
+
+    let namaFile =
+        `${baseFileName}.pdf`;
+
+
+    let lokasi =
+        path.join(
+            uploadDir,
+            namaFile
+        );
+
+
+    let nomor =
+        1;
+
+
+    while (true) {
+
+        /* =============================================
+           Kalau nama tersebut adalah file lama,
+           boleh digunakan kembali.
+        ============================================== */
+
+        if (
+            namaFileLama &&
+            namaFile === namaFileLama
+        ) {
+
+            return {
+                namaFile,
+                lokasi
+            };
+
+        }
+
+
+        try {
+
+            await access(
+                lokasi
+            );
+
+
+            nomor++;
+
+
+            namaFile =
+                `${baseFileName}-${nomor}.pdf`;
+
+
+            lokasi =
+                path.join(
+                    uploadDir,
+                    namaFile
+                );
+
+        } catch {
+
+            return {
+                namaFile,
+                lokasi
+            };
+
+        }
+
+    }
+
+}
+
+
+/* =========================================================
+   HANDLE POST
+========================================================= */
+
+if (
+    Astro.request.method === "POST"
+) {
+
+    try {
+
+        const formData =
+            await Astro.request.formData();
+
+
+        /* =================================================
+           JUDUL
+        ================================================= */
+
+        const judul =
+            String(
+                formData.get("judul") || ""
+            ).trim();
+
+
+        /* =================================================
+           FILE
+        ================================================= */
+
+        const fileValue =
+            formData.get("file");
+
+
+        const file =
+            fileValue instanceof File
+                ? fileValue
+                : null;
+
+
+        /* =================================================
+           VALIDASI JUDUL
+        ================================================= */
+
+        if (!judul) {
+
+            return Astro.redirect(
+                `/admin/edit-kinerja?id=${id}&error=judul`
+            );
+
+        }
+
+
+        /* =================================================
+           AMBIL DATA LAMA
+        ================================================= */
+
+        const [oldRows] =
+            await db.query(
+                `
+                SELECT
+                    id,
+                    tw_option,
+                    file_path
+                FROM twdata
+                WHERE id = ?
+                LIMIT 1
+                `,
+                [id]
+            );
+
+
+        const oldData =
+            (
+                oldRows as Array<{
+                    id: number;
+                    tw_option: string;
+                    file_path: string | null;
+                }>
+            )[0];
+
+
+        if (!oldData) {
+
+            return Astro.redirect(
+                "/admin/kinerja"
+            );
+
+        }
+
+
+        /* =================================================
+           FOLDER PDF
+        ================================================= */
+
+        const uploadDir =
+            path.join(
+                process.cwd(),
+                "public",
+                "pdf"
+            );
+
+
+        await mkdir(
+            uploadDir,
+            {
+                recursive: true
+            }
+        );
+
+
+        /* =================================================
+           NAMA FILE BARU
+        ================================================= */
+
+        const baseFileName =
+            buatNamaFile(
+                judul
+            );
+
+
+        /* =================================================
+           NAMA FILE LAMA
+        ================================================= */
+
+        let oldFileName =
+            "";
+
+
+        if (
+            oldData.file_path &&
+            oldData.file_path.startsWith(
+                "/pdf/"
+            )
+        ) {
+
+            oldFileName =
+                path.basename(
+                    oldData.file_path
+                );
+
+        }
+
+
+        /* =================================================
+           KONDISI 1
+           
+           ADA FILE PDF BARU
+        ================================================= */
+
+        if (
+            file &&
+            file.size > 0
+        ) {
+
+            /* =============================================
+               VALIDASI PDF
+            ============================================== */
+
+            const isPdf =
+                file.type === "application/pdf" ||
+                file.name
+                    .toLowerCase()
+                    .endsWith(".pdf");
+
+
+            if (!isPdf) {
+
+                return Astro.redirect(
+                    `/admin/edit-kinerja?id=${id}&error=pdf`
+                );
+
+            }
+
+
+            /* =============================================
+               CARI NAMA FILE UNIK
+            ============================================== */
+
+            const {
+                namaFile,
+                lokasi
+            } =
+                await cariNamaFileUnik(
+                    uploadDir,
+                    baseFileName,
+                    oldFileName
+                );
+
+
+            /* =============================================
+               SIMPAN FILE BARU
+            ============================================== */
+
+            const buffer =
+                Buffer.from(
+                    await file.arrayBuffer()
+                );
+
+
+            await writeFile(
+                lokasi,
+                buffer
+            );
+
+
+            /* =============================================
+               PATH DATABASE
+            ============================================== */
+
+            const filePath =
+                `/pdf/${namaFile}`;
+
+
+            /* =============================================
+               UPDATE DATABASE
+            ============================================== */
+
+            await db.query(
+                `
+                UPDATE twdata
+                SET
+                    tw_option = ?,
+                    file_path = ?
+                WHERE id = ?
+                `,
+                [
+                    judul,
+                    filePath,
+                    id
+                ]
+            );
+
+
+            /* =============================================
+               HAPUS FILE LAMA
+            ============================================== */
+
+            if (
+                oldFileName &&
+                oldFileName !== namaFile
+            ) {
+
+                const oldFilePath =
+                    path.join(
+                        uploadDir,
+                        oldFileName
+                    );
+
+
+                try {
+
+                    await unlink(
+                        oldFilePath
+                    );
+
+                } catch {
+
+                    /*
+                     * File lama tidak ditemukan.
+                     * Tidak menggagalkan update.
+                     */
+
+                }
+
+            }
+
+        }
+
+
+        /* =================================================
+           KONDISI 2
+           
+           TIDAK ADA FILE BARU
+           
+           TAPI JUDUL BERUBAH
+           
+           FILE LAMA IKUT RENAME
+        ================================================= */
+
+        else {
+
+            /* =============================================
+               TIDAK ADA FILE LAMA
+            ============================================== */
+
+            if (!oldFileName) {
+
+                await db.query(
+                    `
+                    UPDATE twdata
+                    SET tw_option = ?
+                    WHERE id = ?
+                    `,
+                    [
+                        judul,
+                        id
+                    ]
+                );
+
+            }
+
+
+            /* =============================================
+               ADA FILE LAMA
+            ============================================== */
+
+            else {
+
+                const oldFilePath =
+                    path.join(
+                        uploadDir,
+                        oldFileName
+                    );
+
+
+                /* =========================================
+                   Kalau file lama memang ada secara fisik
+                ========================================== */
+
+                let fileLamaAda =
+                    true;
+
+
+                try {
+
+                    await access(
+                        oldFilePath
+                    );
+
+                } catch {
+
+                    fileLamaAda =
+                        false;
+
+                }
+
+
+                /* =========================================
+                   FILE LAMA TIDAK ADA DI SERVER
+                ========================================== */
+
+                if (!fileLamaAda) {
+
+                    await db.query(
+                        `
+                        UPDATE twdata
+                        SET tw_option = ?
+                        WHERE id = ?
+                        `,
+                        [
+                            judul,
+                            id
+                        ]
+                    );
+
+                }
+
+
+                /* =========================================
+                   FILE LAMA ADA
+                ========================================== */
+
+                else {
+
+                    const {
+                        namaFile,
+                        lokasi
+                    } =
+                        await cariNamaFileUnik(
+                            uploadDir,
+                            baseFileName,
+                            oldFileName
+                        );
+
+
+                    /* =====================================
+                       Jika nama sudah sama,
+                       tidak perlu rename.
+                    ====================================== */
+
+                    if (
+                        namaFile === oldFileName
+                    ) {
+
+                        await db.query(
+                            `
+                            UPDATE twdata
+                            SET tw_option = ?
+                            WHERE id = ?
+                            `,
+                            [
+                                judul,
+                                id
+                            ]
+                        );
+
+                    }
+
+
+                    /* =====================================
+                       Rename file lama
+                    ====================================== */
+
+                    else {
+
+                        await rename(
+                            oldFilePath,
+                            lokasi
+                        );
+
+
+                        const filePath =
+                            `/pdf/${namaFile}`;
+
+
+                        await db.query(
+                            `
+                            UPDATE twdata
+                            SET
+                                tw_option = ?,
+                                file_path = ?
+                            WHERE id = ?
+                            `,
+                            [
+                                judul,
+                                filePath,
+                                id
+                            ]
+                        );
+
+                    }
+
+                }
+
+            }
+
+        }
+
+
+        /* =================================================
+           BERHASIL
+        ================================================= */
+
+        return Astro.redirect(
+            "/admin/kinerja"
+        );
+
+    } catch (error) {
+
+        console.error(
+            "EDIT KINERJA ERROR:",
+            error
+        );
+
+
+        return Astro.redirect(
+            `/admin/edit-kinerja?id=${id}&error=server`
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   GET DATA
+========================================================= */
+
+const [rows] =
+    await db.query(
+        `
+        SELECT
+            id,
+            tw_option,
+            file_path
+        FROM twdata
+        WHERE id = ?
+        LIMIT 1
+        `,
+        [id]
+    );
+
+
+const data =
+    (
+        rows as Array<{
+            id: number;
+            tw_option: string;
+            file_path: string | null;
+        }>
+    )[0];
+
+
+if (!data) {
+
+    return Astro.redirect(
+        "/admin/kinerja"
+    );
+
+}
+
+
+const error =
+    Astro.url.searchParams.get(
+        "error"
+    );
+
+---
+
+<AdminShell
+    title="Edit Kinerja Investasi"
+    subtitle="Perbarui data kinerja investasi."
+    showHeader={false}
+>
+
+<div class="page">
+
+    <div class="form-box">
+
+        <div class="form-header">
+
+            <div>
+
+                <h2>
+                    Edit Kinerja
+                </h2>
+
+                <p>
+                    Perbarui judul atau ganti dokumen kinerja investasi.
+                </p>
+
+            </div>
+
+
+            <a
+                href="/admin/kinerja"
+                class="back-button"
+            >
+                ← Kembali
+            </a>
+
+        </div>
+
+
+        {
+            error === "judul" && (
+
+                <div class="alert alert-error">
+                    Judul kinerja wajib diisi.
+                </div>
+
+            )
+        }
+
+
+        {
+            error === "pdf" && (
+
+                <div class="alert alert-error">
+                    File yang diupload harus berupa PDF.
+                </div>
+
+            )
+        }
+
+
+        {
+            error === "server" && (
+
+                <div class="alert alert-error">
+                    Terjadi kesalahan saat menyimpan data.
+                    Silakan cek terminal/server log.
+                </div>
+
+            )
+        }
+
+
+        <form
+            method="POST"
+            enctype="multipart/form-data"
+        >
+
+            <div class="form-group">
+
+                <label for="judul">
+                    Judul Kinerja
+                </label>
+
+                <input
+                    id="judul"
+                    type="text"
+                    name="judul"
+                    value={data.tw_option || ""}
+                    required
+                    autocomplete="off"
+                />
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>
+                    Dokumen Saat Ini
+                </label>
+
+                {
+                    data.file_path ? (
+
+                        <a
+                            href={data.file_path}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="current-file"
+                        >
+
+                            <span class="pdf-box">
+                                PDF
+                            </span>
+
+                            <span class="file-name">
+
+                                {
+                                    data.file_path
+                                        .split("/")
+                                        .pop()
+                                }
+
+                            </span>
+
+                            <span class="view-file">
+                                Buka →
+                            </span>
+
+                        </a>
+
+                    ) : (
+
+                        <div class="no-file">
+                            Belum ada dokumen.
+                        </div>
+
+                    )
+                }
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label for="file">
+                    Upload Dokumen Baru
+                </label>
+
+                <input
+                    id="file"
+                    type="file"
+                    name="file"
+                    accept="application/pdf,.pdf"
+                />
+
+                <small>
+                    Kosongkan jika hanya ingin mengubah judul.
+                    Nama file otomatis mengikuti judul dan tanggal.
+                </small>
+
+            </div>
+
+
+            <div class="form-actions">
+
+                <a
+                    href="/admin/kinerja"
+                    class="cancel-button"
+                >
+                    Batal
+                </a>
+
+                <button
+                    type="submit"
+                    class="save-button"
+                >
+                    Simpan Perubahan
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+</AdminShell>
+
+
+<style>
+
+.page {
+    padding: 24px;
+}
+
+.form-box {
+    max-width: 850px;
+    margin: 0 auto;
+    background: #fff;
+    padding: 30px;
+    border-radius: 18px;
+    border: 1px solid #e5e7eb;
+    box-shadow:
+        0 12px 30px rgba(15, 23, 42, .06);
+}
+
+.form-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.form-header h2 {
+    margin: 0 0 6px;
+    font-size: 22px;
+    color: #111827;
+}
+
+.form-header p {
+    margin: 0;
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.back-button {
+    text-decoration: none;
+    color: #374151;
+    border: 1px solid #d1d5db;
+    padding: 9px 14px;
+    border-radius: 9px;
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+.back-button:hover {
+    background: #f9fafb;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 22px;
+}
+
+.form-group label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+}
+
+.form-group input[type="text"] {
+    width: 100%;
+    height: 44px;
+    padding: 0 13px;
+    border-radius: 9px;
+    border: 1px solid #d1d5db;
+    outline: none;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+.form-group input[type="text"]:focus {
+    border-color: #2563eb;
+    box-shadow:
+        0 0 0 3px rgba(37, 99, 235, .10);
+}
+
+.form-group input[type="file"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 9px;
+    background: #fff;
+    box-sizing: border-box;
+}
+
+.form-group small {
+    color: #6b7280;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.current-file {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    color: #2563eb;
+    text-decoration: none;
+    background: #f8fafc;
+}
+
+.current-file:hover {
+    background: #eff6ff;
+}
+
+.pdf-box {
+    width: 38px;
+    height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: #fee2e2;
+    color: #dc2626;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.file-name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.view-file {
+    margin-left: auto;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.no-file {
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: #f9fafb;
+    color: #9ca3af;
+    font-size: 13px;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding-top: 10px;
+}
+
+.cancel-button {
+    text-decoration: none;
+    color: #374151;
+    background: #fff;
+    border: 1px solid #d1d5db;
+    padding: 11px 18px;
+    border-radius: 9px;
+    font-size: 14px;
+}
+
+.cancel-button:hover {
+    background: #f9fafb;
+}
+
+.save-button {
+    border: none;
+    background: #2563eb;
+    color: #fff;
+    padding: 11px 20px;
+    border-radius: 9px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.save-button:hover {
+    background: #1d4ed8;
+}
+
+.alert {
+    padding: 12px 14px;
+    border-radius: 9px;
+    margin-bottom: 20px;
+    font-size: 14px;
+}
+
+.alert-error {
+    background: #fef2f2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+}
+
+@media (max-width: 768px) {
+
+    .page {
+        padding: 14px;
+    }
+
+    .form-box {
+        padding: 20px;
+    }
+
+    .form-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .current-file {
+        align-items: flex-start;
+    }
+
+    .view-file {
+        margin-left: auto;
+    }
+
+    .form-actions {
+        flex-direction: column-reverse;
+    }
+
+    .cancel-button,
+    .save-button {
+        width: 100%;
+        text-align: center;
+        box-sizing: border-box;
+    }
+
+}
+
+</style>
