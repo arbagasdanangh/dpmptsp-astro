@@ -2193,7 +2193,7 @@ const logoUrl = "https://github.com/arbagasdanangh/pps/blob/main/logo.png?raw=tr
 <style>
   .home {
     --b9: #0a1b55; --b7: #173ea5; --b5: #2f63e0; --y: #ffd21f;
-    --ink: #0f172a; --mut: #5b6478; --line: #e3e8f2; --bg: #f5f7fb;
+    --ink: #0f172a; --mut: #5b6478; --line: #d6e2fb; --bg: #eef3ff;
     font-family: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
     color: var(--ink); background: #fff; overflow-x: clip;
   }
@@ -2227,7 +2227,7 @@ const logoUrl = "https://github.com/arbagasdanangh/pps/blob/main/logo.png?raw=tr
   .btn-sm { padding: 9px 16px; font-size: 13px; }
 
   /* ---------- hero ---------- */
-  .hero { --nav: 0px; position: relative; overflow: hidden; color: #fff; padding: calc(var(--nav) + 72px) 0 170px; border-radius: 0 0 56px 56px;
+  .hero { --nav: 0px; position: relative; overflow: hidden; color: #fff; padding: calc(var(--nav) + 72px) 0 170px; border-radius: 0 0 56px 56px; border-bottom: 10px solid var(--y);
     background: radial-gradient(800px 480px at 90% 0, rgba(255, 210, 31, .26), transparent 60%), radial-gradient(600px 400px at 0 100%, rgba(47, 99, 224, .5), transparent 60%), linear-gradient(135deg, var(--b9), var(--b7) 65%, #2456c9); }
   .hero::before { content: ""; position: absolute; inset: 0; pointer-events: none;
     background-image: linear-gradient(rgba(255, 255, 255, .06) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, .06) 1px, transparent 1px);
@@ -2265,11 +2265,9 @@ const logoUrl = "https://github.com/arbagasdanangh/pps/blob/main/logo.png?raw=tr
   .svc-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
   .svc { position: relative; display: flex; align-items: center; gap: 14px; padding: 16px; border-radius: 18px; background: var(--bg); border: 1px solid transparent; transition: transform .22s, background .22s, border-color .22s, box-shadow .22s; }
   .svc:hover { transform: translateY(-4px); background: #fff; border-color: var(--y); box-shadow: 0 18px 36px -20px rgba(23, 62, 165, .5); }
-  .svc-ic { flex: none; width: 50px; height: 50px; border-radius: 15px; display: grid; place-items: center; font-size: 20px; background: #eaf0ff; color: var(--b7); transition: transform .22s; }
+  .svc-ic { flex: none; width: 50px; height: 50px; border-radius: 15px; display: grid; place-items: center; font-size: 20px; background: var(--b7); color: #fff; transition: transform .22s; }
   .svc:hover .svc-ic { transform: scale(1.08) rotate(-4deg); }
-  .svc:nth-child(4n+2) .svc-ic { background: #fff4c2; color: #a16207; }
-  .svc:nth-child(4n+3) .svc-ic { background: #dcfce7; color: #15803d; }
-  .svc:nth-child(4n+4) .svc-ic { background: #fee2e2; color: #b91c1c; }
+  .svc:nth-child(even) .svc-ic { background: var(--y); color: var(--b9); }
   .svc-ic img { width: 66%; height: 66%; object-fit: contain; }
   .svc-txt { min-width: 0; flex: 1; }
   .svc-txt strong { display: block; font-size: .95rem; font-weight: 700; line-height: 1.3; color: var(--b9); }
@@ -2278,7 +2276,7 @@ const logoUrl = "https://github.com/arbagasdanangh/pps/blob/main/logo.png?raw=tr
   .svc:hover .svc-go { color: var(--b7); }
 
   /* ---------- keunggulan ---------- */
-  .keunggulan { background: linear-gradient(rgba(245, 247, 251, .93), rgba(245, 247, 251, .97)), var(--bgimg) center / cover no-repeat; }
+  .keunggulan { background: linear-gradient(rgba(238, 243, 255, .93), rgba(238, 243, 255, .97)), var(--bgimg) center / cover no-repeat; }
   .ung-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
   .ung { display: flex; flex-direction: column; padding: 28px; border-radius: 24px; background: #fff; border: 1px solid var(--line); transition: transform .25s, box-shadow .25s, border-color .25s; }
   .ung:hover { transform: translateY(-6px); border-color: #c9d6f5; box-shadow: 0 24px 48px -24px rgba(23, 62, 165, .35); }
@@ -2402,6 +2400,36 @@ const logoUrl = "https://github.com/arbagasdanangh/pps/blob/main/logo.png?raw=tr
   .notif-dots { position: absolute; left: 0; right: 0; bottom: 18px; z-index: 3; display: flex; justify-content: center; gap: 8px; }
   .notification-dot { width: 9px; height: 9px; padding: 0; border: 0; border-radius: 99px; background: rgba(255, 255, 255, .5); cursor: pointer; transition: .2s; }
   .notification-dot.active { width: 26px; background: var(--y); }
+
+
+  /* ---------- tema biru & kuning ---------- */
+  .head h2::after { content: ""; display: block; width: 64px; height: 5px; border-radius: 5px; background: var(--y); margin-top: 16px; }
+  .head.center h2::after { margin-inline: auto; }
+  .hl { color: var(--b5); }
+  .float i { background: var(--b7); color: var(--y); }
+  .ung-icon { background: var(--b7); color: var(--y); }
+  .ung { border-top: 4px solid var(--y); }
+  .berita, .partner { background: var(--bg); }
+
+  /* section biru: prinsip & video */
+  .prinsip, .video { position: relative; color: #fff; background: radial-gradient(700px 380px at 100% 0, rgba(255, 210, 31, .18), transparent 60%), linear-gradient(150deg, var(--b9), var(--b7)); }
+  .prinsip .head h2, .video .head h2 { color: #fff; }
+  .prinsip .head p, .video .head p { color: rgba(255, 255, 255, .82); }
+  .prinsip .eyebrow, .video .eyebrow { color: var(--y); }
+  .prinsip .hl, .video .hl { color: var(--y); }
+  .pr { background: rgba(255, 255, 255, .08); border-color: rgba(255, 255, 255, .2); }
+  .pr:hover { background: rgba(255, 255, 255, .15); border-color: var(--y); }
+  .pr h3 { color: #fff; }
+  .pr p { color: rgba(255, 255, 255, .8); }
+  .pr-tag { color: var(--y); }
+  .pr-n { -webkit-text-stroke: 1.5px rgba(255, 210, 31, .6); }
+  .vid { border: 0; }
+  .vid-body h3 { color: var(--b9); }
+
+  /* pita kuning pemisah section biru */
+  .prinsip::before, .video::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 8px; background: repeating-linear-gradient(135deg, var(--y) 0 18px, var(--b9) 18px 36px); }
+  .inv { border: 2px solid var(--y); }
+  .btn-line { border-color: var(--b7); }
 
   /* ---------- responsive ---------- */
   @media (max-width: 1040px) {
