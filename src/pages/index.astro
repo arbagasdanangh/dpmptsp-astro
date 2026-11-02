@@ -1853,7 +1853,11 @@ const fallbackApps = [
   { nama: "SKM", deskripsi: "Survei Kepuasan Masyarakat atas layanan kami.", url: "https://skm.surabaya.go.id/", icon: "fas fa-face-smile" },
 ];
 const services = aplikasi.length > 0 ? aplikasi : fallbackApps;
-const logoUrl = "https://dpm-ptsp.surabaya.go.id/dpmptsp-removebg.png";
+const logoUrl = "https://github.com/arbagasdanangh/pps/blob/main/logo.png?raw=true";
+
+/* link berita dihitung di server (slugify tidak tersedia di browser) */
+berita.forEach((b) => { b.href = `/media/${slugify(b.content)}`; });
+
 ---
 
 <MainLayout title="DPMPTSP Kota Surabaya">
@@ -2185,9 +2189,11 @@ const logoUrl = "https://dpm-ptsp.surabaya.go.id/dpmptsp-removebg.png";
 
 </div>
 
+
 <style is:global>
   @import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
   @keyframes newsProgress { from { width: 0 } to { width: 100% } }
+  :where(.home) a { color: inherit; text-decoration: none; }
 </style>
 
 <style>
@@ -2199,7 +2205,6 @@ const logoUrl = "https://dpm-ptsp.surabaya.go.id/dpmptsp-removebg.png";
   }
   .home *, .home *::before, .home *::after { box-sizing: border-box; }
   .home img { max-width: 100%; display: block; }
-  .home a { text-decoration: none; color: inherit; }
   .home h1, .home h2, .home h3, .home p { margin: 0; }
   .wrap { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
   .sec { padding: 88px 0; }
@@ -2222,8 +2227,8 @@ const logoUrl = "https://dpm-ptsp.surabaya.go.id/dpmptsp-removebg.png";
   .btn-y { background: var(--y); color: var(--b9) !important; box-shadow: 0 10px 28px rgba(255, 210, 31, .35); }
   .btn-ghost { border-color: rgba(255, 255, 255, .4); color: #fff; }
   .btn-ghost:hover { background: rgba(255, 255, 255, .12); }
-  .btn-line { border-color: var(--b7); color: var(--b7); background: #fff; }
-  .btn-line:hover { background: var(--b7); color: #fff; }
+  .btn-line { border-color: var(--b7); color: var(--b7) !important; background: #fff; }
+  .btn-line:hover { background: var(--b7); color: #fff !important; }
   .btn-sm { padding: 9px 16px; font-size: 13px; }
 
   /* ---------- hero ---------- */
@@ -2337,7 +2342,7 @@ const logoUrl = "https://dpm-ptsp.surabaya.go.id/dpmptsp-removebg.png";
   .news-main { display: grid; grid-template-columns: 1.15fr 1fr; border-radius: 30px; overflow: hidden; background: #fff; border: 1px solid var(--line); box-shadow: 0 30px 60px -36px rgba(23, 62, 165, .4); }
   .news-image { position: relative; min-height: 400px; background: #dbe3f5; }
   .news-image img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: opacity .35s, transform .6s; }
-  .news-image.switching img { opacity: 0; transform: scale(1.03); }
+  .news-image.switching img { opacity: .15; }
   .news-badge { position: absolute; top: 20px; left: 20px; padding: 7px 14px; border-radius: 999px; background: var(--y); color: var(--b9); font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
   .news-number { position: absolute; right: 20px; bottom: 12px; font-size: 4rem; font-weight: 800; line-height: 1; color: rgba(255, 255, 255, .85); text-shadow: 0 4px 20px rgba(0, 0, 0, .35); }
   .news-content { display: flex; flex-direction: column; padding: 40px; }
@@ -2467,6 +2472,7 @@ const logoUrl = "https://dpm-ptsp.surabaya.go.id/dpmptsp-removebg.png";
     .home * { transition: none !important; animation: none !important; }
   }
 </style>
+
 
 <script define:vars={{ slider, berita }}>
 
@@ -2665,7 +2671,7 @@ document.addEventListener(
 
 
             newsLink.href =
-              `/media/${slugify(item.content)}`;
+              (item.href || "#");
 
 
             newsThumbs.forEach(
