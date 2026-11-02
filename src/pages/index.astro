@@ -1933,112 +1933,269 @@ try {
      1. SECTION HERO — INOVASI APLIKASI
      Pengganti carousel hero
 ========================================================== -->
-<section class="section-hero" id="sectionHero" aria-labelledby="sectionHeroTitle">
-  <div class="section-hero-orbit section-hero-orbit-left" aria-hidden="true"></div>
-  <div class="section-hero-orbit section-hero-orbit-bottom" aria-hidden="true"></div>
-  <div class="section-hero-dots section-hero-dots-top" aria-hidden="true"></div>
-  <div class="section-hero-dots section-hero-dots-left" aria-hidden="true"></div>
+---
+/**
+ * HeroInovasi.astro
+ * Pemakaian di index.astro:
+ *   import HeroInovasi from "../components/HeroInovasi.astro";
+ *   <HeroInovasi apps={aplikasi} />
+ */
+const { apps = [] } = Astro.props;
+const list = apps.slice(0, 5);
 
-  <div class="section-hero-yellow" aria-hidden="true"></div>
-  <div class="section-hero-yellow-line section-hero-yellow-line-one" aria-hidden="true"></div>
-  <div class="section-hero-yellow-line section-hero-yellow-line-two" aria-hidden="true"></div>
+const isImage = (v) =>
+  /^(\/|https?:)/.test(String(v)) ||
+  /\.(png|jpe?g|webp|svg|gif)(\?.*)?$/i.test(String(v));
+---
 
- <div
-  class="section-hero-watermark"
-  aria-hidden="true"
-  style="
-    position:absolute;
-    z-index:14;
-    top:285px;
-    left:50%;
-    transform:translateX(-50%);
-    width:max-content;
-    color:rgba(255,255,255,0.22);
-    font-size:120px;
-    font-weight:900;
-    line-height:1;
-    letter-spacing:0.08em;
-    white-space:nowrap;
-    opacity:1;
-    pointer-events:none;
-    user-select:none;
-  "
->
-  DPM-PTSP SURABAYA
-</div>
-  <div class="section-hero-container">
-    <div class="section-hero-copy">
-      <div class="section-hero-eyebrow">
-        <span></span>
-        <i class="fas fa-circle"></i>
-        <b>INOVASI DIGITAL</b>
-        <span></span>
-      </div>
-
-      <h1 id="sectionHeroTitle">
-        Inovasi <strong>Aplikasi</strong>
+<section class="hero" aria-labelledby="hero-title">
+  <div class="hero-inner">
+    <div class="hero-copy">
+      <p class="hero-kicker">DPMPTSP Kota Surabaya</p>
+      <h1 id="hero-title">
+        Urus perizinan dan investasi dari <em>satu layar.</em>
       </h1>
-
-      <div class="section-hero-title-line"></div>
-
-      <p>
-        Berbagai solusi digital untuk<br class="section-hero-desktop" />
-        mempermudah pelayanan masyarakat Surabaya
+      <p class="hero-lead">
+        Aplikasi resmi untuk mengurus izin, memantau status, dan menyampaikan
+        pengaduan, kapan saja tanpa antre.
       </p>
-
-      <a href="/inovasi" class="section-hero-button">
-        <span>Lihat Semua</span>
-        <i class="fas fa-arrow-right"></i>
-      </a>
+      <a href="/inovasi" class="hero-cta">Lihat semua aplikasi</a>
     </div>
 
-    <div class="section-hero-apps" aria-label="Pilihan inovasi aplikasi">
-      {aplikasi.slice(0, 5).map((app, index) => (
-        <a
-          href={app.url || "#"}
-          target={app.target || "_self"}
-          rel={app.target === "_blank" ? "noopener noreferrer" : undefined}
-          class:list={[
-            "section-hero-card",
-            `section-hero-card-${index + 1}`,
-            { "section-hero-card-main": index === 2 }
-          ]}
-          aria-label={`Buka ${app.nama || "Aplikasi"}`}
-        >
-          <div class="section-hero-card-corner" aria-hidden="true"></div>
-
-          <span class="section-hero-card-number">
-            {String(index + 1).padStart(2, "0")}
-          </span>
-
-          <div class="section-hero-card-icon">
-            {app.icon ? (
-              String(app.icon).startsWith("/") ||
-              String(app.icon).startsWith("http") ||
-              /\.(png|jpe?g|webp|svg|gif)(\?.*)?$/i.test(String(app.icon)) ? (
-                <img src={app.icon} alt="" />
+    <ul class="hero-apps" aria-label="Aplikasi unggulan">
+      {list.map((app, i) => (
+        <li class:list={["app", { "app-main": i === 0 }]}>
+          <a
+            href={app.url || "#"}
+            target={app.target || "_self"}
+            rel={app.target === "_blank" ? "noopener noreferrer" : undefined}
+          >
+            <span class="app-icon">
+              {app.icon ? (
+                isImage(app.icon) ? (
+                  <img src={app.icon} alt="" loading="lazy" />
+                ) : (
+                  <i class={app.icon}></i>
+                )
               ) : (
-                <i class={app.icon}></i>
-              )
-            ) : (
-              <i class="fas fa-layer-group"></i>
-            )}
-          </div>
-
-          <div class="section-hero-card-body">
-            <h2>{app.nama || "Aplikasi"}</h2>
-            <p>{app.deskripsi || "Layanan digital untuk masyarakat Surabaya."}</p>
-          </div>
-
-          <div class="section-hero-card-link">
-            <span>Buka Aplikasi</span>
-            <i class="fas fa-arrow-right"></i>
-          </div>
-        </a>
+                <i class="fas fa-layer-group"></i>
+              )}
+            </span>
+            <span class="app-text">
+              <strong>{app.nama || "Aplikasi"}</strong>
+              <small>{app.deskripsi || "Layanan digital untuk masyarakat Surabaya."}</small>
+            </span>
+            <span class="app-go" aria-hidden="true"><i class="fas fa-arrow-right"></i></span>
+          </a>
+        </li>
       ))}
-    </div>
+    </ul>
   </div>
 </section>
+
+<style>
+  .hero {
+    --navy: #062a7d;
+    --blue: #0b4dcc;
+    --yellow: #ffc900;
+    position: relative;
+    overflow: hidden;
+    color: #fff;
+    background:
+      radial-gradient(60% 80% at 85% 20%, rgba(40, 110, 230, .45), transparent 70%),
+      linear-gradient(135deg, #04205f 0%, var(--navy) 55%, #0a45b0 100%);
+  }
+
+  /* satu aksen kuning: busur di pojok kanan bawah */
+  .hero::after {
+    content: "";
+    position: absolute;
+    right: -140px;
+    bottom: -260px;
+    width: 520px;
+    height: 520px;
+    border-radius: 50%;
+    background: var(--yellow);
+    opacity: .95;
+    pointer-events: none;
+  }
+
+  .hero-inner {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+    align-items: center;
+    gap: 64px;
+    width: min(1240px, 100%);
+    margin: 0 auto;
+    padding: 96px 32px;
+  }
+
+  .hero-kicker {
+    margin: 0 0 18px;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--yellow);
+  }
+
+  .hero h1 {
+    margin: 0;
+    max-width: 14ch;
+    font-size: clamp(38px, 4.6vw, 64px);
+    line-height: 1.05;
+    font-weight: 800;
+    letter-spacing: -.02em;
+  }
+
+  .hero h1 em {
+    font-style: normal;
+    box-shadow: inset 0 -.28em 0 rgba(255, 201, 0, .55);
+  }
+
+  .hero-lead {
+    max-width: 44ch;
+    margin: 24px 0 0;
+    font-size: 17px;
+    line-height: 1.65;
+    color: rgba(255, 255, 255, .86);
+  }
+
+  .hero-cta {
+    display: inline-block;
+    margin-top: 32px;
+    padding: 15px 28px;
+    border-radius: 12px;
+    background: var(--yellow);
+    color: var(--navy);
+    font-weight: 800;
+    text-decoration: none;
+    transition: transform .2s ease, background .2s ease;
+  }
+  .hero-cta:hover { background: #fff; transform: translateY(-2px); }
+  .hero-cta:focus-visible,
+  .app a:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+
+  /* ===== daftar aplikasi ===== */
+  .hero-apps {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .app a {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    height: 100%;
+    padding: 22px;
+    border-radius: 20px;
+    background: #fff;
+    color: var(--navy);
+    text-decoration: none;
+    box-shadow: 0 18px 40px rgba(0, 15, 70, .25);
+    transition: transform .25s ease, box-shadow .25s ease;
+  }
+  .app a:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 24px 50px rgba(0, 15, 70, .35);
+  }
+
+  .app-icon {
+    flex: 0 0 50px;
+    width: 50px;
+    height: 50px;
+    display: grid;
+    place-items: center;
+    border-radius: 14px;
+    background: #eaf1ff;
+    color: var(--blue);
+    font-size: 22px;
+  }
+  .app-icon img { width: 30px; height: 30px; object-fit: contain; }
+
+  .app-text { display: grid; gap: 6px; min-width: 0; padding-right: 24px; }
+  .app-text strong { font-size: 16px; line-height: 1.25; font-weight: 800; }
+  .app-text small {
+    font-size: 13px;
+    line-height: 1.5;
+    color: #566179;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .app-go {
+    position: absolute;
+    right: 18px;
+    bottom: 18px;
+    font-size: 13px;
+    color: var(--blue);
+    transition: transform .25s ease;
+  }
+  .app a:hover .app-go { transform: translateX(4px); }
+
+  /* kartu utama: satu-satunya yang menonjol */
+  .app-main { grid-column: 1 / -1; }
+  .app-main a {
+    padding: 28px;
+    border: 2px solid var(--yellow);
+    background: linear-gradient(135deg, #fff, #f3f7ff);
+  }
+  .app-main .app-icon {
+    flex-basis: 68px;
+    width: 68px;
+    height: 68px;
+    border-radius: 18px;
+    font-size: 30px;
+    background: var(--yellow);
+    color: var(--navy);
+  }
+  .app-main .app-text strong { font-size: 21px; }
+  .app-main .app-text small { font-size: 14px; -webkit-line-clamp: 3; }
+  .app-main .app-go { font-size: 16px; right: 24px; bottom: 24px; }
+
+  /* gerakan hanya saat halaman dibuka, satu kali */
+  @media (prefers-reduced-motion: no-preference) {
+    .app { animation: rise .6s cubic-bezier(.2, .8, .2, 1) backwards; }
+    .app:nth-child(2) { animation-delay: .08s; }
+    .app:nth-child(3) { animation-delay: .14s; }
+    .app:nth-child(4) { animation-delay: .20s; }
+    .app:nth-child(5) { animation-delay: .26s; }
+    @keyframes rise { from { opacity: 0; transform: translateY(24px); } }
+  }
+
+  /* ===== tablet ===== */
+  @media (max-width: 980px) {
+    .hero-inner { grid-template-columns: 1fr; gap: 44px; padding: 72px 24px; }
+    .hero h1 { max-width: 18ch; }
+  }
+
+  /* ===== mobile: kartu digeser ke samping ===== */
+  @media (max-width: 600px) {
+    .hero-inner { padding: 56px 0 64px; gap: 36px; }
+    .hero-copy { padding: 0 20px; }
+    .hero-lead { font-size: 15px; }
+
+    .hero-apps {
+      display: flex;
+      gap: 12px;
+      padding: 6px 20px 20px;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      scrollbar-width: none;
+    }
+    .hero-apps::-webkit-scrollbar { display: none; }
+    .app { flex: 0 0 82%; scroll-snap-align: center; }
+    .app a { min-height: 150px; }
+    .hero::after { width: 320px; height: 320px; right: -120px; bottom: -180px; }
+  }
+</style>
 
 
 <style>
