@@ -1,4 +1,4 @@
---- 
+---
 import MainLayout from "../layouts/MainLayout.astro";
 //import { db } from "../lib/db.js";
 import Pdf from "../components/Pdf.astro";
@@ -1853,7 +1853,7 @@ const fallbackApps = [
   { nama: "SKM", deskripsi: "Survei Kepuasan Masyarakat atas layanan kami.", url: "https://skm.surabaya.go.id/", icon: "fas fa-face-smile" },
 ];
 const services = aplikasi.length > 0 ? aplikasi : fallbackApps;
-const logoUrl = "https://dpm-ptsp.surabaya.go.id/dpmptsp-removebg.png";
+const logoUrl = "https://github.com/arbagasdanangh/pps/blob/main/logo.png?raw=true";
 
 /* link berita dihitung di server (slugify tidak tersedia di browser) */
 berita.forEach((b) => { b.href = `/media/${slugify(b.content)}`; });
