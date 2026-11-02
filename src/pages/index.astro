@@ -1,5 +1,5 @@
 ---
-export const prerender = false; 
+export const prerender = false;
 
 import MainLayout from "../layouts/MainLayout.astro";
 import { slugify } from "../utils/slugify";
@@ -292,19 +292,19 @@ const services = aplikasi.length > 0 ? aplikasi : fallbackApps;
 
 {notifikasi.length > 0 && (
   <div id="notificationModal" class="notif" aria-hidden="false" role="dialog" aria-modal="true" aria-label="Informasi">
-    <div class="book">
+    <div class="book-wrap">
 
-      <!-- sampul buku: terbuka otomatis saat modal tampil -->
-      <div class="book-cover" aria-hidden="true">
-        <div class="cover-face cover-front">
-          <span class="cover-logo"><img src={logoUrl} alt="" /></span>
-          <strong>Informasi</strong>
-          <small>DPMPTSP Kota Surabaya</small>
+      <div class="book">
+        <!-- sampul buku: terbuka otomatis saat modal tampil -->
+        <div class="book-cover" aria-hidden="true">
+          <div class="cover-face cover-front">
+            <span class="cover-logo"><img src={logoUrl} alt="" /></span>
+            <strong>Informasi</strong>
+            <small>DPMPTSP Kota Surabaya</small>
+          </div>
+          <div class="cover-face cover-back"></div>
         </div>
-        <div class="cover-face cover-back"></div>
-      </div>
 
-      <div class="book-page">
         <button type="button" id="notificationClose" class="notif-close" aria-label="Tutup">
           <i class="fas fa-xmark"></i>
         </button>
@@ -313,35 +313,30 @@ const services = aplikasi.length > 0 ? aplikasi : fallbackApps;
           {notifikasi.map((item, index) => (
             <div class={`notification-slide ${index === 0 ? "active" : ""}`} data-index={index}>
               {item.gambar ? (
-                <div class="notif-media"><img src={item.gambar} alt={item.judul || "Informasi"} /></div>
+                <img class="notif-img" src={item.gambar} alt={item.judul || "Informasi"} />
               ) : (
-                <div class="notif-fallback"><i class={`fas ${item.icon || "fa-bell"}`}></i></div>
-              )}
-              {(item.judul || item.isi) && (
-                <div class="notif-info">
-                  {item.judul && <h2>{item.judul}</h2>}
-                  {item.isi && <p>{item.isi}</p>}
+                <div class="notif-card">
+                  <div class="notif-fallback"><i class={`fas ${item.icon || "fa-bell"}`}></i></div>
+                  {(item.judul || item.isi) && (
+                    <div class="notif-info">
+                      {item.judul && <h2>{item.judul}</h2>}
+                      {item.isi && <p>{item.isi}</p>}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
           ))}
         </div>
-
-        <div class={`notif-foot ${notifikasi.length > 1 ? "" : "single"}`}>
-          {notifikasi.length > 1 && (
-            <>
-              <button type="button" id="notificationPrev" class="notif-arrow" aria-label="Halaman sebelumnya"><i class="fas fa-chevron-left"></i></button>
-              <div id="notificationDots" class="notif-dots">
-                {notifikasi.map((_, index) => (
-                  <button type="button" class={`notification-dot ${index === 0 ? "active" : ""}`} data-slide={index} aria-label={`Halaman ${index + 1}`}></button>
-                ))}
-              </div>
-              <button type="button" id="notificationNext" class="notif-arrow" aria-label="Halaman berikutnya"><i class="fas fa-chevron-right"></i></button>
-            </>
-          )}
-          <button type="button" class="notification-later btn btn-y btn-sm">Tutup</button>
-        </div>
       </div>
+
+      {notifikasi.length > 1 && (
+        <div class="notif-foot">
+          <button type="button" id="notificationPrev" class="notif-arrow" aria-label="Sebelumnya"><i class="fas fa-chevron-left"></i></button>
+          <span id="notificationCounter" class="notif-count" aria-live="polite">1 / {notifikasi.length}</span>
+          <button type="button" id="notificationNext" class="notif-arrow" aria-label="Berikutnya"><i class="fas fa-chevron-right"></i></button>
+        </div>
+      )}
     </div>
   </div>
 )}
@@ -661,7 +656,7 @@ const services = aplikasi.length > 0 ? aplikasi : fallbackApps;
   }
   @keyframes pageShade {
     0%, 28% { filter: brightness(.5); }
-    100% { filter: brightness(1); }
+    100% { filter: none; }
   }
   @keyframes pageFwd {
     0%   { transform: rotateY(-100deg); opacity: 0; }
@@ -813,7 +808,7 @@ const services = aplikasi.length > 0 ? aplikasi : fallbackApps;
   .inv-map { position: relative; padding: 18px; }
   .inv-map::before { content: ""; position: absolute; left: -10px; bottom: -6px; width: 62%; aspect-ratio: 1; border-radius: 50%; background: var(--y); }
   .inv-map::after { content: ""; position: absolute; right: 2px; top: 2px; width: 74px; height: 74px; border-radius: 50%; border: 12px solid var(--b7); opacity: .85; }
-  .inv-blob { position: relative; z-index: 1; border-radius: 58% 42% 52% 48% / 46% 54% 46% 54%; overflow: hidden; background: #fff; border: 8px solid #fff; box-shadow: 0 34px 70px -28px rgba(10,27,85,.55); }
+  .inv-blob { position: relative; z-index: 1; border-radius: 24px; overflow: hidden; background: #fff; border: 6px solid #fff; box-shadow: 0 34px 70px -28px rgba(10,27,85,.55); }
   .inv-blob img { width: 100%; }
   .inv-badge { position: absolute; z-index: 2; top: 34px; left: 20px; display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; background: rgba(10,27,85,.9); color: #fff; font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
   .inv-badge i { width: 8px; height: 8px; border-radius: 50%; background: #4ade80; box-shadow: 0 0 0 4px rgba(74,222,128,.25); }
@@ -835,7 +830,7 @@ const services = aplikasi.length > 0 ? aplikasi : fallbackApps;
   .arrows button:hover { background: var(--b7); color: #fff; }
   .news-main { position: relative; display: grid; grid-template-columns: 1.1fr 1fr; gap: 48px; align-items: center; }
   .news-main::before { content: ""; position: absolute; left: -36px; bottom: -34px; width: 170px; height: 170px; border-radius: 50%; background: var(--y); }
-  .news-image { position: relative; z-index: 1; min-height: 420px; overflow: hidden; background: #dbe3f5; border-radius: 190px 40px 190px 40px; border: 8px solid #fff; box-shadow: 0 34px 60px -30px rgba(23,62,165,.55); }
+  .news-image { position: relative; z-index: 1; aspect-ratio: 4 / 3; overflow: hidden; background: #dbe3f5; border-radius: 24px; border: 8px solid #fff; box-shadow: 0 34px 60px -30px rgba(23,62,165,.55); }
   .news-image img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: opacity .35s, transform .6s; }
   .news-image.switching img { opacity: .15; }
   .news-badge { position: absolute; z-index: 2; bottom: 24px; left: 50%; transform: translateX(-50%); padding: 8px 18px; border-radius: 999px; background: var(--y); color: var(--b9); font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
@@ -858,7 +853,7 @@ const services = aplikasi.length > 0 ? aplikasi : fallbackApps;
   .vid-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 44px 28px; }
   .vid { transition: transform .25s; }
   .vid:hover { transform: translateY(-6px); }
-  .vid-thumb { position: relative; display: block; aspect-ratio: 16 / 10; overflow: hidden; background: var(--b9); border-radius: 120px 28px 120px 28px; border: 5px solid rgba(255,255,255,.9); box-shadow: 0 26px 44px -22px rgba(0,0,0,.6); }
+  .vid-thumb { position: relative; display: block; aspect-ratio: 16 / 10; overflow: hidden; background: var(--b9); border-radius: 22px; border: 4px solid rgba(255,255,255,.9); box-shadow: 0 26px 44px -22px rgba(0,0,0,.6); }
   .vid-thumb img { width: 100%; height: 100%; object-fit: cover; transition: transform .5s; }
   .vid:hover .vid-thumb img { transform: scale(1.07); }
   .vid-thumb::after { content: ""; position: absolute; inset: 0; background: linear-gradient(transparent 40%, rgba(10,27,85,.55)); }
@@ -881,51 +876,49 @@ const services = aplikasi.length > 0 ? aplikasi : fallbackApps;
   .pt-label { font-size: 10.5px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--b5); }
   .pt strong { font-size: .98rem; line-height: 1.4; color: var(--b9); max-width: 200px; }
 
-  /* ---------- modal notifikasi: buku ---------- */
-  .notif { position: fixed; inset: 0; z-index: 9999; display: grid; place-items: center; padding: 16px; background: rgba(8,16,46,.8); backdrop-filter: blur(6px); animation: veilIn .4s both; }
+  /* ---------- modal notifikasi: gambar saja, terbuka seperti buku ---------- */
+  .notif { position: fixed; inset: 0; z-index: 9999; display: grid; place-items: center; padding: 20px 16px; background: rgba(8,16,46,.78); backdrop-filter: blur(6px); animation: veilIn .4s both; }
   .notif.closing { animation: veilOut .4s .85s both; }
-  .book { position: relative; width: min(680px, 100%); perspective: 2400px; animation: bookIn .75s cubic-bezier(.2,.8,.2,1) both; }
-  .notif.closing .book { animation: bookOut .45s .8s ease both; }
+  .book-wrap { display: flex; flex-direction: column; align-items: center; gap: 18px; max-width: 100%; animation: bookIn .75s cubic-bezier(.2,.8,.2,1) both; }
+  .notif.closing .book-wrap { animation: bookOut .45s .8s ease both; }
+  .book { position: relative; perspective: 2400px; max-width: 100%; min-width: min(280px, 80vw); min-height: 280px; }
 
-  .book-page { position: relative; display: flex; flex-direction: column; max-height: calc(100vh - 32px); border-radius: 28px; overflow: hidden; background: #fff; border-top: 6px solid var(--y); box-shadow: 0 40px 90px rgba(0,0,0,.5);
-    animation: pageShade 1.9s both; }
-
-  .book-cover { position: absolute; inset: 0; z-index: 6; border-radius: 28px; transform-origin: left center; transform-style: preserve-3d; pointer-events: none;
+  .book-cover { position: absolute; inset: 0; z-index: 6; border-radius: 18px; transform-origin: left center; transform-style: preserve-3d; pointer-events: none;
     animation: coverOpen 1.7s .55s cubic-bezier(.65,.02,.25,1) both; }
   .notif.closing .book-cover { animation: coverClose .7s ease both; }
   .cover-face { position: absolute; inset: 0; border-radius: inherit; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
-  .cover-front { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: #fff; text-align: center;
+  .cover-front { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; color: #fff; text-align: center;
     background: radial-gradient(500px 300px at 80% 0, rgba(255,210,31,.25), transparent 60%), linear-gradient(135deg, var(--b9), var(--b7)); box-shadow: 0 30px 80px rgba(0,0,0,.45); }
-  .cover-front::before { content: ""; position: absolute; inset: 18px; border-radius: 18px; border: 2px dashed rgba(255,210,31,.6); }
-  .cover-front::after { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 26px; border-radius: 28px 0 0 28px; background: linear-gradient(90deg, rgba(0,0,0,.4), transparent); }
-  .cover-logo { width: 104px; height: 104px; margin-bottom: 8px; border-radius: 50%; display: grid; place-items: center; background: #fff; box-shadow: 0 0 0 8px rgba(255,210,31,.45); }
+  .cover-front::before { content: ""; position: absolute; inset: 14px; border-radius: 12px; border: 2px dashed rgba(255,210,31,.6); }
+  .cover-front::after { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 22px; border-radius: 18px 0 0 18px; background: linear-gradient(90deg, rgba(0,0,0,.4), transparent); }
+  .cover-logo { width: 92px; height: 92px; margin-bottom: 6px; border-radius: 50%; display: grid; place-items: center; background: #fff; box-shadow: 0 0 0 7px rgba(255,210,31,.45); }
   .cover-logo img { width: 66%; height: 66%; object-fit: contain; }
-  .cover-front strong { font-family: var(--hd); font-size: 2rem; font-weight: 800; letter-spacing: -.02em; }
-  .cover-front small { font-size: 12px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--y); }
+  .cover-front strong { font-family: var(--hd); font-size: 1.8rem; font-weight: 800; letter-spacing: -.02em; }
+  .cover-front small { font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--y); }
   .cover-back { transform: rotateY(180deg); background: #fffaf0; box-shadow: inset -34px 0 46px -24px rgba(0,0,0,.3); }
 
-  .notif-slider { flex: 1 1 auto; min-height: 0; overflow-y: auto; perspective: 1800px; }
+  .notif-slider { position: relative; perspective: 1800px; animation: pageShade 1.9s backwards; }
   .notification-slide { display: none; transform-origin: left center; }
   .notification-slide.active { display: block; }
   .notification-slide.flip { animation: pageFwd .7s cubic-bezier(.25,.8,.25,1) both; }
   .notif-slider.back .notification-slide { transform-origin: right center; }
   .notif-slider.back .notification-slide.flip { animation-name: pageBack; }
-  .notif-media { display: grid; place-items: center; background: var(--bg); }
-  .notif-media img { width: 100%; height: auto; max-height: 68vh; object-fit: contain; }
-  .notif-fallback { display: grid; place-items: center; height: 220px; font-size: 64px; color: var(--y); background: linear-gradient(135deg, var(--b9), var(--b7)); }
-  .notif-info { padding: 22px 28px 12px; }
-  .notif-info h2 { font-size: 1.3rem; font-weight: 800; line-height: 1.3; color: var(--b9); }
+
+  .notif-img { display: block; width: auto; height: auto; max-width: min(560px, calc(100vw - 32px)); max-height: calc(100vh - 150px); border-radius: 18px; box-shadow: 0 30px 80px rgba(0,0,0,.55); }
+  .notif-card { width: min(520px, calc(100vw - 32px)); border-radius: 22px; overflow: hidden; background: #fff; box-shadow: 0 30px 80px rgba(0,0,0,.55); }
+  .notif-fallback { display: grid; place-items: center; height: 180px; font-size: 56px; color: var(--y); background: linear-gradient(135deg, var(--b9), var(--b7)); }
+  .notif-info { padding: 20px 24px 24px; }
+  .notif-info h2 { font-size: 1.25rem; font-weight: 800; line-height: 1.3; color: var(--b9); }
   .notif-info h2::after { content: ""; display: block; width: 44px; height: 5px; border-radius: 5px; background: var(--y); margin-top: 10px; }
   .notif-info p { margin-top: 12px; font-size: .95rem; line-height: 1.65; color: var(--mut); }
-  .notif-close { position: absolute; top: 16px; right: 16px; z-index: 3; width: 42px; height: 42px; border-radius: 50%; border: 3px solid #fff; cursor: pointer; background: var(--b7); color: #fff; box-shadow: 0 6px 18px rgba(0,0,0,.3); transition: transform .2s, background .2s; }
-  .notif-close:hover { background: var(--b9); transform: rotate(90deg); }
-  .notif-foot { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 20px; border-top: 1px solid var(--line); background: #fff; }
-  .notif-foot.single { justify-content: center; }
-  .notif-arrow { flex: none; width: 42px; height: 42px; border-radius: 50%; border: 0; background: var(--bg); color: var(--b7); cursor: pointer; transition: .2s; }
-  .notif-arrow:hover { background: var(--b7); color: #fff; }
-  .notif-dots { flex: 1; display: flex; justify-content: center; align-items: center; gap: 8px; }
-  .notification-dot { width: 10px; height: 10px; padding: 0; border: 0; border-radius: 99px; background: #c5d3f3; cursor: pointer; transition: .25s; }
-  .notification-dot.active { width: 30px; background: var(--b7); }
+
+  .notif-close { position: absolute; top: -14px; right: -14px; z-index: 8; width: 40px; height: 40px; border-radius: 50%; border: 2px solid rgba(255,255,255,.9); cursor: pointer; background: rgba(15,23,42,.92); color: #fff; box-shadow: 0 6px 18px rgba(0,0,0,.4); transition: transform .2s, background .2s; }
+  .notif-close:hover { background: var(--b7); transform: rotate(90deg); }
+
+  .notif-foot { display: flex; align-items: center; justify-content: center; gap: 12px; }
+  .notif-arrow { width: 46px; height: 46px; border-radius: 50%; border: 0; background: rgba(255,255,255,.92); color: var(--b9); cursor: pointer; box-shadow: 0 8px 20px rgba(0,0,0,.3); transition: background .2s, color .2s, transform .2s; }
+  .notif-arrow:hover { background: var(--y); transform: scale(1.06); }
+  .notif-count { min-width: 64px; height: 46px; padding: 0 16px; display: grid; place-items: center; border-radius: 999px; background: rgba(255,255,255,.92); font-weight: 800; font-size: 14px; color: var(--b9); box-shadow: 0 8px 20px rgba(0,0,0,.3); }
 
   /* ---------- responsive ---------- */
   @media (max-width: 1040px) {
@@ -944,7 +937,7 @@ const services = aplikasi.length > 0 ? aplikasi : fallbackApps;
     .f1 { left: 0; } .f2 { right: 0; }
     .inv { gap: 40px; }
     .news-main { gap: 32px; }
-    .news-image { min-height: 280px; border-radius: 120px 32px 120px 32px; }
+    .news-image { border-radius: 20px; }
     .news-number { font-size: 4rem; }
     .pdf iframe { height: 520px; }
   }
@@ -1068,7 +1061,7 @@ const modal = document.getElementById("notificationModal");
 if (modal) {
   const slider = modal.querySelector("#notificationSlider");
   const slides = Array.from(modal.querySelectorAll(".notification-slide"));
-  const dots = Array.from(modal.querySelectorAll(".notification-dot"));
+  const counter = modal.querySelector("#notificationCounter");
   const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   let current = 0;
@@ -1090,7 +1083,7 @@ if (modal) {
     });
     void slides[next].offsetWidth;
     if (!reduce) slides[next].classList.add("flip");
-    dots.forEach((d, i) => d.classList.toggle("active", i === next));
+    if (counter) counter.textContent = `${next + 1} / ${slides.length}`;
 
     current = next;
     slider.scrollTop = 0;
@@ -1114,9 +1107,6 @@ if (modal) {
     if (t.closest("#notificationNext")) { e.preventDefault(); show(current + 1, 1); return; }
     if (t.closest("#notificationPrev")) { e.preventDefault(); show(current - 1, -1); return; }
 
-    const dot = t.closest(".notification-dot");
-    if (dot) { e.preventDefault(); const n = Number(dot.getAttribute("data-slide")); show(n, n >= current ? 1 : -1); return; }
-
     if (t.closest("#notificationClose") || t.closest(".notification-later")) {
       e.preventDefault();
       closeBook();
@@ -1124,7 +1114,7 @@ if (modal) {
     }
 
     // klik area gelap di luar buku
-    if (t === modal) closeBook();
+    if (t === modal || t.classList.contains("book-wrap")) closeBook();
   });
 
   document.addEventListener("keydown", (e) => {
