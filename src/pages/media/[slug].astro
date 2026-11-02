@@ -135,7 +135,7 @@ const tags = String(post.tag || "").split(",").map((t) => t.trim()).filter(Boole
   --ink: #14233c;
   --muted: #5b6b85;
   --line: #dde6f3;
-  --paper: #f5f8fc;
+  --paper: #f4f9ff;
   --display: 'Bricolage Grotesque', 'Plus Jakarta Sans', sans-serif;
   --sans: 'Plus Jakarta Sans', system-ui, sans-serif;
   --serif: 'Source Serif 4', Georgia, serif;
@@ -160,10 +160,23 @@ const tags = String(post.tag || "").split(",").map((t) => t.trim()).filter(Boole
 /* ---------- HERO ---------- */
 .hero {
   position: relative; overflow: hidden; color: #fff;
-  background:
-    radial-gradient(900px 400px at 0% 0%, #0b4aa8 0%, transparent 70%),
-    var(--navy);
+  background: linear-gradient(110deg, #062d70 0%, #064b9d 48%, #0756ad 100%);
   padding: 30px 0 112px;
+}
+.hero::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px);
+  background-size: 38px 38px;
+}
+.hero::after {
+  content: ""; position: absolute; width: 380px; height: 380px; left: -190px; top: -170px;
+  border-radius: 50%; border: 72px solid rgba(30,112,208,.45); pointer-events: none;
+}
+.hero-ribbon {
+  position: absolute; left: -70px; top: 118px; width: 210px; height: 66px;
+  background: var(--gold); border-radius: 50px; transform: rotate(-32deg);
 }
 .hero-stripe, .hero-photo {
   position: absolute; top: 0; bottom: 0; right: 0; width: 46%;
@@ -172,7 +185,7 @@ const tags = String(post.tag || "").split(",").map((t) => t.trim()).filter(Boole
 .hero-stripe { background: var(--gold); transform: translateX(-20px); }
 .hero-photo {
   background:
-    linear-gradient(90deg, rgba(6,42,99,.35), transparent 40%),
+    linear-gradient(90deg, rgba(5,75,157,.55), rgba(5,75,157,.1) 55%),
     url("/images/siola.jpg") center / cover no-repeat;
 }
 .wrap { width: min(1200px, calc(100% - 40px)); margin: 0 auto; position: relative; }
@@ -220,6 +233,8 @@ const tags = String(post.tag || "").split(",").map((t) => t.trim()).filter(Boole
   margin: 0; overflow: hidden; border-radius: 16px; background: var(--sky);
   box-shadow: 0 24px 60px rgba(6,38,92,.22);
 }
+.cover { position: relative; }
+.cover-tag { position: absolute; left: 16px; bottom: 16px; background: var(--gold); color: var(--navy); font-weight: 800; font-size: 12px; padding: 7px 14px; border-radius: 999px; box-shadow: 0 6px 16px rgba(0,0,0,.2); }
 .cover img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
 .cover-empty {
   aspect-ratio: 16 / 9; display: grid; place-items: center; text-align: center;
@@ -234,7 +249,7 @@ const tags = String(post.tag || "").split(",").map((t) => t.trim()).filter(Boole
 .sheet-head {
   display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px 20px;
   padding-bottom: 20px; margin-bottom: 32px;
-  border-bottom: 1px solid var(--line); font-size: 13px; color: var(--muted);
+  border-bottom: 3px solid var(--gold); font-size: 13px; color: var(--muted);
 }
 .sheet-head span { display: inline-flex; align-items: center; gap: 7px; }
 .sheet-head i { color: var(--blue); }
@@ -299,15 +314,24 @@ aside { align-self: start; min-width: 0; }
   box-shadow: 0 18px 44px rgba(6,38,92,.1);
 }
 .panel-head {
+  position: relative; overflow: hidden; color: #fff;
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  padding: 18px 20px 14px;
+  padding: 20px 20px 18px; margin-bottom: 14px;
+  background: linear-gradient(135deg, #063b82, #0754b8 55%, #0b72df);
 }
-.panel-head h2 { margin: 0; font-size: 17px; font-weight: 800; color: var(--navy); }
-.panel-head p { margin: 2px 0 0; font-size: 12px; color: var(--muted); }
+.panel-head::after {
+  content: ""; position: absolute; right: -34px; top: -44px; width: 110px; height: 110px;
+  border-radius: 50%; border: 22px solid rgba(255,198,26,.28); pointer-events: none;
+}
+.panel-head > * { position: relative; z-index: 1; }
+.panel-head h2 { margin: 0; font-size: 17px; font-weight: 800; color: #fff; }
+.panel-head p { margin: 2px 0 0; font-size: 12px; color: rgba(255,255,255,.75); }
 .panel-head a {
-  font-size: 13px; font-weight: 700; color: var(--blue); text-decoration: none;
+  font-size: 12px; font-weight: 700; color: #fff; text-decoration: none;
+  padding: 7px 12px; border-radius: 999px; background: rgba(255,255,255,.14);
+  border: 1px solid rgba(255,255,255,.25); transition: background .15s ease, color .15s ease;
 }
-.panel-head a:hover { text-decoration: underline; }
+.panel-head a:hover { background: var(--gold); color: var(--navy); }
 
 .filter { padding: 0 16px 12px; border-bottom: 1px solid var(--line); background: #fff; }
 .search { position: relative; }
@@ -366,7 +390,9 @@ aside { align-self: start; min-width: 0; }
 .btn:hover { background: var(--navy); }
 
 /* ---------- LAYANAN ---------- */
-.service { background: var(--navy); color: #fff; border-radius: 16px; padding: 22px; }
+.service { position: relative; overflow: hidden; background: linear-gradient(135deg, #0751b3, #0a68d2); color: #fff; border-radius: 16px; padding: 22px; }
+.service::after { content: ""; position: absolute; right: -60px; top: -60px; width: 160px; height: 160px; border-radius: 50%; border: 32px solid rgba(255,255,255,.08); pointer-events: none; }
+.service > * { position: relative; z-index: 1; }
 .service h2 { margin: 0 0 4px; font-size: 17px; font-weight: 800; }
 .service p { margin: 0 0 14px; font-size: 12px; color: rgba(255,255,255,.7); line-height: 1.5; }
 .service a {
@@ -404,7 +430,7 @@ aside { align-self: start; min-width: 0; }
 /* ---------- RESPONSIVE ---------- */
 @media (max-width: 768px) {
   .hero { padding: 24px 0 96px; }
-  .hero-stripe { display: none; }
+  .hero-stripe, .hero-ribbon { display: none; }
   .hero-photo { width: 100%; clip-path: none; opacity: .28; }
   .hero-text { max-width: 100%; }
   .article-content { font-size: 17px; }
@@ -423,6 +449,7 @@ aside { align-self: start; min-width: 0; }
 
   <!-- HERO -->
   <section class="hero">
+    <div class="hero-ribbon"></div>
     <div class="hero-stripe"></div>
     <div class="hero-photo"></div>
     <div class="wrap">
@@ -462,6 +489,7 @@ aside { align-self: start; min-width: 0; }
             </div>
           </div>
         )}
+        <span class="cover-tag">{namaKategori}</span>
       </figure>
 
       <div class="sheet">
