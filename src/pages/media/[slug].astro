@@ -118,6 +118,15 @@ function imageUrl(picture) {
 
 const plain = String(post.ref_content || "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
 const readMinutes = Math.max(1, Math.round(plain.split(" ").filter(Boolean).length / 200));
+let contentHtml = String(post.ref_content || "");
+if (type === "artikel") {
+  contentHtml = contentHtml.replace(/<p\b[^>]*>[\s\S]*?<\/p>/gi, (block) => {
+    if (!/<img\b/i.test(block)) return block;
+    const cleaned = block.replace(/<img\b[^>]*>/gi, "");
+    const hasText = cleaned.replace(/<[^>]*>/g, "").replace(/&nbsp;|\s/g, "") !== "";
+    return hasText ? cleaned : "";
+  });
+}
 const idx = mediaList.findIndex((i) => slugify(i.title) === slugify(post.title));
 const newer = idx > 0 ? mediaList[idx - 1] : null;
 const older = idx >= 0 && idx < mediaList.length - 1 ? mediaList[idx + 1] : null;
@@ -495,6 +504,7 @@ aside { align-self: start; min-width: 0; }
           <span class="badge"><i class={`fas ${kategoriIcon}`}></i>{namaKategori}</span>
           <span class="date"><i class="far fa-calendar"></i>{formatDate(post.date)}</span>
         </div>
+
         <h1>{post.title}</h1>
       </div>
     </div>
@@ -524,13 +534,12 @@ aside { align-self: start; min-width: 0; }
           <strong>DPMPTSP Kota Surabaya</strong>
           <span class="vsep"></span>
           <span><i class="far fa-calendar"></i>{formatDate(post.date)}</span>
-          <span class="vsep"></span>
         </div>
         <span class="pub"><i></i>Publikasi</span>
       </div>
 
       <div class="sheet">
-        <div class="article-content" set:html={post.ref_content}></div>
+        <div class="article-content" set:html={contentHtml}></div>
 
         <div class="sheet-foot">
           <div class="tags">
