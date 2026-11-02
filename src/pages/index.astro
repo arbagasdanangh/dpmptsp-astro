@@ -1839,6 +1839,21 @@ const partnerLabel = (nama = "") => {
   if (n.includes("bkpm")) return "Investasi Indonesia";
   return "Instansi Terkait";
 };
+
+const B = "https://dpm-ptsp.surabaya.go.id";
+const fallbackApps = [
+  { nama: "Aplikasi Ijin Usaha", deskripsi: "Pengajuan dan pengurusan izin usaha secara online.", url: `${B}/aplikasi.php#ijinusaha-sec`, icon: "fas fa-building-circle-check" },
+  { nama: "Aplikasi Pengaduan", deskripsi: "Sampaikan pengaduan dan masukan layanan.", url: `${B}/aplikasi.php#pengaduan-sec`, icon: "fas fa-headset" },
+  { nama: "Dashboard Investasi", deskripsi: "Data dan statistik investasi Kota Surabaya.", url: "https://dashboardinvestasi.surabaya.go.id/", icon: "fas fa-chart-pie" },
+  { nama: "SIWASTIB", deskripsi: "Sistem pengawasan dan ketertiban perizinan.", url: `${B}/siwastib/`, icon: "fas fa-user-shield" },
+  { nama: "SIPINTAR", deskripsi: "Layanan informasi perizinan yang cerdas.", url: `${B}/sipintar/`, icon: "fas fa-lightbulb" },
+  { nama: "SICERDAS", deskripsi: "Konsultasi dan informasi perizinan terpadu.", url: `${B}/sicerdas/`, icon: "fas fa-brain" },
+  { nama: "Kalkulator Investasi", deskripsi: "Simulasi dan estimasi biaya investasi.", url: `${B}/kalkulator_investasi/`, icon: "fas fa-calculator" },
+  { nama: "Mal Pelayanan Publik", deskripsi: "Layanan publik terpadu dalam satu tempat.", url: "https://mpp.surabaya.go.id/", icon: "fas fa-landmark" },
+  { nama: "SKM", deskripsi: "Survei Kepuasan Masyarakat atas layanan kami.", url: "https://skm.surabaya.go.id/", icon: "fas fa-face-smile" },
+];
+const services = aplikasi.length > 0 ? aplikasi : fallbackApps;
+const logoUrl = "https://github.com/arbagasdanangh/pps/blob/main/logo.png?raw=true";
 ---
 
 <MainLayout title="DPMPTSP Kota Surabaya">
@@ -1890,43 +1905,57 @@ const partnerLabel = (nama = "") => {
 <section class="hero" id="sectionHero" aria-labelledby="sectionHeroTitle">
   <div class="wrap">
     <div class="hero-copy">
-      <span class="pill"><i></i> Inovasi Digital</span>
-      <h1 id="sectionHeroTitle">Inovasi <em>Aplikasi</em> untuk Surabaya</h1>
-      <p>Berbagai solusi digital untuk mempermudah pelayanan perizinan dan investasi bagi masyarakat Kota Surabaya.</p>
+      <span class="pill"><i></i> DPMPTSP Kota Surabaya</span>
+      <h1 id="sectionHeroTitle">Perizinan &amp; Investasi <em>Lebih Mudah</em></h1>
+      <p>Satu pintu layanan digital untuk mengurus perizinan, memantau investasi, dan terhubung dengan Pemerintah Kota Surabaya.</p>
       <div class="hero-cta">
-        <a href="/inovasi" class="btn btn-y">Lihat Semua <i class="fas fa-arrow-right"></i></a>
+        <a href="#aplikasi" class="btn btn-y">Jelajahi Aplikasi <i class="fas fa-arrow-down"></i></a>
         <a href="#potensi-investasi" class="btn btn-ghost">Potensi Investasi</a>
       </div>
-      <ul class="chips">
-        <li><i class="fas fa-clock"></i> Online 24 jam</li>
-        <li><i class="fas fa-door-open"></i> Satu pintu</li>
-        <li><i class="fas fa-shield-halved"></i> Bebas pungli</li>
-      </ul>
     </div>
 
-    <div class="apps" aria-label="Pilihan inovasi aplikasi">
-      {aplikasi.length > 0 ? aplikasi.slice(0, 5).map((app, index) => (
+    <div class="hero-art" aria-hidden="true">
+      <span class="ring r1"></span><span class="ring r2"></span>
+      <div class="orb"><img src={logoUrl} alt="" onerror="this.onerror=null;this.src='/logo-surabaya.png';" /></div>
+      <div class="float f1"><i class="fas fa-clock"></i><div><strong>24 Jam</strong><span>Layanan online</span></div></div>
+      <div class="float f2"><i class="fas fa-map-location-dot"></i><div><strong>31</strong><span>Kecamatan</span></div></div>
+      <div class="float f3"><i class="fas fa-shield-halved"></i><div><strong>Bebas Pungli</strong><span>WBK &amp; WBBM</span></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ LAYANAN DIGITAL ============ -->
+<section class="svc-sec" id="aplikasi" aria-label="Layanan digital">
+  <div class="wrap">
+    <div class="svc-head">
+      <div>
+        <span class="eyebrow">Layanan Digital</span>
+        <h2>Pilih layanan yang Anda butuhkan</h2>
+      </div>
+      <a href="/inovasi" class="svc-all">Lihat semua <i class="fas fa-arrow-right"></i></a>
+    </div>
+    <div class="svc-grid">
+      {services.map((app, index) => (
         <a
           href={app.url || "#"}
-          target={app.target || "_self"}
-          rel={app.target === "_blank" ? "noopener noreferrer" : undefined}
-          class:list={["app", { "is-main": index === 0 }]}
+          target={app.target || "_blank"}
+          rel="noopener noreferrer"
+          class="svc"
+          style={`--i:${index}`}
           aria-label={`Buka ${app.nama || "Aplikasi"}`}
         >
-          <div class="app-icon">
+          <span class="svc-ic">
             {isImg(app.icon) ? <img src={app.icon} alt="" />
               : isFa(app.icon) ? <i class={app.icon}></i>
               : <i class="fas fa-layer-group"></i>}
-          </div>
-          <div class="app-body">
-            <h2>{app.nama || "Aplikasi"}</h2>
-            <p>{app.deskripsi || "Layanan digital untuk masyarakat Surabaya."}</p>
-            <span class="app-go">Buka Aplikasi <i class="fas fa-arrow-right"></i></span>
-          </div>
+          </span>
+          <span class="svc-txt">
+            <strong>{app.nama || "Aplikasi"}</strong>
+            <small>{app.deskripsi || "Layanan digital untuk masyarakat Surabaya."}</small>
+          </span>
+          <i class="fas fa-arrow-up-right-from-square svc-go"></i>
         </a>
-      )) : (
-        <div class="app is-main"><div class="app-body"><h2>Aplikasi segera hadir</h2><p>Data inovasi aplikasi belum tersedia.</p></div></div>
-      )}
+      ))}
     </div>
   </div>
 </section>
@@ -2198,32 +2227,55 @@ const partnerLabel = (nama = "") => {
   .btn-sm { padding: 9px 16px; font-size: 13px; }
 
   /* ---------- hero ---------- */
-  .hero { position: relative; overflow: hidden; color: #fff; padding: 84px 0 128px; border-radius: 0 0 56px 56px;
-    background: radial-gradient(900px 520px at 88% -10%, rgba(255, 210, 31, .24), transparent 60%), linear-gradient(135deg, var(--b9), var(--b7) 62%, #2456c9); }
+  .hero { --nav: 0px; position: relative; overflow: hidden; color: #fff; padding: calc(var(--nav) + 72px) 0 170px; border-radius: 0 0 56px 56px;
+    background: radial-gradient(800px 480px at 90% 0, rgba(255, 210, 31, .26), transparent 60%), radial-gradient(600px 400px at 0 100%, rgba(47, 99, 224, .5), transparent 60%), linear-gradient(135deg, var(--b9), var(--b7) 65%, #2456c9); }
   .hero::before { content: ""; position: absolute; inset: 0; pointer-events: none;
     background-image: linear-gradient(rgba(255, 255, 255, .06) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, .06) 1px, transparent 1px);
-    background-size: 56px 56px; -webkit-mask-image: linear-gradient(#000, transparent 85%); mask-image: linear-gradient(#000, transparent 85%); }
-  .hero .wrap { position: relative; display: grid; grid-template-columns: 1fr 1.15fr; gap: 56px; align-items: center; }
-  .pill { display: inline-flex; align-items: center; gap: 10px; padding: 8px 16px; border-radius: 999px; background: rgba(255, 255, 255, .12); border: 1px solid rgba(255, 255, 255, .22); font-size: 12px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
-  .pill i { width: 8px; height: 8px; border-radius: 50%; background: var(--y); }
-  .hero h1 { font-size: clamp(2.5rem, 5.6vw, 4.4rem); line-height: 1.04; font-weight: 800; letter-spacing: -.03em; margin: 22px 0 18px; }
+    background-size: 56px 56px; -webkit-mask-image: linear-gradient(#000, transparent 90%); mask-image: linear-gradient(#000, transparent 90%); }
+  .hero .wrap { position: relative; display: grid; grid-template-columns: 1.1fr .9fr; gap: 40px; align-items: center; }
+  .pill { display: inline-flex; align-items: center; gap: 10px; padding: 8px 16px; border-radius: 999px; background: rgba(255, 255, 255, .12); border: 1px solid rgba(255, 255, 255, .22); font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+  .pill i { width: 8px; height: 8px; border-radius: 50%; background: var(--y); box-shadow: 0 0 0 4px rgba(255, 210, 31, .3); }
+  .hero h1 { font-size: clamp(2.4rem, 5.4vw, 4.2rem); line-height: 1.06; font-weight: 800; letter-spacing: -.03em; margin: 22px 0 18px; color: #fff; }
   .hero h1 em { font-style: normal; color: var(--y); }
-  .hero-copy > p { font-size: 1.1rem; line-height: 1.7; color: rgba(255, 255, 255, .82); max-width: 460px; }
-  .hero-cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
-  .chips { list-style: none; display: flex; flex-wrap: wrap; gap: 10px; padding: 0; margin: 32px 0 0; }
-  .chips li { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: rgba(255, 255, 255, .85); padding: 8px 14px; border-radius: 999px; background: rgba(255, 255, 255, .08); }
-  .chips i { color: var(--y); }
+  .hero-copy > p { font-size: 1.1rem; line-height: 1.7; color: rgba(255, 255, 255, .84); max-width: 520px; }
+  .hero-cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 34px; }
 
-  .apps { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-  .app { display: flex; flex-direction: column; gap: 14px; padding: 22px; border-radius: 22px; color: #fff; background: rgba(255, 255, 255, .09); border: 1px solid rgba(255, 255, 255, .18); backdrop-filter: blur(10px); transition: transform .25s, background .25s, border-color .25s; }
-  .app:hover { transform: translateY(-5px); background: rgba(255, 255, 255, .16); border-color: var(--y); }
-  .app.is-main { grid-column: 1 / -1; flex-direction: row; align-items: center; gap: 20px; padding: 28px; background: rgba(255, 255, 255, .15); }
-  .app-icon { flex: none; width: 54px; height: 54px; border-radius: 16px; background: #fff; color: var(--b7); display: grid; place-items: center; font-size: 22px; overflow: hidden; }
-  .app.is-main .app-icon { width: 72px; height: 72px; font-size: 30px; }
-  .app-icon img { width: 70%; height: 70%; object-fit: contain; }
-  .app h2 { font-size: 1.05rem; font-weight: 700; line-height: 1.3; }
-  .app p { margin-top: 6px; font-size: .86rem; line-height: 1.55; color: rgba(255, 255, 255, .78); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-  .app-go { display: inline-flex; align-items: center; gap: 8px; margin-top: 12px; font-size: 13px; font-weight: 700; color: var(--y); }
+  .hero-art { position: relative; aspect-ratio: 1; max-width: 440px; width: 100%; margin-inline: auto; display: grid; place-items: center; }
+  .ring { position: absolute; border-radius: 50%; border: 1px dashed rgba(255, 255, 255, .3); }
+  .r1 { inset: 4%; animation: spin 40s linear infinite; }
+  .r2 { inset: 20%; border-style: solid; border-color: rgba(255, 210, 31, .35); }
+  .orb { position: relative; width: 52%; aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center; background: rgba(255, 255, 255, .96); box-shadow: 0 0 0 14px rgba(255, 255, 255, .1), 0 30px 70px rgba(0, 0, 0, .35); }
+  .orb img { width: 66%; height: 66%; object-fit: contain; }
+  .float { position: absolute; display: flex; align-items: center; gap: 12px; padding: 12px 18px 12px 14px; border-radius: 18px; background: rgba(255, 255, 255, .95); color: var(--b9); box-shadow: 0 18px 40px rgba(0, 0, 0, .25); animation: bob 5s ease-in-out infinite; }
+  .float i { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; background: #eaf0ff; color: var(--b7); }
+  .float strong { display: block; font-size: 15px; font-weight: 800; line-height: 1.2; }
+  .float span { font-size: 12px; color: var(--mut); }
+  .f1 { top: 6%; left: -4%; } .f2 { top: 44%; right: -6%; animation-delay: -1.5s; } .f3 { bottom: 4%; left: 4%; animation-delay: -3s; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes bob { 50% { transform: translateY(-10px); } }
+
+  /* ---------- layanan digital ---------- */
+  .svc-sec { position: relative; z-index: 2; margin-top: -92px; padding-bottom: 24px; }
+  .svc-sec .wrap { padding: 28px; border-radius: 32px; background: #fff; border: 1px solid var(--line); box-shadow: 0 40px 80px -40px rgba(10, 27, 85, .5); }
+  .svc-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-bottom: 22px; }
+  .svc-head h2 { margin-top: 10px; font-size: clamp(1.4rem, 2.4vw, 1.9rem); font-weight: 800; letter-spacing: -.02em; color: var(--b9); }
+  .svc-all { font-size: 14px; font-weight: 700; color: var(--b7); white-space: nowrap; }
+  .svc-all i { margin-left: 6px; transition: transform .2s; }
+  .svc-all:hover i { transform: translateX(4px); }
+  .svc-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .svc { position: relative; display: flex; align-items: center; gap: 14px; padding: 16px; border-radius: 18px; background: var(--bg); border: 1px solid transparent; transition: transform .22s, background .22s, border-color .22s, box-shadow .22s; }
+  .svc:hover { transform: translateY(-4px); background: #fff; border-color: var(--y); box-shadow: 0 18px 36px -20px rgba(23, 62, 165, .5); }
+  .svc-ic { flex: none; width: 50px; height: 50px; border-radius: 15px; display: grid; place-items: center; font-size: 20px; background: #eaf0ff; color: var(--b7); transition: transform .22s; }
+  .svc:hover .svc-ic { transform: scale(1.08) rotate(-4deg); }
+  .svc:nth-child(4n+2) .svc-ic { background: #fff4c2; color: #a16207; }
+  .svc:nth-child(4n+3) .svc-ic { background: #dcfce7; color: #15803d; }
+  .svc:nth-child(4n+4) .svc-ic { background: #fee2e2; color: #b91c1c; }
+  .svc-ic img { width: 66%; height: 66%; object-fit: contain; }
+  .svc-txt { min-width: 0; flex: 1; }
+  .svc-txt strong { display: block; font-size: .95rem; font-weight: 700; line-height: 1.3; color: var(--b9); }
+  .svc-txt small { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-top: 3px; font-size: 12.5px; line-height: 1.45; color: var(--mut); }
+  .svc-go { flex: none; font-size: 12px; color: #a3abbd; transition: color .2s; }
+  .svc:hover .svc-go { color: var(--b7); }
 
   /* ---------- keunggulan ---------- */
   .keunggulan { background: linear-gradient(rgba(245, 247, 251, .93), rgba(245, 247, 251, .97)), var(--bgimg) center / cover no-repeat; }
@@ -2358,8 +2410,12 @@ const partnerLabel = (nama = "") => {
   }
   @media (max-width: 900px) {
     .sec { padding: 64px 0; }
-    .hero { padding: 56px 0 88px; border-radius: 0 0 36px 36px; }
+    .hero { padding: calc(var(--nav) + 48px) 0 130px; border-radius: 0 0 36px 36px; }
+    .svc-sec { margin-top: -72px; }
     .hero .wrap, .inv, .news-main { grid-template-columns: 1fr; }
+    .hero-art { max-width: 340px; }
+    .f1 { left: 0; } .f2 { right: 0; }
+    .svc-grid { grid-template-columns: repeat(2, 1fr); }
     .hero .wrap { gap: 40px; }
     .inv { padding: 24px; gap: 28px; border-radius: 28px; }
     .news-image { min-height: 260px; }
@@ -2367,9 +2423,10 @@ const partnerLabel = (nama = "") => {
     .pdf iframe { height: 520px; }
   }
   @media (max-width: 640px) {
-    .apps, .ung-grid, .vid-grid { grid-template-columns: 1fr; }
+    .svc-grid, .ung-grid, .vid-grid { grid-template-columns: 1fr; }
+    .svc-sec .wrap { padding: 18px; border-radius: 24px; }
+    .svc-head { flex-direction: column; align-items: flex-start; }
     .pr-grid { grid-template-columns: 1fr 1fr; }
-    .app.is-main { flex-direction: column; align-items: flex-start; }
     .head-row { flex-direction: column; align-items: flex-start; gap: 0; }
     .arrows { margin-bottom: 24px; }
     .pdf-bar { flex-wrap: wrap; }
