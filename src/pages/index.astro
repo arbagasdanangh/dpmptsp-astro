@@ -1853,7 +1853,7 @@ const fallbackApps = [
   { nama: "SKM", deskripsi: "Survei Kepuasan Masyarakat atas layanan kami.", url: "https://skm.surabaya.go.id/", icon: "fas fa-face-smile" },
 ];
 const services = aplikasi.length > 0 ? aplikasi : fallbackApps;
-const logoUrl = "https://github.com/arbagasdanangh/pps/blob/main/logo.png?raw=true";
+const logoUrl = "https://dpm-ptsp.surabaya.go.id/dpmptsp-removebg.png";
 
 /* link berita dihitung di server (slugify tidak tersedia di browser) */
 berita.forEach((b) => { b.href = `/media/${slugify(b.content)}`; });
@@ -1864,43 +1864,44 @@ berita.forEach((b) => { b.href = `/media/${slugify(b.content)}`; });
 <div class="home">
 
 {notifikasi.length > 0 && (
-  <div id="notificationModal" class="notif" aria-hidden="false">
+  <div id="notificationModal" class="notif" aria-hidden="false" role="dialog" aria-modal="true" aria-label="Informasi">
     <div class="notif-box">
       <button type="button" id="notificationClose" class="notif-close" aria-label="Tutup">
         <i class="fas fa-xmark"></i>
       </button>
 
-      <div id="notificationSlider">
+      <div id="notificationSlider" class="notif-slider">
         {notifikasi.map((item, index) => (
           <div class={`notification-slide ${index === 0 ? "active" : ""}`} data-index={index}>
             {item.gambar ? (
-              <div class="notif-media">
-                <img src={item.gambar} alt={item.judul || "Informasi"} />
-                {(item.judul || item.isi) && (
-                  <div class="notif-caption">
-                    {item.judul && <h2>{item.judul}</h2>}
-                    {item.isi && <p>{item.isi}</p>}
-                  </div>
-                )}
-              </div>
+              <div class="notif-media"><img src={item.gambar} alt={item.judul || "Informasi"} /></div>
             ) : (
               <div class="notif-fallback"><i class={`fas ${item.icon || "fa-bell"}`}></i></div>
+            )}
+            {(item.judul || item.isi) && (
+              <div class="notif-info">
+                {item.judul && <h2>{item.judul}</h2>}
+                {item.isi && <p>{item.isi}</p>}
+              </div>
             )}
           </div>
         ))}
       </div>
 
-      {notifikasi.length > 1 && (
-        <>
-          <button type="button" id="notificationPrev" class="notif-arrow prev" aria-label="Sebelumnya"><i class="fas fa-chevron-left"></i></button>
-          <button type="button" id="notificationNext" class="notif-arrow next" aria-label="Berikutnya"><i class="fas fa-chevron-right"></i></button>
-          <div id="notificationDots" class="notif-dots">
-            {notifikasi.map((_, index) => (
-              <button type="button" class={`notification-dot ${index === 0 ? "active" : ""}`} data-slide={index} aria-label={`Slide ${index + 1}`}></button>
-            ))}
-          </div>
-        </>
-      )}
+      <div class={`notif-foot ${notifikasi.length > 1 ? "" : "single"}`}>
+        {notifikasi.length > 1 && (
+          <>
+            <button type="button" id="notificationPrev" class="notif-arrow" aria-label="Sebelumnya"><i class="fas fa-chevron-left"></i></button>
+            <div id="notificationDots" class="notif-dots">
+              {notifikasi.map((_, index) => (
+                <button type="button" class={`notification-dot ${index === 0 ? "active" : ""}`} data-slide={index} aria-label={`Slide ${index + 1}`}></button>
+              ))}
+            </div>
+            <button type="button" id="notificationNext" class="notif-arrow" aria-label="Berikutnya"><i class="fas fa-chevron-right"></i></button>
+          </>
+        )}
+        <button type="button" class="notification-later btn btn-y btn-sm">Tutup</button>
+      </div>
     </div>
   </div>
 )}
@@ -2388,24 +2389,29 @@ berita.forEach((b) => { b.href = `/media/${slugify(b.content)}`; });
   .pt:hover .pt-go { color: var(--b7); }
 
   /* ---------- modal notifikasi ---------- */
-  .notif { position: fixed; inset: 0; z-index: 9999; display: grid; place-items: center; padding: 20px; background: rgba(8, 16, 46, .72); backdrop-filter: blur(6px); transition: opacity .25s; }
+  .notif { position: fixed; inset: 0; z-index: 9999; display: grid; place-items: center; padding: 16px; background: rgba(8, 16, 46, .78); backdrop-filter: blur(6px); transition: opacity .25s; }
   .notif.notification-hidden { opacity: 0; pointer-events: none; }
-  .notif-box { position: relative; width: min(560px, 100%); border-radius: 26px; overflow: hidden; background: #fff; box-shadow: 0 40px 90px rgba(0, 0, 0, .5); }
+  .notif-box { position: relative; display: flex; flex-direction: column; width: min(680px, 100%); max-height: calc(100vh - 32px); border-radius: 28px; overflow: hidden; background: #fff; border-top: 6px solid var(--y); box-shadow: 0 40px 90px rgba(0, 0, 0, .5); }
+  .notif-slider { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
   .notification-slide { display: none; }
-  .notification-slide.active { display: block; }
-  .notif-media { position: relative; }
-  .notif-media img { width: 100%; max-height: 80vh; object-fit: cover; }
-  .notif-caption { position: absolute; left: 0; right: 0; bottom: 0; padding: 60px 24px 52px; color: #fff; background: linear-gradient(transparent, rgba(8, 16, 46, .92)); }
-  .notif-caption h2 { font-size: 1.3rem; font-weight: 800; }
-  .notif-caption p { margin-top: 6px; font-size: .92rem; line-height: 1.5; opacity: .9; }
-  .notif-fallback { display: grid; place-items: center; height: 280px; font-size: 64px; color: var(--y); background: var(--b7); }
-  .notif-close { position: absolute; top: 14px; right: 14px; z-index: 3; width: 38px; height: 38px; border-radius: 50%; border: 0; cursor: pointer; background: rgba(255, 255, 255, .92); color: var(--b9); }
-  .notif-arrow { position: absolute; top: 45%; z-index: 3; width: 40px; height: 40px; border-radius: 50%; border: 0; cursor: pointer; background: rgba(255, 255, 255, .9); color: var(--b9); }
-  .notif-arrow.prev { left: 12px; } .notif-arrow.next { right: 12px; }
-  .notif-dots { position: absolute; left: 0; right: 0; bottom: 18px; z-index: 3; display: flex; justify-content: center; gap: 8px; }
-  .notification-dot { width: 9px; height: 9px; padding: 0; border: 0; border-radius: 99px; background: rgba(255, 255, 255, .5); cursor: pointer; transition: .2s; }
-  .notification-dot.active { width: 26px; background: var(--y); }
-
+  .notification-slide.active { display: block; animation: notifIn .3s ease; }
+  @keyframes notifIn { from { opacity: 0; transform: translateY(8px); } }
+  .notif-media { display: grid; place-items: center; background: var(--bg); }
+  .notif-media img { width: 100%; height: auto; max-height: 68vh; object-fit: contain; }
+  .notif-fallback { display: grid; place-items: center; height: 220px; font-size: 64px; color: var(--y); background: linear-gradient(135deg, var(--b9), var(--b7)); }
+  .notif-info { padding: 22px 26px 10px; }
+  .notif-info h2 { font-size: 1.25rem; font-weight: 800; line-height: 1.3; color: var(--b9); }
+  .notif-info h2::after { content: ""; display: block; width: 44px; height: 4px; border-radius: 4px; background: var(--y); margin-top: 10px; }
+  .notif-info p { margin-top: 12px; font-size: .95rem; line-height: 1.65; color: var(--mut); }
+  .notif-close { position: absolute; top: 16px; right: 16px; z-index: 3; width: 40px; height: 40px; border-radius: 50%; border: 2px solid #fff; cursor: pointer; background: var(--b7); color: #fff; box-shadow: 0 6px 18px rgba(0, 0, 0, .3); transition: transform .2s, background .2s; }
+  .notif-close:hover { background: var(--b9); transform: rotate(90deg); }
+  .notif-foot { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 20px; border-top: 1px solid var(--line); background: #fff; }
+  .notif-foot.single { justify-content: center; }
+  .notif-arrow { flex: none; width: 40px; height: 40px; border-radius: 50%; border: 1.5px solid var(--b7); background: #fff; color: var(--b7); cursor: pointer; transition: .2s; }
+  .notif-arrow:hover { background: var(--b7); color: #fff; }
+  .notif-dots { flex: 1; display: flex; justify-content: center; align-items: center; gap: 8px; }
+  .notification-dot { width: 9px; height: 9px; padding: 0; border: 0; border-radius: 99px; background: #c5d3f3; cursor: pointer; transition: .2s; }
+  .notification-dot.active { width: 28px; background: var(--b7); }
 
   /* ---------- tema biru & kuning ---------- */
   .head h2::after { content: ""; display: block; width: 64px; height: 5px; border-radius: 5px; background: var(--y); margin-top: 16px; }
