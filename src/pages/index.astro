@@ -1,864 +1,230 @@
 ---
+export const prerender = false;
+
 import MainLayout from "../layouts/MainLayout.astro";
-//import { db } from "../lib/db.js";
-import Pdf from "../components/Pdf.astro";
 import { slugify } from "../utils/slugify";
 
-const bgInvestasi = `/bgkeunggulan.jpeg`; 
+const bgInvestasi = `/bgkeunggulan.jpeg`;
+const logoUrl = "https://github.com/arbagasdanangh/pps/blob/main/logo.png?raw=true";
+const B = "https://dpm-ptsp.surabaya.go.id";
 
 /* =========================================================
-   API INSTANSI TERKAIT
+   HELPER API
+   Semua endpoint memakai kredensial yang sama.
 ========================================================= */
 
-let partners = [];
+const username = import.meta.env.API_BERITA_USERNAME;
+const password = import.meta.env.API_BERITA_PASSWORD;
 
-try {
-  const apiUrl =
-    "https://dpm-ptsp.surabaya.go.id/sso/apinstansiterkait.php";
+const pad = (n) => String(n).padStart(2, "0");
+const sekarang = new Date();
+const hariIni = `${sekarang.getFullYear()}-${pad(sekarang.getMonth() + 1)}-${pad(sekarang.getDate())}`;
 
-  const username = import.meta.env.API_BERITA_USERNAME;
-  const password = import.meta.env.API_BERITA_PASSWORD;
-
-  if (!username || !password) {
-    throw new Error(
-      "API_BERITA_USERNAME / API_BERITA_PASSWORD belum diset"
-    );
-  }
-
-  const response = await fetch(apiUrl, {
-    method: "POST",
-    headers: {
-      username,
-      password,
-      Accept: "application/json",
-    },
-  });
-
-  const responseText = await response.text();
-
-  if (!response.ok) {
-    throw new Error(
-      `API instansi gagal: HTTP ${response.status} - ${responseText}`
-    );
-  }
-
-  let payload;
-
+async function fetchApi(nama, endpoint, params = null, allowSingle = false) {
   try {
-    payload = JSON.parse(responseText);
-  } catch {
-    throw new Error(
-      `Response API instansi bukan JSON: ${responseText.substring(0, 500)}`
-    );
-  }
-
-  const apiData =
-    Array.isArray(payload)
-      ? payload
-      : Array.isArray(payload?.data)
-        ? payload.data
-        : Array.isArray(payload?.results)
-          ? payload.results
-          : [];
-
-  partners = apiData
-    .map((item) => ({
-      id: item.id ?? null,
-      nama: item.nama ?? "",
-      link: item.link ?? "#",
-      logo: item.logo ?? "",
-      alt_logo: item.alt_logo ?? item.nama ?? "",
-      aktif: item.aktif ?? 1,
-      urutan: Number(item.urutan) || 999999,
-      created_at: item.created_at ?? null,
-      updated_at: item.updated_at ?? null,
-    }))
-    .filter(
-      (item) =>
-        item.nama &&
-        Number(item.aktif) === 1
-    )
-    .sort((a, b) => {
-      if (a.urutan !== b.urutan) {
-        return a.urutan - b.urutan;
-      }
-
-      return (
-        (Number(a.id) || 0) -
-        (Number(b.id) || 0)
-      );
-    });
-
-  console.log(
-    "[API INSTANSI TERKAIT] berhasil:",
-    partners
-  );
-
-} catch (error) {
-
-  console.error(
-    "[API INSTANSI TERKAIT ERROR]",
-    error
-  );
-
-  partners = [];
-}
-
-/* =========================================================
-   WATERMARK
-========================================================= */
-
-const watermarkLogo =
-  "https://github.com/arbagasdanangh/pps/blob/main/logo.png?raw=true";
-
-/* =========================================================
-   NOTIFIKASI DARI JSON API
-   API: https://dpm-ptsp.surabaya.go.id/sso/apinotifikasi.php
-========================================================= */
-
-let notifikasi = [];
-
-try {
-  const apiUrl =
-    "https://dpm-ptsp.surabaya.go.id/sso/apinotifikasi.php";
-
-  const username = import.meta.env.API_BERITA_USERNAME;
-  const password = import.meta.env.API_BERITA_PASSWORD;
-
-  if (!username || !password) {
-    throw new Error(
-      "API_BERITA_USERNAME / API_BERITA_PASSWORD belum diset"
-    );
-  }
-
-  const response = await fetch(apiUrl, {
-    method: "POST",
-    headers: {
-      username,
-      password,
-      Accept: "application/json",
-    },
-  });
-
-  const responseText = await response.text();
-
-  if (!response.ok) {
-    throw new Error(
-      `API notifikasi gagal: HTTP ${response.status} - ${responseText}`
-    );
-  }
-
-  let payload;
-
-  try {
-    payload = JSON.parse(responseText);
-  } catch {
-    throw new Error(
-      `Response API notifikasi bukan JSON: ${responseText.substring(0, 500)}`
-    );
-  }
-
-  const apiData = Array.isArray(payload)
-    ? payload
-    : Array.isArray(payload?.data)
-      ? payload.data
-      : Array.isArray(payload?.results)
-        ? payload.results
-        : [];
-
-  notifikasi = apiData
-    .map((item) => ({
-      id: item.id ?? null,
-      judul: item.judul ?? "",
-      isi: item.isi ?? "",
-      gambar: item.gambar ?? "",
-      tipe: item.tipe ?? "info",
-      icon: item.icon ?? "fa-circle-info",
-      link: item.link ?? "#",
-      teks_link: item.teks_link ?? "Selengkapnya",
-      active: item.active ?? "Y",
-      mulai: item.mulai ?? null,
-      selesai: item.selesai ?? null,
-      urutan: Number(item.urutan) || 999999,
-      created_at: item.created_at ?? null,
-    }))
-    .filter(
-      (item) =>
-        item.judul &&
-        String(item.active).toUpperCase() === "Y"
-    )
-    .sort((a, b) => {
-      if (a.urutan !== b.urutan) {
-        return a.urutan - b.urutan;
-      }
-
-      return (Number(b.id) || 0) - (Number(a.id) || 0);
-    });
-
-  console.log(
-    "[API NOTIFIKASI] berhasil:",
-    notifikasi
-  );
-
-} catch (error) {
-  console.error(
-    "[API NOTIFIKASI ERROR]",
-    error
-  );
-
-  notifikasi = [];
-}
-
-
-/* =========================================================
-   REGULASI DARI JSON API
-
-   API:
-   https://dpm-ptsp.surabaya.go.id/sso/apiregulasi.php
-
-   Mulai:
-   2024-01-01
-
-   Sampai:
-   hari ini
-========================================================= */
-
-let regulasi = [];
-
-try {
-  const apiUrl =
-    "https://dpm-ptsp.surabaya.go.id/sso/apiregulasi.php";
-
-  const username =
-    import.meta.env.API_BERITA_USERNAME;
-
-  const password =
-    import.meta.env.API_BERITA_PASSWORD;
-
-  if (!username || !password) {
-    throw new Error(
-      "API_BERITA_USERNAME / API_BERITA_PASSWORD belum diset"
-    );
-  }
-
-
-  /* =====================================================
-     TANGGAL
-  ===================================================== */
-
-  const awal = "2024-01-01";
-
-  const sekarang = new Date();
-
-  const akhir =
-    sekarang.getFullYear() +
-    "-" +
-    String(
-      sekarang.getMonth() + 1
-    ).padStart(2, "0") +
-    "-" +
-    String(
-      sekarang.getDate()
-    ).padStart(2, "0");
-
-
-  /* =====================================================
-     FORM POST
-  ===================================================== */
-
-  const form = new URLSearchParams();
-
-  form.append(
-    "awal",
-    awal
-  );
-
-  form.append(
-    "akhir",
-    akhir
-  );
-
-
-  /* =====================================================
-     REQUEST
-  ===================================================== */
-
-  const response = await fetch(
-    apiUrl,
-    {
-      method: "POST",
-
-      headers: {
-        username,
-        password,
-
-        Accept:
-          "application/json",
-
-        "Content-Type":
-          "application/x-www-form-urlencoded",
-      },
-
-      body:
-        form.toString(),
+    if (!username || !password) {
+      throw new Error("API_BERITA_USERNAME / API_BERITA_PASSWORD belum diset");
     }
-  );
 
+    const headers = { username, password, Accept: "application/json" };
+    const init = { method: "POST", headers };
 
-  const responseText =
-    await response.text();
-
-
-  /* =====================================================
-     DEBUG
-  ===================================================== */
-
-  console.log(
-    "========================================"
-  );
-
-  console.log(
-    "[API REGULASI] STATUS:",
-    response.status
-  );
-
-  console.log(
-    "[API REGULASI] FILTER:",
-    {
-      awal,
-      akhir,
+    if (params) {
+      headers["Content-Type"] = "application/x-www-form-urlencoded";
+      init.body = new URLSearchParams(params).toString();
     }
-  );
 
-  console.log(
-    "[API REGULASI] RAW:",
-    responseText
-  );
+    const response = await fetch(`${B}/sso/${endpoint}`, init);
+    const text = await response.text();
 
-  console.log(
-    "========================================"
-  );
+    if (!response.ok) throw new Error(`HTTP ${response.status} - ${text}`);
 
+    let payload;
+    try {
+      payload = JSON.parse(text);
+    } catch {
+      throw new Error(`Response bukan JSON: ${text.substring(0, 500)}`);
+    }
 
-  /* =====================================================
-     CEK HTTP
-  ===================================================== */
+    let rows =
+      [payload, payload?.data, payload?.results, payload?.result, payload?.items, payload?.rows]
+        .find(Array.isArray) || [];
 
-  if (!response.ok) {
-    throw new Error(
-      `API regulasi gagal: HTTP ${response.status} - ${responseText}`
-    );
+    if (!rows.length && allowSingle && payload && typeof payload === "object" && (payload.judul || payload.deskripsi || payload.title)) {
+      rows = [payload];
+    }
+
+    return { rows, error: "" };
+  } catch (error) {
+    console.error(`[API ${nama} ERROR]`, error);
+    return { rows: [], error: error instanceof Error ? error.message : "Gagal mengambil data API" };
   }
-
-
-  /* =====================================================
-     PARSE JSON
-  ===================================================== */
-
-  let payload;
-
-  try {
-
-    payload =
-      JSON.parse(
-        responseText
-      );
-
-  } catch {
-
-    throw new Error(
-      `Response API regulasi bukan JSON: ${responseText.substring(
-        0,
-        1000
-      )}`
-    );
-
-  }
-
-
-  console.log(
-    "[API REGULASI] PAYLOAD:",
-    payload
-  );
-
-
-  /* =====================================================
-     AMBIL DATA
-  ===================================================== */
-
-  let apiData = [];
-
-
-  if (
-    Array.isArray(payload)
-  ) {
-
-    apiData =
-      payload;
-
-  }
-
-  else if (
-    Array.isArray(
-      payload?.data
-    )
-  ) {
-
-    apiData =
-      payload.data;
-
-  }
-
-  else if (
-    Array.isArray(
-      payload?.results
-    )
-  ) {
-
-    apiData =
-      payload.results;
-
-  }
-
-  else if (
-    Array.isArray(
-      payload?.result
-    )
-  ) {
-
-    apiData =
-      payload.result;
-
-  }
-
-  else if (
-    Array.isArray(
-      payload?.items
-    )
-  ) {
-
-    apiData =
-      payload.items;
-
-  }
-
-  else if (
-    Array.isArray(
-      payload?.rows
-    )
-  ) {
-
-    apiData =
-      payload.rows;
-
-  }
-
-
-  console.log(
-    "[API REGULASI] TOTAL RAW:",
-    apiData.length
-  );
-
-
-  /* =====================================================
-     NORMALISASI
-  ===================================================== */
-
-  regulasi =
-    apiData
-
-      .map((item) => ({
-
-        id:
-          item.id ??
-          item.id_regulasi ??
-          item.id_peraturan ??
-          null,
-
-        jenis:
-          item.jenis ??
-          item.jenis_regulasi ??
-          item.type ??
-          "",
-
-        nomor:
-          item.nomor ??
-          item.no ??
-          item.nomor_regulasi ??
-          "",
-
-        tahun:
-          item.tahun ??
-          item.year ??
-          null,
-
-        judul:
-          item.judul ??
-          item.title ??
-          item.nama ??
-          item.nama_regulasi ??
-          "",
-
-        file:
-          item.file ??
-          item.file_url ??
-          item.url_file ??
-          item.pdf ??
-          item.link ??
-          "",
-
-        url:
-          item.url ??
-          item.link ??
-          item.file_url ??
-          item.url_file ??
-          "",
-
-        active:
-          item.active ??
-          item.aktif ??
-          item.status ??
-          item.is_active ??
-          "Y",
-
-        urutan:
-          Number(
-            item.urutan ??
-            item.order ??
-            item.sort_order ??
-            999999
-          ) || 999999,
-
-        tanggal:
-          item.tanggal ??
-          item.date ??
-          item.created_at ??
-          null,
-
-        created_at:
-          item.created_at ??
-          null,
-
-        raw:
-          item,
-
-      }))
-
-
-      /*
-       * Untuk sementara jangan terlalu ketat
-       * pada active.
-       *
-       * Yang penting regulasi dari API
-       * benar-benar tampil.
-       */
-
-      .filter(
-        (item) =>
-          item.judul
-      )
-
-
-      .sort((a, b) => {
-
-        const tahunA =
-          Number(a.tahun) || 0;
-
-        const tahunB =
-          Number(b.tahun) || 0;
-
-        if (
-          tahunA !== tahunB
-        ) {
-
-          return (
-            tahunB -
-            tahunA
-          );
-
-        }
-
-        return (
-          (Number(b.id) || 0) -
-          (Number(a.id) || 0)
-        );
-
-      });
-
-
-  console.log(
-    "========================================"
-  );
-
-  console.log(
-    "[API REGULASI] BERHASIL:",
-    regulasi.length
-  );
-
-  console.log(
-    "[API REGULASI] HASIL:",
-    regulasi
-  );
-
-  console.log(
-    "========================================"
-  );
-
-
-} catch (error) {
-
-  console.error(
-    "========================================"
-  );
-
-  console.error(
-    "[API REGULASI ERROR]:",
-    error
-  );
-
-  console.error(
-    "========================================"
-  );
-
-  regulasi = [];
-
 }
-
-let slider = [];
-
-try {
-  const [result] = await db.execute(`
-    SELECT
-      id,
-      gambar,
-      judul,
-      deskripsi,
-      urutan
-    FROM beranda_slider
-    ORDER BY urutan ASC, id ASC
-  `);
-
-  slider = result;
-} catch (error) {
-  console.error("Slider DB Error:", error);
-}
-
 
 /* =========================================================
-   BERITA DARI JSON API
-   Mulai 1 Januari 2024 sampai hari ini
+   INSTANSI TERKAIT
 ========================================================= */
 
-let berita = [];
+const partnerRes = await fetchApi("INSTANSI", "apinstansiterkait.php");
 
-try {
-  const apiUrl =
-    "https://dpm-ptsp.surabaya.go.id/sso/apiberita.php";
-
-  const username =
-    import.meta.env.API_BERITA_USERNAME;
-
-  const password =
-    import.meta.env.API_BERITA_PASSWORD;
-
-  if (!username || !password) {
-    throw new Error(
-      "API_BERITA_USERNAME / API_BERITA_PASSWORD belum diset"
-    );
-  }
-
-  // Mulai dari 1 Januari 2024
-  const awal = "2024-01-01";
-
-  // Sampai tanggal hari ini
-  const sekarang = new Date();
-
-  const akhir =
-    sekarang.getFullYear() +
-    "-" +
-    String(sekarang.getMonth() + 1).padStart(2, "0") +
-    "-" +
-    String(sekarang.getDate()).padStart(2, "0");
-
-  /*
-   * API apiberita.php menggunakan POST form.
-   */
-  const form = new URLSearchParams();
-
-  form.append("awal", awal);
-  form.append("akhir", akhir);
-  form.append("id_category", "");
-  form.append("active", "");
-  form.append("headline", "");
-
-  const response = await fetch(apiUrl, {
-    method: "POST",
-
-    headers: {
-      username,
-      password,
-      Accept: "application/json",
-      "Content-Type":
-        "application/x-www-form-urlencoded",
-    },
-
-    body: form.toString(),
-  });
-
-  const responseText =
-    await response.text();
-
-  if (!response.ok) {
-    throw new Error(
-      `API berita gagal: HTTP ${response.status} - ${responseText}`
-    );
-  }
-
-  let payload;
-
-  try {
-    payload = JSON.parse(responseText);
-  } catch {
-    throw new Error(
-      `Response API berita bukan JSON: ${responseText.substring(
-        0,
-        1000
-      )}`
-    );
-  }
-
-  console.log(
-    "[API BERITA]",
-    {
-      awal,
-      akhir,
-      total_data:
-        payload?.total_data ?? 0,
-    }
-  );
-
-  /*
-   * Response API:
-   *
-   * {
-   *   status: true,
-   *   message: "...",
-   *   filter: {...},
-   *   total_data: 123,
-   *   data: [...]
-   * }
-   */
-
-  const apiData =
-    Array.isArray(payload)
-      ? payload
-      : Array.isArray(payload?.data)
-        ? payload.data
-        : Array.isArray(payload?.results)
-          ? payload.results
-          : [];
-
-  berita = apiData
-    .map((item) => ({
-      id_post:
-        item.id_post ??
-        item.id ??
-        null,
-
-      id_category:
-        item.id_category ??
-        null,
-
-      title:
-        item.title ??
-        item.judul ??
-        "",
-
-      content:
-        item.content ??
-        item.isi ??
-        "",
-
-      ref_content:
-        item.ref_content ??
-        item.content ??
-        item.isi ??
-        "",
-
-      seotitle:
-        item.seotitle ??
-        item.slug ??
-        "",
-
-      date:
-        item.date ??
-        item.tanggal ??
-        item.created_at ??
-        null,
-
-      time:
-        item.time ??
-        item.jam ??
-        null,
-
-      picture:
-        item.picture ??
-        item.gambar ??
-        item.image ??
-        "",
-
-      hits:
-        item.hits ??
-        item.view ??
-        item.views ??
-        0,
-
-      category_title:
-        item.category_title ??
-        item.category ??
-        item.nama_category ??
-        "BERITA",
-    }))
-    .filter(
-      (item) =>
-        item.title
-    )
-    .sort((a, b) => {
-      const dateA =
-        new Date(
-          `${a.date || ""} ${a.time || ""}`
-        ).getTime() || 0;
-
-      const dateB =
-        new Date(
-          `${b.date || ""} ${b.time || ""}`
-        ).getTime() || 0;
-
-      return dateB - dateA;
-    })
-    .slice(0, 10);
-
-  console.log(
-    `[API BERITA] ${berita.length} berita berhasil diambil`
-  );
-
-} catch (error) {
-  console.error(
-    "[API BERITA ERROR]",
-    error
-  );
-
-  berita = [];
-}
-
+const partners = partnerRes.rows
+  .map((item) => ({
+    id: item.id ?? null,
+    nama: item.nama ?? "",
+    link: item.link ?? "#",
+    logo: item.logo ?? "",
+    alt_logo: item.alt_logo ?? item.nama ?? "",
+    aktif: item.aktif ?? 1,
+    urutan: Number(item.urutan) || 999999,
+  }))
+  .filter((item) => item.nama && Number(item.aktif) === 1)
+  .sort((a, b) => a.urutan - b.urutan || (Number(a.id) || 0) - (Number(b.id) || 0));
 
 /* =========================================================
-   HELPER
+   NOTIFIKASI
+========================================================= */
+
+const notifRes = await fetchApi("NOTIFIKASI", "apinotifikasi.php");
+
+const notifikasi = notifRes.rows
+  .map((item) => ({
+    id: item.id ?? null,
+    judul: item.judul ?? "",
+    isi: item.isi ?? "",
+    gambar: item.gambar ?? "",
+    tipe: item.tipe ?? "info",
+    icon: item.icon ?? "fa-circle-info",
+    link: item.link ?? "#",
+    teks_link: item.teks_link ?? "Selengkapnya",
+    active: item.active ?? "Y",
+    urutan: Number(item.urutan) || 999999,
+  }))
+  .filter((item) => item.judul && String(item.active).toUpperCase() === "Y")
+  .sort((a, b) => a.urutan - b.urutan || (Number(b.id) || 0) - (Number(a.id) || 0));
+
+/* =========================================================
+   BERITA (1 Jan 2024 s/d hari ini, 10 terbaru)
+========================================================= */
+
+const beritaRes = await fetchApi("BERITA", "apiberita.php", {
+  awal: "2024-01-01",
+  akhir: hariIni,
+  id_category: "",
+  active: "",
+  headline: "",
+});
+
+const berita = beritaRes.rows
+  .map((item) => ({
+    id_post: item.id_post ?? item.id ?? null,
+    id_category: item.id_category ?? null,
+    title: item.title ?? item.judul ?? "",
+    content: item.content ?? item.isi ?? "",
+    ref_content: item.ref_content ?? item.content ?? item.isi ?? "",
+    seotitle: item.seotitle ?? item.slug ?? "",
+    date: item.date ?? item.tanggal ?? item.created_at ?? null,
+    time: item.time ?? item.jam ?? null,
+    picture: item.picture ?? item.gambar ?? item.image ?? "",
+    hits: item.hits ?? item.view ?? item.views ?? 0,
+    category_title: item.category_title ?? item.category ?? item.nama_category ?? "BERITA",
+  }))
+  .filter((item) => item.title)
+  .sort((a, b) => {
+    const da = new Date(`${a.date || ""} ${a.time || ""}`).getTime() || 0;
+    const db = new Date(`${b.date || ""} ${b.time || ""}`).getTime() || 0;
+    return db - da;
+  })
+  .slice(0, 10);
+
+/* link berita dihitung di server (slugify tidak tersedia di browser) */
+berita.forEach((b) => { b.href = `/media/${slugify(b.content)}`; });
+
+/* =========================================================
+   KEUNGGULAN INVESTASI
+========================================================= */
+
+const unggulRes = await fetchApi("KEUNGGULAN", "apikeunggulan.php", {
+  awal: "2026-01-01",
+  akhir: "2026-12-31",
+});
+const apiError = unggulRes.error;
+
+const unggul = unggulRes.rows.map((item) => ({
+  id: item?.id ?? null,
+  judul: item?.judul ?? item?.title ?? "",
+  deskripsi: item?.deskripsi ?? item?.description ?? "",
+  icon: item?.icon ?? "fas fa-star",
+  link: item?.link ?? "#",
+  tanggal: item?.tanggal ?? "",
+}));
+
+/* =========================================================
+   VIDEO
+========================================================= */
+
+const videoRes = await fetchApi("VIDEO", "apivideo.php");
+
+const videos = videoRes.rows
+  .map((item) => ({
+    id: item.id ?? null,
+    judul: item.judul ?? "",
+    deskripsi: item.deskripsi ?? "",
+    thumbnail: item.thumbnail ?? "",
+    url_video: item.url_video ?? "#",
+    status: item.status ?? "VIDEO",
+    tanggal: item.tanggal ?? null,
+    created_at: item.created_at ?? null,
+  }))
+  .filter((item) => item.judul)
+  .sort((a, b) => {
+    const da = new Date(a.tanggal || a.created_at || "").getTime() || 0;
+    const db = new Date(b.tanggal || b.created_at || "").getTime() || 0;
+    return db - da;
+  })
+  .slice(0, 6);
+
+/* =========================================================
+   PETA POTENSI INVESTASI
+========================================================= */
+
+const petaRes = await fetchApi("PETA", "apipetapotensi.php", null, true);
+
+const peta = petaRes.rows
+  .map((item) => ({
+    id: item?.id ?? item?.id_peta ?? item?.id_potensi ?? null,
+    judul: item?.judul ?? item?.Judul ?? item?.title ?? item?.nama ?? item?.nama_peta ?? item?.nama_potensi ?? "",
+    deskripsi: item?.deskripsi ?? item?.Deskripsi ?? item?.description ?? item?.keterangan ?? item?.desc ?? "",
+    gambar: item?.gambar ?? item?.foto ?? item?.image ?? item?.img ?? item?.foto_peta ?? "",
+    link: item?.link ?? item?.url ?? item?.href ?? item?.url_peta ?? "#",
+    wilayah_unggulan: item?.wilayah_unggulan ?? item?.wilayahUnggulan ?? item?.wilayah ?? "",
+  }))
+  .filter((item) => item.judul || item.deskripsi || item.gambar || item.wilayah_unggulan || item.link !== "#");
+
+/* =========================================================
+   APLIKASI PUBLIK
+========================================================= */
+
+const aplikasiRes = await fetchApi("APLIKASI", "apiaplikasi.php", { awal: "2024-01-01", akhir: hariIni });
+
+const aplikasi = aplikasiRes.rows
+  .map((item) => ({
+    id: item.id ?? item.id_aplikasi ?? null,
+    nama: item.nama_aplikasi ?? item.nama ?? item.title ?? item.judul ?? item.name ?? item.label ?? "",
+    deskripsi: item.deskripsi ?? item.description ?? item.keterangan ?? item.desc ?? "",
+    url: item.url_aplikasi ?? item.link_aplikasi ?? item.url ?? item.link ?? item.href ?? item.website ?? "",
+    icon: item.icon_aplikasi ?? item.icon ?? item.logo ?? item.gambar ?? item.image ?? "▣",
+    target: item.target ?? "_blank",
+    urutan: Number(item.urutan ?? item.order ?? item.sort_order ?? item.position ?? 999999) || 999999,
+  }))
+  .filter((item) => item.nama)
+  .sort((a, b) => a.urutan - b.urutan);
+
+/* =========================================================
+   HELPER TAMPILAN
 ========================================================= */
 
 function stripHtml(value) {
   if (!value) return "";
-
   return String(value)
     .replace(/<[^>]*>/g, "")
     .replace(/&nbsp;/gi, " ")
@@ -869,951 +235,17 @@ function stripHtml(value) {
     .trim();
 }
 
-
 function excerpt(value, length = 220) {
   const text = stripHtml(value);
-
-  if (text.length <= length) {
-    return text;
-  }
-
-  return text.substring(0, length).trim() + "...";
+  return text.length <= length ? text : text.substring(0, length).trim() + "...";
 }
-
 
 function formatDate(value) {
   if (!value) return "";
-
   const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return date.toLocaleDateString("id-ID", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric"
-  });
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" });
 }
-
- 
-export const prerender = false;
-
-let unggul = [];
-let apiError = "";
-
-try {
-  const apiUrl =
-    "https://dpm-ptsp.surabaya.go.id/sso/apikeunggulan.php";
-
-  const username = import.meta.env.API_BERITA_USERNAME;
-  const password = import.meta.env.API_BERITA_PASSWORD;
-
-  const response = await fetch(apiUrl, {
-    method: "POST",
-    headers: {
-      username,
-      password,
-      Accept: "application/json",
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: new URLSearchParams({
-      awal: "2026-01-01",
-      akhir: "2026-12-31",
-    }),
-  });
-
-  const responseText = await response.text();
-
-  if (!response.ok) {
-    throw new Error(
-      `HTTP ${response.status}: ${responseText}`
-    );
-  }
-
-  const payload = JSON.parse(responseText);
-
-  const apiData =
-    Array.isArray(payload)
-      ? payload
-      : Array.isArray(payload?.data)
-        ? payload.data
-        : Array.isArray(payload?.results)
-          ? payload.results
-          : Array.isArray(payload?.result)
-            ? payload.result
-            : [];
-
-  unggul = apiData.map((item) => ({
-    id: item?.id ?? null,
-
-    judul:
-      item?.judul ??
-      item?.title ??
-      "",
-
-    deskripsi:
-      item?.deskripsi ??
-      item?.description ??
-      "",
-
-    icon:
-      item?.icon ??
-      "fas fa-star",
-
-    warna_icon:
-      item?.warna_icon ??
-      "blue-600",
-
-    warna_bg:
-      item?.warna_bg ??
-      "blue-100",
-
-    link:
-      item?.link ??
-      "#",
-
-    tanggal:
-      item?.tanggal ??
-      "",
-  }));
-
-  console.log("[API KEUNGGULAN]", unggul);
-
-} catch (error) {
-  console.error("[API KEUNGGULAN ERROR]", error);
-
-  apiError =
-    error instanceof Error
-      ? error.message
-      : "Gagal mengambil data API";
-
-  unggul = [];
-}
-/* =========================================================
-   VIDEO DARI JSON API
-========================================================= */
-
-let videos = [];
-
-try {
-  const apiUrl =
-    "https://dpm-ptsp.surabaya.go.id/sso/apivideo.php";
-
-  const username = import.meta.env.API_BERITA_USERNAME;
-  const password = import.meta.env.API_BERITA_PASSWORD;
-
-  const response = await fetch(apiUrl, {
-    method: "POST",
-    headers: {
-      username,
-      password,
-      Accept: "application/json",
-    },
-  });
-
-  const responseText = await response.text();
-
-  if (!response.ok) {
-    throw new Error(
-      `API video gagal: HTTP ${response.status} - ${responseText}`
-    );
-  }
-
-  const payload = JSON.parse(responseText);
-
-  const apiData = Array.isArray(payload)
-    ? payload
-    : Array.isArray(payload?.data)
-      ? payload.data
-      : Array.isArray(payload?.results)
-        ? payload.results
-        : [];
-
-  videos = apiData
-    .map((item) => ({
-      id: item.id ?? null,
-      judul: item.judul ?? "",
-      deskripsi: item.deskripsi ?? "",
-      thumbnail: item.thumbnail ?? "",
-      url_video: item.url_video ?? "#",
-      status: item.status ?? "VIDEO",
-      tanggal: item.tanggal ?? null,
-      created_at: item.created_at ?? null,
-    }))
-    .filter((item) => item.judul)
-    .sort((a, b) => {
-      const dateA =
-        new Date(a.tanggal || a.created_at || "").getTime() || 0;
-
-      const dateB =
-        new Date(b.tanggal || b.created_at || "").getTime() || 0;
-
-      return dateB - dateA;
-    })
-    .slice(0, 6);
-
-  console.log("[API VIDEO]", videos);
-
-} catch (error) {
-  console.error("[API VIDEO ERROR]", error);
-  videos = [];
-} 
-
- /* =========================================================
-   PETA POTENSI INVESTASI DARI JSON API
-========================================================= */
-
-let peta = [];
-
-try {
-
-  const apiUrl =
-    "https://dpm-ptsp.surabaya.go.id/sso/apipetapotensi.php";
-
-  const username =
-    import.meta.env.API_BERITA_USERNAME;
-
-  const password =
-    import.meta.env.API_BERITA_PASSWORD;
-
-
-  if (!username || !password) {
-
-    throw new Error(
-      "API_BERITA_USERNAME / API_BERITA_PASSWORD belum diset"
-    );
-
-  }
-
-
-  console.log(
-    "========================================"
-  );
-
-  console.log(
-    "[API PETA] REQUEST"
-  );
-
-  console.log(
-    "URL:",
-    apiUrl
-  );
-
-
-  /* =====================================================
-     REQUEST
-  ===================================================== */
-
-  const response =
-    await fetch(
-      apiUrl,
-      {
-        method: "POST",
-
-        headers: {
-          username,
-          password,
-          Accept: "application/json",
-        },
-      }
-    );
-
-
-  const responseText =
-    await response.text();
-
-
-  console.log(
-    "[API PETA] STATUS:",
-    response.status
-  );
-
-  console.log(
-    "[API PETA] RAW:",
-    responseText
-  );
-
-
-  if (!response.ok) {
-
-    throw new Error(
-      `API peta gagal: HTTP ${response.status} - ${responseText}`
-    );
-
-  }
-
-
-  /* =====================================================
-     PARSE JSON
-  ===================================================== */
-
-  let payload;
-
-  try {
-
-    payload =
-      JSON.parse(
-        responseText
-      );
-
-  } catch {
-
-    throw new Error(
-      `Response API peta bukan JSON: ${responseText.substring(
-        0,
-        2000
-      )}`
-    );
-
-  }
-
-
-  console.log(
-    "[API PETA] PAYLOAD:",
-    payload
-  );
-
-
-  /* =====================================================
-     AMBIL DATA
-  ===================================================== */
-
-  let apiData = [];
-
-
-  if (
-    Array.isArray(payload)
-  ) {
-
-    apiData =
-      payload;
-
-  }
-
-  else if (
-    Array.isArray(payload?.data)
-  ) {
-
-    apiData =
-      payload.data;
-
-  }
-
-  else if (
-    Array.isArray(payload?.results)
-  ) {
-
-    apiData =
-      payload.results;
-
-  }
-
-  else if (
-    Array.isArray(payload?.result)
-  ) {
-
-    apiData =
-      payload.result;
-
-  }
-
-  else if (
-    Array.isArray(payload?.items)
-  ) {
-
-    apiData =
-      payload.items;
-
-  }
-
-  else if (
-    Array.isArray(payload?.rows)
-  ) {
-
-    apiData =
-      payload.rows;
-
-  }
-
-  else if (
-    payload &&
-    typeof payload === "object"
-  ) {
-
-    if (
-      payload.judul ||
-      payload.deskripsi ||
-      payload.title
-    ) {
-
-      apiData = [
-        payload
-      ];
-
-    }
-
-  }
-
-
-  console.log(
-    "[API PETA] TOTAL DATA:",
-    apiData.length
-  );
-
-
-  console.log(
-    "[API PETA] DATA MENTAH:",
-    apiData
-  );
-
-
-  /* =====================================================
-     NORMALISASI
-  ===================================================== */
-
-  peta =
-    apiData
-
-      .map((item) => {
-
-        const judul =
-          item?.judul ??
-          item?.Judul ??
-          item?.title ??
-          item?.nama ??
-          item?.nama_peta ??
-          item?.nama_potensi ??
-          "";
-
-
-        const deskripsi =
-          item?.deskripsi ??
-          item?.Deskripsi ??
-          item?.description ??
-          item?.keterangan ??
-          item?.desc ??
-          "";
-
-
-        const gambar =
-          item?.gambar ??
-          item?.foto ??
-          item?.image ??
-          item?.img ??
-          item?.foto_peta ??
-          "";
-
-
-        const link =
-          item?.link ??
-          item?.url ??
-          item?.href ??
-          item?.url_peta ??
-          "#";
-
-
-        /*
-         * ================================================
-         * WILAYAH UNGGULAN
-         * ================================================
-         */
-
-        const wilayah_unggulan =
-          item?.wilayah_unggulan ??
-          item?.wilayahUnggulan ??
-          item?.wilayah ??
-          item?.wilayah_unggulan_investasi ??
-          "";
-
-
-        return {
-
-          id:
-            item?.id ??
-            item?.id_peta ??
-            item?.id_potensi ??
-            null,
-
-
-          judul,
-
-
-          deskripsi,
-
-
-          gambar,
-
-
-          link,
-
-
-          wilayah_unggulan,
-
-
-          raw:
-            item
-
-        };
-
-      })
-
-
-      /*
-       * Buang data kosong
-       */
-
-      .filter(
-        (item) =>
-          item.judul ||
-          item.deskripsi ||
-          item.gambar ||
-          item.wilayah_unggulan ||
-          item.link !== "#"
-      );
-
-
-  console.log(
-    "========================================"
-  );
-
-  console.log(
-    "[API PETA] BERHASIL:",
-    peta.length
-  );
-
-  console.log(
-    "[API PETA] HASIL:",
-    peta
-  );
-
-  console.log(
-    "[API PETA] WILAYAH:",
-    peta[0]?.wilayah_unggulan
-  );
-
-  console.log(
-    "========================================"
-  );
-
-
-} catch (error) {
-
-  console.error(
-    "========================================"
-  );
-
-  console.error(
-    "[API PETA ERROR]",
-    error
-  );
-
-  console.error(
-    "========================================"
-  );
-
-  peta = [];
-
-}
-
-   let renstra = [];
-  try {
-    const [result] = await db.execute('SELECT * FROM renstra_investasi');
-    renstra = result;
-  } catch (e) {
-    console.error("DB error:", e);
-  }
-
- /* =========================================================
-   APLIKASI PUBLIK DARI JSON API
-   API:
-   https://dpm-ptsp.surabaya.go.id/sso/apiaplikasi.php
-
-   Mulai: 2024-01-01
-   Sampai: hari ini
-========================================================= */
-
-let aplikasi = [];
-
-try {
-  const apiUrl =
-    "https://dpm-ptsp.surabaya.go.id/sso/apiaplikasi.php";
-
-  const username =
-    import.meta.env.API_BERITA_USERNAME;
-
-  const password =
-    import.meta.env.API_BERITA_PASSWORD;
-
-  if (!username || !password) {
-    throw new Error(
-      "API_BERITA_USERNAME / API_BERITA_PASSWORD belum diset"
-    );
-  }
-
-  /*
-   * =====================================================
-   * FILTER TANGGAL
-   * =====================================================
-   */
-
-  const awal = "2024-01-01";
-
-  const sekarang = new Date();
-
-  const akhir =
-    sekarang.getFullYear() +
-    "-" +
-    String(
-      sekarang.getMonth() + 1
-    ).padStart(2, "0") +
-    "-" +
-    String(
-      sekarang.getDate()
-    ).padStart(2, "0");
-
-
-  /*
-   * =====================================================
-   * BODY REQUEST
-   * =====================================================
-   */
-
-  const form = new URLSearchParams();
-
-  form.append("awal", awal);
-  form.append("akhir", akhir);
-
-
-  /*
-   * =====================================================
-   * REQUEST API
-   * =====================================================
-   */
-
-  const response = await fetch(apiUrl, {
-    method: "POST",
-
-    headers: {
-      username,
-      password,
-
-      Accept:
-        "application/json",
-
-      "Content-Type":
-        "application/x-www-form-urlencoded",
-    },
-
-    body:
-      form.toString(),
-  });
-
-
-  const responseText =
-    await response.text();
-
-
-  /*
-   * =====================================================
-   * DEBUG
-   * =====================================================
-   */
-
-  console.log(
-    "========================================"
-  );
-
-  console.log(
-    "[API APLIKASI] STATUS:",
-    response.status
-  );
-
-  console.log(
-    "[API APLIKASI] FILTER:",
-    {
-      awal,
-      akhir,
-    }
-  );
-
-  console.log(
-    "[API APLIKASI] RAW:",
-    responseText
-  );
-
-  console.log(
-    "========================================"
-  );
-
-
-  /*
-   * =====================================================
-   * CEK RESPONSE
-   * =====================================================
-   */
-
-  if (!response.ok) {
-    throw new Error(
-      `API aplikasi gagal: HTTP ${response.status} - ${responseText}`
-    );
-  }
-
-
-  let payload;
-
-  try {
-
-    payload =
-      JSON.parse(responseText);
-
-  } catch {
-
-    throw new Error(
-      `Response API aplikasi bukan JSON: ${responseText.substring(
-        0,
-        1000
-      )}`
-    );
-
-  }
-
-
-  console.log(
-    "[API APLIKASI] PAYLOAD:",
-    payload
-  );
-
-
-  /*
-   * =====================================================
-   * AMBIL DATA
-   * =====================================================
-   */
-
-  let apiData = [];
-
-
-  if (
-    Array.isArray(payload)
-  ) {
-
-    apiData =
-      payload;
-
-  }
-
-  else if (
-    Array.isArray(
-      payload?.data
-    )
-  ) {
-
-    apiData =
-      payload.data;
-
-  }
-
-  else if (
-    Array.isArray(
-      payload?.results
-    )
-  ) {
-
-    apiData =
-      payload.results;
-
-  }
-
-  else if (
-    Array.isArray(
-      payload?.result
-    )
-  ) {
-
-    apiData =
-      payload.result;
-
-  }
-
-  else if (
-    Array.isArray(
-      payload?.items
-    )
-  ) {
-
-    apiData =
-      payload.items;
-
-  }
-
-  else if (
-    Array.isArray(
-      payload?.rows
-    )
-  ) {
-
-    apiData =
-      payload.rows;
-
-  }
-
-
-  console.log(
-    "[API APLIKASI] TOTAL DATA:",
-    apiData.length
-  );
-
-
-  /*
-   * =====================================================
-   * NORMALISASI
-   * =====================================================
-   */
-
-  aplikasi =
-    apiData
-
-      .map((item) => ({
-
-        id:
-          item.id ??
-          item.id_aplikasi ??
-          null,
-
-        nama:
-          item.nama_aplikasi ??
-          item.nama ??
-          item.title ??
-          item.judul ??
-          item.name ??
-          item.label ??
-          "",
-
-        deskripsi:
-          item.deskripsi ??
-          item.description ??
-          item.keterangan ??
-          item.desc ??
-          "",
-
-        url:
-          item.url_aplikasi ??
-          item.link_aplikasi ??
-          item.url ??
-          item.link ??
-          item.href ??
-          item.website ??
-          "",
-
-        icon:
-          item.icon_aplikasi ??
-          item.icon ??
-          item.logo ??
-          item.gambar ??
-          item.image ??
-          "▣",
-
-        target:
-          item.target ??
-          "_blank",
-
-        active:
-          item.active ??
-          item.aktif ??
-          item.status ??
-          item.is_active ??
-          "",
-
-        urutan:
-          Number(
-            item.urutan ??
-            item.order ??
-            item.sort_order ??
-            item.position ??
-            999999
-          ) || 999999,
-
-        tanggal:
-          item.tanggal ??
-          item.date ??
-          item.created_at ??
-          null,
-
-        raw:
-          item,
-
-      }))
-
-
-      /*
-       * Jangan filter active dulu.
-       *
-       * Tujuannya memastikan seluruh
-       * data dari API bisa terlihat.
-       */
-
-      .filter(
-        (item) =>
-          item.nama
-      )
-
-
-      .sort(
-        (a, b) =>
-          a.urutan -
-          b.urutan
-      );
-
-
-  /*
-   * =====================================================
-   * HASIL AKHIR
-   * =====================================================
-   */
-
-  console.log(
-    "========================================"
-  );
-
-  console.log(
-    "[API APLIKASI] BERHASIL:",
-    aplikasi.length
-  );
-
-  console.log(
-    "[API APLIKASI] HASIL:",
-    aplikasi
-  );
-
-  console.log(
-    "========================================"
-  );
-
-
-} catch (error) {
-
-  console.error(
-    "========================================"
-  );
-
-  console.error(
-    "[API APLIKASI ERROR]:",
-    error
-  );
-
-  console.error(
-    "========================================"
-  );
-
-  aplikasi = [];
-
-}
-
-/* =========================================================
-   HELPER DESAIN BARU
-========================================================= */
 
 const principles = [
   { n: "01", t: "Cepat", d: "Sesuai SLA pelayanan", tag: "Speed", i: "fa-bolt" },
@@ -1840,7 +272,6 @@ const partnerLabel = (nama = "") => {
   return "Instansi Terkait";
 };
 
-const B = "https://dpm-ptsp.surabaya.go.id";
 const fallbackApps = [
   { nama: "Aplikasi Ijin Usaha", deskripsi: "Pengajuan dan pengurusan izin usaha secara online.", url: `${B}/aplikasi.php#ijinusaha-sec`, icon: "fas fa-building-circle-check" },
   { nama: "Aplikasi Pengaduan", deskripsi: "Sampaikan pengaduan dan masukan layanan.", url: `${B}/aplikasi.php#pengaduan-sec`, icon: "fas fa-headset" },
@@ -1853,11 +284,12 @@ const fallbackApps = [
   { nama: "SKM", deskripsi: "Survei Kepuasan Masyarakat atas layanan kami.", url: "https://skm.surabaya.go.id/", icon: "fas fa-face-smile" },
 ];
 const services = aplikasi.length > 0 ? aplikasi : fallbackApps;
-const logoUrl = "https://github.com/arbagasdanangh/pps/blob/main/logo.png?raw=true";
 
-/* link berita dihitung di server (slugify tidak tersedia di browser) */
-berita.forEach((b) => { b.href = `/media/${slugify(b.content)}`; });
-
+/* pembatas gelombang antar-section */
+const wave = (pos, fill) =>
+  `<svg class="wave wave-${pos}" viewBox="0 0 1440 90" preserveAspectRatio="none" aria-hidden="true" style="fill:${fill}"><path d="M0,0H1440V38C1260,88 1080,8 900,34C720,60 540,92 360,56C220,28 100,50 0,70Z"/></svg>`;
+const WHITE = "#ffffff";
+const SOFT = "#eef3ff";
 ---
 
 <MainLayout title="DPMPTSP Kota Surabaya">
@@ -1865,42 +297,55 @@ berita.forEach((b) => { b.href = `/media/${slugify(b.content)}`; });
 
 {notifikasi.length > 0 && (
   <div id="notificationModal" class="notif" aria-hidden="false" role="dialog" aria-modal="true" aria-label="Informasi">
-    <div class="notif-box">
-      <button type="button" id="notificationClose" class="notif-close" aria-label="Tutup">
-        <i class="fas fa-xmark"></i>
-      </button>
+    <div class="book">
 
-      <div id="notificationSlider" class="notif-slider">
-        {notifikasi.map((item, index) => (
-          <div class={`notification-slide ${index === 0 ? "active" : ""}`} data-index={index}>
-            {item.gambar ? (
-              <div class="notif-media"><img src={item.gambar} alt={item.judul || "Informasi"} /></div>
-            ) : (
-              <div class="notif-fallback"><i class={`fas ${item.icon || "fa-bell"}`}></i></div>
-            )}
-            {(item.judul || item.isi) && (
-              <div class="notif-info">
-                {item.judul && <h2>{item.judul}</h2>}
-                {item.isi && <p>{item.isi}</p>}
-              </div>
-            )}
-          </div>
-        ))}
+      <!-- sampul buku: terbuka otomatis saat modal tampil -->
+      <div class="book-cover" aria-hidden="true">
+        <div class="cover-face cover-front">
+          <span class="cover-logo"><img src={logoUrl} alt="" /></span>
+          <strong>Informasi</strong>
+          <small>DPMPTSP Kota Surabaya</small>
+        </div>
+        <div class="cover-face cover-back"></div>
       </div>
 
-      <div class={`notif-foot ${notifikasi.length > 1 ? "" : "single"}`}>
-        {notifikasi.length > 1 && (
-          <>
-            <button type="button" id="notificationPrev" class="notif-arrow" aria-label="Sebelumnya"><i class="fas fa-chevron-left"></i></button>
-            <div id="notificationDots" class="notif-dots">
-              {notifikasi.map((_, index) => (
-                <button type="button" class={`notification-dot ${index === 0 ? "active" : ""}`} data-slide={index} aria-label={`Slide ${index + 1}`}></button>
-              ))}
+      <div class="book-page">
+        <button type="button" id="notificationClose" class="notif-close" aria-label="Tutup">
+          <i class="fas fa-xmark"></i>
+        </button>
+
+        <div id="notificationSlider" class="notif-slider">
+          {notifikasi.map((item, index) => (
+            <div class={`notification-slide ${index === 0 ? "active" : ""}`} data-index={index}>
+              {item.gambar ? (
+                <div class="notif-media"><img src={item.gambar} alt={item.judul || "Informasi"} /></div>
+              ) : (
+                <div class="notif-fallback"><i class={`fas ${item.icon || "fa-bell"}`}></i></div>
+              )}
+              {(item.judul || item.isi) && (
+                <div class="notif-info">
+                  {item.judul && <h2>{item.judul}</h2>}
+                  {item.isi && <p>{item.isi}</p>}
+                </div>
+              )}
             </div>
-            <button type="button" id="notificationNext" class="notif-arrow" aria-label="Berikutnya"><i class="fas fa-chevron-right"></i></button>
-          </>
-        )}
-        <button type="button" class="notification-later btn btn-y btn-sm">Tutup</button>
+          ))}
+        </div>
+
+        <div class={`notif-foot ${notifikasi.length > 1 ? "" : "single"}`}>
+          {notifikasi.length > 1 && (
+            <>
+              <button type="button" id="notificationPrev" class="notif-arrow" aria-label="Halaman sebelumnya"><i class="fas fa-chevron-left"></i></button>
+              <div id="notificationDots" class="notif-dots">
+                {notifikasi.map((_, index) => (
+                  <button type="button" class={`notification-dot ${index === 0 ? "active" : ""}`} data-slide={index} aria-label={`Halaman ${index + 1}`}></button>
+                ))}
+              </div>
+              <button type="button" id="notificationNext" class="notif-arrow" aria-label="Halaman berikutnya"><i class="fas fa-chevron-right"></i></button>
+            </>
+          )}
+          <button type="button" class="notification-later btn btn-y btn-sm">Tutup</button>
+        </div>
       </div>
     </div>
   </div>
@@ -1908,6 +353,7 @@ berita.forEach((b) => { b.href = `/media/${slugify(b.content)}`; });
 
 <!-- ============ HERO ============ -->
 <section class="hero" id="sectionHero" aria-labelledby="sectionHeroTitle">
+  <span class="bubble b1"></span><span class="bubble b2"></span><span class="bubble b3"></span>
   <div class="wrap">
     <div class="hero-copy">
       <span class="pill"><i></i> DPMPTSP Kota Surabaya</span>
@@ -1927,17 +373,15 @@ berita.forEach((b) => { b.href = `/media/${slugify(b.content)}`; });
       <div class="float f3"><i class="fas fa-shield-halved"></i><div><strong>Bebas Pungli</strong><span>WBK &amp; WBBM</span></div></div>
     </div>
   </div>
+  <Fragment set:html={wave("b", WHITE)} />
 </section>
 
 <!-- ============ LAYANAN DIGITAL ============ -->
 <section class="svc-sec" id="aplikasi" aria-label="Layanan digital">
   <div class="wrap">
     <div class="svc-head">
-      <div>
-        <span class="eyebrow">Layanan Digital</span>
-        <h2>Pilih layanan yang Anda butuhkan</h2>
-      </div>
-      <a href="/inovasi" class="svc-all">Lihat semua <i class="fas fa-arrow-right"></i></a>
+      <span class="eyebrow">Layanan Digital</span>
+      <h2>Pilih layanan yang Anda butuhkan</h2>
     </div>
     <div class="svc-grid">
       {services.map((app, index) => (
@@ -1954,19 +398,18 @@ berita.forEach((b) => { b.href = `/media/${slugify(b.content)}`; });
               : isFa(app.icon) ? <i class={app.icon}></i>
               : <i class="fas fa-layer-group"></i>}
           </span>
-          <span class="svc-txt">
-            <strong>{app.nama || "Aplikasi"}</strong>
-            <small>{app.deskripsi || "Layanan digital untuk masyarakat Surabaya."}</small>
-          </span>
-          <i class="fas fa-arrow-up-right-from-square svc-go"></i>
+          <strong>{app.nama || "Aplikasi"}</strong>
+          <small>{app.deskripsi || "Layanan digital untuk masyarakat Surabaya."}</small>
         </a>
       ))}
     </div>
+    <div class="svc-more"><a href="/inovasi" class="svc-all">Lihat semua layanan <i class="fas fa-arrow-right"></i></a></div>
   </div>
 </section>
 
 <!-- ============ KEUNGGULAN ============ -->
-<section id="keunggulan-investasi" class="sec keunggulan" style={`--bgimg:url("${bgInvestasi}")`}>
+<section id="keunggulan-investasi" class="sec wv keunggulan" style={`--bgimg:url("${bgInvestasi}")`}>
+  <Fragment set:html={wave("t", WHITE)} />
   <div class="wrap">
     <div class="head center">
       <span class="eyebrow">Potensi Investasi Surabaya</span>
@@ -1980,8 +423,8 @@ berita.forEach((b) => { b.href = `/media/${slugify(b.content)}`; });
       <div id="keunggulanGrid" class="ung-grid">
         {unggul.map((item, index) => (
           <article class="ung">
-            <div class="ung-top">
-              <div class="ung-icon"><i class={item.icon}></i></div>
+            <div class="ung-icon">
+              <i class={item.icon}></i>
               <span class="ung-no">{String(index + 1).padStart(2, "0")}</span>
             </div>
             <h3>{item.judul}</h3>
@@ -2019,9 +462,10 @@ berita.forEach((b) => { b.href = `/media/${slugify(b.content)}`; });
 </section>
 
 <!-- ============ PRINSIP ============ -->
-<section class="sec prinsip">
+<section class="sec wv prinsip">
+  <Fragment set:html={wave("t", SOFT)} />
   <div class="wrap">
-    <div class="head">
+    <div class="head center">
       <span class="eyebrow">Nilai Pelayanan Publik</span>
       <h2>5 prinsip. <span class="hl">Satu komitmen.</span></h2>
       <p>Pelayanan DPMPTSP Surabaya dibangun untuk memberikan pengalaman yang cepat, mudah, transparan, dan berintegritas bagi masyarakat.</p>
@@ -2029,7 +473,10 @@ berita.forEach((b) => { b.href = `/media/${slugify(b.content)}`; });
     <div class="pr-grid">
       {principles.map((p) => (
         <div class="pr">
-          <div class="pr-top"><span class="pr-ic"><i class={`fas ${p.i}`}></i></span><span class="pr-n">{p.n}</span></div>
+          <div class="pr-ic">
+            <i class={`fas ${p.i}`}></i>
+            <span class="pr-n">{p.n}</span>
+          </div>
           <h3>{p.t}</h3>
           <p>{p.d}</p>
           <span class="pr-tag">{p.tag}</span>
@@ -2037,6 +484,7 @@ berita.forEach((b) => { b.href = `/media/${slugify(b.content)}`; });
       ))}
     </div>
   </div>
+  <Fragment set:html={wave("b", WHITE)} />
 </section>
 
 <!-- ============ INVESTASI ============ -->
@@ -2045,25 +493,27 @@ berita.forEach((b) => { b.href = `/media/${slugify(b.content)}`; });
     <div class="inv">
       <div class="inv-map">
         <span class="inv-badge"><i></i> Peta potensi aktif</span>
-        <img
-          src={peta[0]?.gambar || "https://dpm-ptsp.surabaya.go.id/images/PetaPotensi.png"}
-          alt={peta[0]?.judul || "Peta Potensi Investasi Surabaya"}
-          loading="lazy"
-          onerror="this.onerror=null;this.src='https://dpm-ptsp.surabaya.go.id/images/PetaPotensi.png';"
-        />
+        <div class="inv-blob">
+          <img
+            src={peta[0]?.gambar || "https://dpm-ptsp.surabaya.go.id/images/PetaPotensi.png"}
+            alt={peta[0]?.judul || "Peta Potensi Investasi Surabaya"}
+            loading="lazy"
+            onerror="this.onerror=null;this.src='https://dpm-ptsp.surabaya.go.id/images/PetaPotensi.png';"
+          />
+        </div>
       </div>
       <div class="inv-body">
-        <span class="inv-kick"><i class="fas fa-chart-line"></i> Investment Insight</span>
+        <span class="eyebrow"><i class="fas fa-chart-line"></i> Investment Insight</span>
         <h2>Temukan <em>Peluang Investasi</em> di Kota Surabaya</h2>
         <h3>{peta[0]?.judul || "Peta Potensi Investasi Surabaya"}</h3>
         <p>{peta[0]?.deskripsi || "Temukan sektor unggulan dan peluang investasi di setiap wilayah Kota Surabaya melalui informasi potensi investasi yang terintegrasi."}</p>
         <div class="inv-stats">
-          <div><strong>31</strong><span>Kecamatan</span></div>
-          <div><strong>1</strong><span>Kota Surabaya</span></div>
+          <div class="stat"><strong>31</strong><span>Kecamatan</span></div>
+          <div class="stat y"><strong>1</strong><span>Kota Surabaya</span></div>
         </div>
         <a
           href={peta[0]?.link && peta[0].link !== "#" ? peta[0].link : "#"}
-          class="btn btn-y"
+          class="btn btn-blue"
           target={peta[0]?.link && peta[0].link !== "#" ? "_blank" : undefined}
           rel={peta[0]?.link && peta[0].link !== "#" ? "noopener noreferrer" : undefined}
         >Lihat Potensi Investasi <i class="fas fa-arrow-right"></i></a>
@@ -2073,7 +523,8 @@ berita.forEach((b) => { b.href = `/media/${slugify(b.content)}`; });
 </section>
 
 <!-- ============ BERITA ============ -->
-<section class="sec berita">
+<section class="sec wv berita">
+  <Fragment set:html={wave("t", WHITE)} />
   <div class="wrap">
     <div class="head-row">
       <div class="head">
@@ -2091,29 +542,28 @@ berita.forEach((b) => { b.href = `/media/${slugify(b.content)}`; });
       <>
         <div class="news-main" id="newsMain">
           <div class="news-image">
-            <img id="newsImage" src={`https://dpm-ptsp.surabaya.go.id/fileberita/${berita[0].picture}`} alt={berita[0].title} />
+            <img id="newsImage" src={`${B}/fileberita/${berita[0].picture}`} alt={berita[0].title} />
             <div class="news-badge" id="newsCategory">{berita[0].category_title || "BERITA"}</div>
-            <div class="news-number" id="newsNumber">01</div>
           </div>
           <div class="news-content">
+            <div class="news-number" id="newsNumber">01</div>
             <div class="news-meta" id="newsMeta">{berita[0].category_title || "BERITA"} • {formatDate(berita[0].date)}</div>
             <h3 id="newsTitle">{berita[0].title}</h3>
             <p id="newsDescription">{excerpt(berita[0].content)}</p>
-            <a id="newsLink" href={`/media/${slugify(berita[0].content)}`} class="news-read">Baca Selengkapnya <span>↗</span></a>
+            <a id="newsLink" href={berita[0].href} class="news-read">Baca Selengkapnya <i class="fas fa-arrow-up-right-from-square"></i></a>
             <div class="news-progress"><span id="newsProgress"></span></div>
           </div>
         </div>
 
         <div class="news-thumbs" id="newsThumbs">
           {berita.map((item, index) => (
-            <button type="button" class:list={["news-thumb", { active: index === 0 }]} data-index={index}>
-              <img src={`https://dpm-ptsp.surabaya.go.id/fileberita/${item.picture}`} alt={item.title} loading={index === 0 ? "eager" : "lazy"} />
-              <span>{item.title}</span>
+            <button type="button" class:list={["news-thumb", { active: index === 0 }]} data-index={index} aria-label={item.title} title={item.title}>
+              <img src={`${B}/fileberita/${item.picture}`} alt="" loading={index === 0 ? "eager" : "lazy"} />
             </button>
           ))}
         </div>
 
-        <div class="more"><a href="/beritalist" class="btn btn-line">Lihat Semua Berita <i class="fas fa-arrow-right"></i></a></div>
+        <div class="more"><a href="/beritalist" class="btn btn-blue">Lihat Semua Berita <i class="fas fa-arrow-right"></i></a></div>
       </>
     ) : (
       <p class="empty">Belum ada berita.</p>
@@ -2122,7 +572,8 @@ berita.forEach((b) => { b.href = `/media/${slugify(b.content)}`; });
 </section>
 
 <!-- ============ VIDEO ============ -->
-<section class="sec video">
+<section class="sec wv video">
+  <Fragment set:html={wave("t", SOFT)} />
   <div class="wrap">
     <div class="head center">
       <span class="eyebrow">Media Informasi</span>
@@ -2148,11 +599,12 @@ berita.forEach((b) => { b.href = `/media/${slugify(b.content)}`; });
         ))}
       </div>
     ) : (
-      <p class="empty">Belum ada video tersedia.</p>
+      <p class="empty light">Belum ada video tersedia.</p>
     )}
 
-    <div class="more"><a href="/video" class="btn btn-line">Lihat Semua Video <i class="fas fa-arrow-right"></i></a></div>
+    <div class="more"><a href="/video" class="btn btn-y">Lihat Semua Video <i class="fas fa-arrow-right"></i></a></div>
   </div>
+  <Fragment set:html={wave("b", SOFT)} />
 </section>
 
 <!-- ============ INSTANSI TERKAIT ============ -->
@@ -2177,7 +629,6 @@ berita.forEach((b) => { b.href = `/media/${slugify(b.content)}`; });
               </div>
               <span class="pt-label">{partnerLabel(nama)}</span>
               <strong>{nama}</strong>
-              <span class="pt-go">Portal resmi <i class="fas fa-arrow-up-right-from-square"></i></span>
             </a>
           );
         })}
@@ -2192,1049 +643,553 @@ berita.forEach((b) => { b.href = `/media/${slugify(b.content)}`; });
 
 
 <style is:global>
-  @import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
-  @keyframes newsProgress { from { width: 0 } to { width: 100% } }
+  @import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
+
   :where(.home) a { color: inherit; text-decoration: none; }
+
+  @keyframes newsProgress { from { width: 0 } to { width: 100% } }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes bob { 50% { transform: translateY(-10px); } }
+  @keyframes drift { 50% { transform: translate(14px, -18px) scale(1.05); } }
+
+  /* ---- modal: buka buku ---- */
+  @keyframes veilIn { from { opacity: 0; } }
+  @keyframes veilOut { to { opacity: 0; } }
+  @keyframes bookIn {
+    from { opacity: 0; transform: translateY(46px) rotateX(16deg) scale(.86); }
+  }
+  @keyframes bookOut {
+    to { opacity: 0; transform: translateY(30px) scale(.9); }
+  }
+  @keyframes coverOpen {
+    0%   { transform: rotateY(0); opacity: 1; visibility: visible; }
+    80%  { opacity: 1; }
+    100% { transform: rotateY(-172deg); opacity: 0; visibility: hidden; }
+  }
+  @keyframes coverClose {
+    0%   { transform: rotateY(-172deg); opacity: 0; visibility: visible; }
+    20%  { opacity: 1; }
+    100% { transform: rotateY(0); opacity: 1; visibility: visible; }
+  }
+  @keyframes pageShade {
+    0%, 28% { filter: brightness(.5); }
+    100% { filter: brightness(1); }
+  }
+  @keyframes pageFwd {
+    0%   { transform: rotateY(-100deg); opacity: 0; }
+    55%  { opacity: 1; }
+    100% { transform: rotateY(0); opacity: 1; }
+  }
+  @keyframes pageBack {
+    0%   { transform: rotateY(100deg); opacity: 0; }
+    55%  { opacity: 1; }
+    100% { transform: rotateY(0); opacity: 1; }
+  }
 </style>
 
 <style>
   .home {
     --b9: #0a1b55; --b7: #173ea5; --b5: #2f63e0; --y: #ffd21f;
     --ink: #0f172a; --mut: #5b6478; --line: #d6e2fb; --bg: #eef3ff;
+    --hd: "Bricolage Grotesque", "Plus Jakarta Sans", system-ui, sans-serif;
     font-family: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
     color: var(--ink); background: #fff; overflow-x: clip;
   }
   .home *, .home *::before, .home *::after { box-sizing: border-box; }
   .home img { max-width: 100%; display: block; }
   .home h1, .home h2, .home h3, .home p { margin: 0; }
-  .wrap { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
-  .sec { padding: 88px 0; }
+  .home h1, .home h2 { font-family: var(--hd); }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 0 20px; position: relative; }
+  .sec { position: relative; padding: 88px 0; }
+  .sec.wv { padding: 140px 0; }
   .hidden { display: none; }
   .empty { text-align: center; color: var(--mut); padding: 40px 0; }
-  .alert { margin-bottom: 24px; padding: 14px 18px; border-radius: 14px; background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; }
+  .empty.light { color: rgba(255,255,255,.8); }
+  .alert { margin-bottom: 24px; padding: 14px 18px; border-radius: 24px; background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; }
+
+  /* ---------- gelombang pembatas ---------- */
+  .wave { position: absolute; left: 0; width: 100%; height: 70px; display: block; pointer-events: none; z-index: 1; }
+  .wave-t { top: -1px; }
+  .wave-b { bottom: -1px; transform: rotate(180deg); }
 
   /* ---------- shared ---------- */
   .eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--b7); }
-  .eyebrow::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--y); box-shadow: 0 0 0 4px rgba(255, 210, 31, .28); }
-  .head { max-width: 660px; margin-bottom: 48px; }
+  .eyebrow::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--y); box-shadow: 0 0 0 5px rgba(255,210,31,.28); }
+  .eyebrow i { display: none; }
+  .head { max-width: 660px; margin-bottom: 56px; }
   .head.center { margin-inline: auto; text-align: center; }
-  .head h2 { font-size: clamp(1.8rem, 3.4vw, 2.6rem); line-height: 1.15; font-weight: 800; letter-spacing: -.02em; color: var(--b9); margin: 14px 0 12px; }
+  .head h2 { font-size: clamp(1.9rem, 3.6vw, 2.8rem); line-height: 1.12; font-weight: 800; letter-spacing: -.025em; color: var(--b9); margin: 14px 0 12px; }
+  .head h2::after { content: ""; display: block; width: 64px; height: 6px; border-radius: 6px; background: var(--y); margin-top: 16px; }
+  .head.center h2::after { margin-inline: auto; }
   .head p { color: var(--mut); line-height: 1.7; }
   .hl { color: var(--b5); }
   .head-row { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; }
-  .more { display: flex; justify-content: center; margin-top: 40px; }
-  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; padding: 14px 24px; border-radius: 999px; font-weight: 700; font-size: 15px; border: 1.5px solid transparent; cursor: pointer; transition: transform .2s, box-shadow .2s, background .2s; }
+  .more { display: flex; justify-content: center; margin-top: 48px; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; padding: 14px 26px; border-radius: 999px; font-weight: 700; font-size: 15px; border: 1.5px solid transparent; cursor: pointer; transition: transform .2s, box-shadow .2s, background .2s; }
   .btn:hover { transform: translateY(-2px); }
-  .btn-y { background: var(--y); color: var(--b9) !important; box-shadow: 0 10px 28px rgba(255, 210, 31, .35); }
-  .btn-ghost { border-color: rgba(255, 255, 255, .4); color: #fff; }
-  .btn-ghost:hover { background: rgba(255, 255, 255, .12); }
-  .btn-line { border-color: var(--b7); color: var(--b7) !important; background: #fff; }
-  .btn-line:hover { background: var(--b7); color: #fff !important; }
-  .btn-sm { padding: 9px 16px; font-size: 13px; }
+  .btn-y { background: var(--y); color: var(--b9) !important; box-shadow: 0 10px 28px rgba(255,210,31,.35); }
+  .btn-blue { background: var(--b7); color: #fff !important; box-shadow: 0 12px 28px rgba(23,62,165,.3); }
+  .btn-blue:hover { background: var(--b9); }
+  .btn-ghost { border-color: rgba(255,255,255,.45); color: #fff; }
+  .btn-ghost:hover { background: rgba(255,255,255,.14); }
+  .btn-sm { padding: 9px 18px; font-size: 13px; }
 
   /* ---------- hero ---------- */
-  .hero { --nav: 0px; position: relative; overflow: hidden; color: #fff; padding: calc(var(--nav) + 72px) 0 170px; border-radius: 0 0 56px 56px; border-bottom: 10px solid var(--y);
-    background: radial-gradient(800px 480px at 90% 0, rgba(255, 210, 31, .26), transparent 60%), radial-gradient(600px 400px at 0 100%, rgba(47, 99, 224, .5), transparent 60%), linear-gradient(135deg, var(--b9), var(--b7) 65%, #2456c9); }
-  .hero::before { content: ""; position: absolute; inset: 0; pointer-events: none;
-    background-image: linear-gradient(rgba(255, 255, 255, .06) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, .06) 1px, transparent 1px);
-    background-size: 56px 56px; -webkit-mask-image: linear-gradient(#000, transparent 90%); mask-image: linear-gradient(#000, transparent 90%); }
-  .hero .wrap { position: relative; display: grid; grid-template-columns: 1.1fr .9fr; gap: 40px; align-items: center; }
-  .pill { display: inline-flex; align-items: center; gap: 10px; padding: 8px 16px; border-radius: 999px; background: rgba(255, 255, 255, .12); border: 1px solid rgba(255, 255, 255, .22); font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
-  .pill i { width: 8px; height: 8px; border-radius: 50%; background: var(--y); box-shadow: 0 0 0 4px rgba(255, 210, 31, .3); }
-  .hero h1 { font-size: clamp(2.4rem, 5.4vw, 4.2rem); line-height: 1.06; font-weight: 800; letter-spacing: -.03em; margin: 22px 0 18px; color: #fff; }
+  .hero { position: relative; overflow: hidden; color: #fff; padding: 72px 0 170px;
+    background: radial-gradient(800px 480px at 90% 0, rgba(255,210,31,.26), transparent 60%), radial-gradient(600px 400px at 0 100%, rgba(47,99,224,.5), transparent 60%), linear-gradient(135deg, var(--b9), var(--b7) 65%, #2456c9); }
+  .bubble { position: absolute; border-radius: 50%; pointer-events: none; animation: drift 14s ease-in-out infinite; }
+  .b1 { width: 340px; height: 340px; left: -120px; top: -120px; border: 54px solid rgba(255,255,255,.07); }
+  .b2 { width: 120px; height: 120px; right: 38%; bottom: 90px; background: rgba(255,210,31,.18); animation-delay: -4s; }
+  .b3 { width: 26px; height: 26px; left: 46%; top: 90px; background: var(--y); animation-delay: -8s; }
+  .hero .wrap { display: grid; grid-template-columns: 1.1fr .9fr; gap: 40px; align-items: center; }
+  .pill { display: inline-flex; align-items: center; gap: 10px; padding: 8px 18px; border-radius: 999px; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.22); font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+  .pill i { width: 9px; height: 9px; border-radius: 50%; background: var(--y); box-shadow: 0 0 0 4px rgba(255,210,31,.3); }
+  .hero h1 { font-size: clamp(2.5rem, 5.6vw, 4.4rem); line-height: 1.04; font-weight: 800; letter-spacing: -.035em; margin: 22px 0 18px; color: #fff; text-wrap: balance; }
   .hero h1 em { font-style: normal; color: var(--y); }
-  .hero-copy > p { font-size: 1.1rem; line-height: 1.7; color: rgba(255, 255, 255, .84); max-width: 520px; }
+  .hero-copy > p { font-size: 1.1rem; line-height: 1.7; color: rgba(255,255,255,.84); max-width: 520px; }
   .hero-cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 34px; }
 
   .hero-art { position: relative; aspect-ratio: 1; max-width: 440px; width: 100%; margin-inline: auto; display: grid; place-items: center; }
-  .ring { position: absolute; border-radius: 50%; border: 1px dashed rgba(255, 255, 255, .3); }
+  .ring { position: absolute; border-radius: 50%; border: 1px dashed rgba(255,255,255,.3); }
   .r1 { inset: 4%; animation: spin 40s linear infinite; }
-  .r2 { inset: 20%; border-style: solid; border-color: rgba(255, 210, 31, .35); }
-  .orb { position: relative; width: 52%; aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center; background: rgba(255, 255, 255, .96); box-shadow: 0 0 0 14px rgba(255, 255, 255, .1), 0 30px 70px rgba(0, 0, 0, .35); }
+  .r2 { inset: 20%; border-style: solid; border-color: rgba(255,210,31,.4); }
+  .orb { position: relative; width: 52%; aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center; background: rgba(255,255,255,.96); box-shadow: 0 0 0 14px rgba(255,255,255,.1), 0 30px 70px rgba(0,0,0,.35); }
   .orb img { width: 66%; height: 66%; object-fit: contain; }
-  .float { position: absolute; display: flex; align-items: center; gap: 12px; padding: 12px 18px 12px 14px; border-radius: 18px; background: rgba(255, 255, 255, .95); color: var(--b9); box-shadow: 0 18px 40px rgba(0, 0, 0, .25); animation: bob 5s ease-in-out infinite; }
-  .float i { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; background: #eaf0ff; color: var(--b7); }
+  .float { position: absolute; display: flex; align-items: center; gap: 12px; padding: 10px 20px 10px 10px; border-radius: 999px; background: rgba(255,255,255,.96); color: var(--b9); box-shadow: 0 18px 40px rgba(0,0,0,.25); animation: bob 5s ease-in-out infinite; }
+  .float i { width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; background: var(--b7); color: var(--y); }
   .float strong { display: block; font-size: 15px; font-weight: 800; line-height: 1.2; }
   .float span { font-size: 12px; color: var(--mut); }
   .f1 { top: 6%; left: -4%; } .f2 { top: 44%; right: -6%; animation-delay: -1.5s; } .f3 { bottom: 4%; left: 4%; animation-delay: -3s; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  @keyframes bob { 50% { transform: translateY(-10px); } }
 
-  /* ---------- layanan digital ---------- */
-  .svc-sec { position: relative; z-index: 2; margin-top: -92px; padding-bottom: 24px; }
-  .svc-sec .wrap { padding: 28px; border-radius: 32px; background: #fff; border: 1px solid var(--line); box-shadow: 0 40px 80px -40px rgba(10, 27, 85, .5); }
-  .svc-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-bottom: 22px; }
-  .svc-head h2 { margin-top: 10px; font-size: clamp(1.4rem, 2.4vw, 1.9rem); font-weight: 800; letter-spacing: -.02em; color: var(--b9); }
-  .svc-all { font-size: 14px; font-weight: 700; color: var(--b7); white-space: nowrap; }
+  /* ---------- layanan digital: ikon lingkaran ---------- */
+  .svc-sec { padding: 20px 0 40px; }
+  .svc-head { text-align: center; margin-bottom: 40px; }
+  .svc-head h2 { margin-top: 12px; font-size: clamp(1.6rem, 2.8vw, 2.2rem); font-weight: 800; letter-spacing: -.02em; color: var(--b9); }
+  .svc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 36px 20px; }
+  .svc { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; padding: 4px; border-radius: 28px; transition: transform .25s; }
+  .svc:hover { transform: translateY(-6px); }
+  .svc-ic { position: relative; width: 84px; height: 84px; margin-bottom: 10px; border-radius: 50%; display: grid; place-items: center; font-size: 30px; color: #fff;
+    background: linear-gradient(145deg, var(--b5), var(--b7)); box-shadow: 0 0 0 7px var(--bg), 0 16px 30px -12px rgba(23,62,165,.55); transition: box-shadow .25s, transform .25s; }
+  .svc:nth-child(even) .svc-ic { background: linear-gradient(145deg, #ffe066, var(--y)); color: var(--b9); box-shadow: 0 0 0 7px #fff8d6, 0 16px 30px -12px rgba(224,170,0,.6); }
+  .svc:hover .svc-ic { transform: scale(1.08); box-shadow: 0 0 0 7px var(--y), 0 20px 34px -12px rgba(23,62,165,.55); }
+  .svc-ic img { width: 56%; height: 56%; object-fit: contain; }
+  .svc strong { font-size: .95rem; font-weight: 700; line-height: 1.3; color: var(--b9); }
+  .svc small { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 12.5px; line-height: 1.5; color: var(--mut); max-width: 190px; }
+  .svc-more { display: flex; justify-content: center; margin-top: 36px; }
+  .svc-all { font-size: 14px; font-weight: 700; color: var(--b7); }
   .svc-all i { margin-left: 6px; transition: transform .2s; }
   .svc-all:hover i { transform: translateX(4px); }
-  .svc-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-  .svc { position: relative; display: flex; align-items: center; gap: 14px; padding: 16px; border-radius: 18px; background: var(--bg); border: 1px solid transparent; transition: transform .22s, background .22s, border-color .22s, box-shadow .22s; }
-  .svc:hover { transform: translateY(-4px); background: #fff; border-color: var(--y); box-shadow: 0 18px 36px -20px rgba(23, 62, 165, .5); }
-  .svc-ic { flex: none; width: 50px; height: 50px; border-radius: 15px; display: grid; place-items: center; font-size: 20px; background: var(--b7); color: #fff; transition: transform .22s; }
-  .svc:hover .svc-ic { transform: scale(1.08) rotate(-4deg); }
-  .svc:nth-child(even) .svc-ic { background: var(--y); color: var(--b9); }
-  .svc-ic img { width: 66%; height: 66%; object-fit: contain; }
-  .svc-txt { min-width: 0; flex: 1; }
-  .svc-txt strong { display: block; font-size: .95rem; font-weight: 700; line-height: 1.3; color: var(--b9); }
-  .svc-txt small { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-top: 3px; font-size: 12.5px; line-height: 1.45; color: var(--mut); }
-  .svc-go { flex: none; font-size: 12px; color: #a3abbd; transition: color .2s; }
-  .svc:hover .svc-go { color: var(--b7); }
 
-  /* ---------- keunggulan ---------- */
-  .keunggulan { background: linear-gradient(rgba(238, 243, 255, .93), rgba(238, 243, 255, .97)), var(--bgimg) center / cover no-repeat; }
-  .ung-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-  .ung { display: flex; flex-direction: column; padding: 28px; border-radius: 24px; background: #fff; border: 1px solid var(--line); transition: transform .25s, box-shadow .25s, border-color .25s; }
-  .ung:hover { transform: translateY(-6px); border-color: #c9d6f5; box-shadow: 0 24px 48px -24px rgba(23, 62, 165, .35); }
-  .ung-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
-  .ung-icon { width: 56px; height: 56px; border-radius: 18px; display: grid; place-items: center; font-size: 22px; background: #eaf0ff; color: var(--b7); }
-  .ung-no { font-size: 13px; font-weight: 800; color: var(--b9); background: var(--y); border-radius: 999px; padding: 4px 12px; }
-  .ung h3 { font-size: 1.1rem; font-weight: 700; color: var(--b9); margin-bottom: 8px; }
-  .ung p { color: var(--mut); font-size: .92rem; line-height: 1.65; flex: 1; }
-  .keunggulan-btn { margin-top: 20px; align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; padding: 0; border: 0; background: none; cursor: pointer; font: inherit; font-weight: 700; font-size: 14px; color: var(--b7); }
+  /* ---------- keunggulan: tanpa kotak ---------- */
+  .keunggulan { background: linear-gradient(rgba(238,243,255,.93), rgba(238,243,255,.97)), var(--bgimg) center / cover no-repeat; }
+  .ung-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 56px 40px; }
+  .ung { display: flex; flex-direction: column; align-items: center; text-align: center; }
+  .ung:nth-child(3n+2) { margin-top: 40px; }
+  .ung-icon { position: relative; width: 104px; height: 104px; margin-bottom: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 38px; color: var(--y);
+    background: linear-gradient(145deg, var(--b5), var(--b9)); box-shadow: 0 0 0 9px rgba(23,62,165,.1), 0 22px 40px -16px rgba(10,27,85,.6); transition: transform .3s; }
+  .ung-icon::before { content: ""; position: absolute; inset: -17px; border-radius: 50%; border: 2px dashed rgba(23,62,165,.35); transition: transform 1s; }
+  .ung:hover .ung-icon { transform: scale(1.06); }
+  .ung:hover .ung-icon::before { transform: rotate(120deg); }
+  .ung-no { position: absolute; right: -6px; top: -4px; min-width: 38px; height: 38px; padding: 0 6px; border-radius: 50%; display: grid; place-items: center; font-family: var(--hd); font-size: 14px; font-weight: 800; color: var(--b9); background: var(--y); border: 3px solid #fff; }
+  .ung h3 { font-size: 1.15rem; font-weight: 800; color: var(--b9); margin-bottom: 8px; }
+  .ung p { color: var(--mut); font-size: .93rem; line-height: 1.7; flex: 1; max-width: 330px; }
+  .keunggulan-btn { margin-top: 18px; display: inline-flex; align-items: center; gap: 8px; padding: 9px 18px; border: 0; border-radius: 999px; background: #fff; box-shadow: 0 6px 18px -8px rgba(23,62,165,.5); cursor: pointer; font: inherit; font-weight: 700; font-size: 13.5px; color: var(--b7); transition: background .2s, color .2s; }
+  .keunggulan-btn:hover { background: var(--b7); color: #fff; }
   .keunggulan-btn i { transition: transform .2s; }
-  .keunggulan-btn:hover i { transform: translateX(4px); }
-  .ung-na { margin-top: 20px; font-size: 12px; color: #a3abbd; }
+  .keunggulan-btn:hover i { transform: translateX(3px); }
+  .ung-na { margin-top: 18px; font-size: 12px; color: #a3abbd; }
 
-  .pdf { margin-top: 32px; border-radius: 24px; overflow: hidden; background: #fff; border: 1px solid var(--line); box-shadow: 0 30px 60px -30px rgba(15, 23, 42, .3); }
-  .pdf-bar { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 16px 20px; border-bottom: 1px solid var(--line); }
+  .pdf { margin-top: 56px; border-radius: 36px; overflow: hidden; background: #fff; box-shadow: 0 30px 60px -30px rgba(15,23,42,.35); }
+  .pdf-bar { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 16px 22px; border-bottom: 1px solid var(--line); }
   .pdf-title { display: flex; align-items: center; gap: 12px; min-width: 0; }
   .pdf-title small { display: block; font-size: 11px; color: #94a0b8; }
   .pdf-title h3 { font-size: 1rem; font-weight: 700; color: var(--b9); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .pdf-ic { flex: none; width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: #fef2f2; color: #ef4444; }
+  .pdf-ic { flex: none; width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; background: #fef2f2; color: #ef4444; }
   .pdf-act { display: flex; align-items: center; gap: 8px; flex: none; }
-  .pdf-x { width: 38px; height: 38px; border-radius: 12px; border: 0; background: #fef2f2; color: #ef4444; cursor: pointer; }
+  .pdf-x { width: 40px; height: 40px; border-radius: 50%; border: 0; background: #fef2f2; color: #ef4444; cursor: pointer; }
   .pdf iframe { width: 100%; height: 700px; border: 0; background: #eef1f7; display: block; }
 
-  /* ---------- prinsip ---------- */
-  .pr-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
-  .pr { position: relative; padding: 26px 22px; border-radius: 22px; background: var(--bg); border: 1px solid var(--line); transition: transform .25s, background .25s, border-color .25s; }
-  .pr:hover { transform: translateY(-5px); background: #fff; border-color: var(--y); }
-  .pr-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; }
-  .pr-ic { width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; background: var(--y); color: var(--b9); }
-  .pr-n { font-size: 2rem; font-weight: 800; color: transparent; -webkit-text-stroke: 1.5px #c3cde6; line-height: 1; }
-  .pr h3 { font-size: 1.15rem; font-weight: 800; color: var(--b9); }
-  .pr p { margin-top: 6px; font-size: .88rem; line-height: 1.55; color: var(--mut); }
-  .pr-tag { display: inline-block; margin-top: 16px; font-size: 10px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--b7); }
+  /* ---------- prinsip: lingkaran ---------- */
+  .prinsip, .video { color: #fff; background: radial-gradient(700px 380px at 100% 0, rgba(255,210,31,.18), transparent 60%), linear-gradient(150deg, var(--b9), var(--b7)); }
+  .prinsip .head h2, .video .head h2 { color: #fff; }
+  .prinsip .head p, .video .head p { color: rgba(255,255,255,.82); }
+  .prinsip .eyebrow, .video .eyebrow, .prinsip .hl, .video .hl { color: var(--y); }
+  .pr-grid { position: relative; display: grid; grid-template-columns: repeat(5, 1fr); gap: 24px; }
+  .pr-grid::before { content: ""; position: absolute; left: 10%; right: 10%; top: 59px; border-top: 2px dashed rgba(255,210,31,.45); }
+  .pr { position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; }
+  .pr-ic { position: relative; width: 120px; height: 120px; margin-bottom: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 40px; color: var(--b9);
+    background: radial-gradient(circle at 30% 25%, #fff3a8, var(--y) 60%); box-shadow: 0 0 0 10px rgba(255,210,31,.2), 0 24px 44px -14px rgba(0,0,0,.5); transition: transform .3s; }
+  .pr:hover .pr-ic { transform: translateY(-8px) rotate(-5deg); }
+  .pr-n { position: absolute; right: -2px; top: -2px; width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; font-family: var(--hd); font-size: 15px; font-weight: 800; color: #fff; background: var(--b9); border: 3px solid var(--y); }
+  .pr h3 { font-size: 1.2rem; font-weight: 800; color: #fff; }
+  .pr p { margin-top: 6px; font-size: .88rem; line-height: 1.55; color: rgba(255,255,255,.8); max-width: 180px; }
+  .pr-tag { display: inline-block; margin-top: 14px; padding: 4px 14px; border-radius: 999px; border: 1px solid rgba(255,210,31,.55); font-size: 10.5px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--y); }
 
-  /* ---------- investasi ---------- */
-  .inv { display: grid; grid-template-columns: 1.05fr 1fr; gap: 48px; align-items: center; padding: 44px; border-radius: 36px; color: #fff;
-    background: radial-gradient(600px 360px at 100% 0, rgba(255, 210, 31, .2), transparent 60%), linear-gradient(140deg, var(--b9), var(--b7)); }
-  .inv-map { position: relative; padding: 10px; border-radius: 28px; background: rgba(255, 255, 255, .12); border: 1px solid rgba(255, 255, 255, .22); }
-  .inv-map img { width: 100%; border-radius: 20px; background: #fff; }
-  .inv-badge { position: absolute; top: 22px; left: 22px; z-index: 1; display: inline-flex; align-items: center; gap: 8px; padding: 7px 13px; border-radius: 999px; background: rgba(10, 27, 85, .85); font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
-  .inv-badge i { width: 8px; height: 8px; border-radius: 50%; background: #4ade80; box-shadow: 0 0 0 4px rgba(74, 222, 128, .25); }
-  .inv-kick { display: inline-flex; gap: 8px; align-items: center; font-size: 12px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--y); }
-  .inv h2 { font-size: clamp(1.7rem, 3vw, 2.4rem); line-height: 1.15; font-weight: 800; letter-spacing: -.02em; margin: 14px 0 20px; }
-  .inv h2 em { font-style: normal; color: var(--y); }
-  .inv h3 { font-size: 1.05rem; font-weight: 700; }
-  .inv-body > p { margin-top: 8px; line-height: 1.7; color: rgba(255, 255, 255, .8); }
-  .inv-stats { display: flex; gap: 12px; margin: 26px 0 30px; }
-  .inv-stats div { flex: 1; padding: 16px 18px; border-radius: 16px; background: rgba(255, 255, 255, .1); border: 1px solid rgba(255, 255, 255, .16); }
-  .inv-stats strong { display: block; font-size: 1.8rem; font-weight: 800; color: var(--y); line-height: 1.1; }
-  .inv-stats span { font-size: 13px; color: rgba(255, 255, 255, .8); }
+  /* ---------- investasi: bentuk organik ---------- */
+  .inv { display: grid; grid-template-columns: 1.05fr 1fr; gap: 64px; align-items: center; }
+  .inv-map { position: relative; padding: 18px; }
+  .inv-map::before { content: ""; position: absolute; left: -10px; bottom: -6px; width: 62%; aspect-ratio: 1; border-radius: 50%; background: var(--y); }
+  .inv-map::after { content: ""; position: absolute; right: 2px; top: 2px; width: 74px; height: 74px; border-radius: 50%; border: 12px solid var(--b7); opacity: .85; }
+  .inv-blob { position: relative; z-index: 1; border-radius: 58% 42% 52% 48% / 46% 54% 46% 54%; overflow: hidden; background: #fff; border: 8px solid #fff; box-shadow: 0 34px 70px -28px rgba(10,27,85,.55); }
+  .inv-blob img { width: 100%; }
+  .inv-badge { position: absolute; z-index: 2; top: 34px; left: 20px; display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; background: rgba(10,27,85,.9); color: #fff; font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+  .inv-badge i { width: 8px; height: 8px; border-radius: 50%; background: #4ade80; box-shadow: 0 0 0 4px rgba(74,222,128,.25); }
+  .inv h2 { font-size: clamp(1.8rem, 3.2vw, 2.7rem); line-height: 1.12; font-weight: 800; letter-spacing: -.025em; color: var(--b9); margin: 14px 0 20px; }
+  .inv h2 em { font-style: normal; color: var(--b5); }
+  .inv h3 { font-size: 1.1rem; font-weight: 700; color: var(--b9); }
+  .inv-body > p { margin-top: 8px; line-height: 1.75; color: var(--mut); }
+  .inv-stats { display: flex; gap: 20px; margin: 30px 0 34px; }
+  .stat { width: 124px; height: 124px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; background: linear-gradient(145deg, var(--b5), var(--b9)); box-shadow: 0 0 0 7px rgba(23,62,165,.1); }
+  .stat.y { background: radial-gradient(circle at 30% 25%, #fff3a8, var(--y) 60%); color: var(--b9); box-shadow: 0 0 0 7px rgba(255,210,31,.25); }
+  .stat strong { font-family: var(--hd); font-size: 2.2rem; font-weight: 800; line-height: 1; }
+  .stat span { margin-top: 4px; font-size: 12px; font-weight: 600; opacity: .9; }
 
   /* ---------- berita ---------- */
   .berita { background: var(--bg); }
-  .head-row .head { margin-bottom: 40px; }
-  .arrows { display: flex; gap: 10px; margin-bottom: 40px; }
-  .arrows button { width: 48px; height: 48px; border-radius: 50%; border: 1.5px solid var(--b7); background: #fff; color: var(--b7); cursor: pointer; transition: .2s; }
+  .head-row .head { margin-bottom: 44px; }
+  .arrows { display: flex; gap: 10px; margin-bottom: 44px; }
+  .arrows button { width: 50px; height: 50px; border-radius: 50%; border: 0; background: #fff; color: var(--b7); cursor: pointer; box-shadow: 0 8px 20px -10px rgba(23,62,165,.55); transition: .2s; }
   .arrows button:hover { background: var(--b7); color: #fff; }
-  .news-main { display: grid; grid-template-columns: 1.15fr 1fr; border-radius: 30px; overflow: hidden; background: #fff; border: 1px solid var(--line); box-shadow: 0 30px 60px -36px rgba(23, 62, 165, .4); }
-  .news-image { position: relative; min-height: 400px; background: #dbe3f5; }
+  .news-main { position: relative; display: grid; grid-template-columns: 1.1fr 1fr; gap: 48px; align-items: center; }
+  .news-main::before { content: ""; position: absolute; left: -36px; bottom: -34px; width: 170px; height: 170px; border-radius: 50%; background: var(--y); }
+  .news-image { position: relative; z-index: 1; min-height: 420px; overflow: hidden; background: #dbe3f5; border-radius: 190px 40px 190px 40px; border: 8px solid #fff; box-shadow: 0 34px 60px -30px rgba(23,62,165,.55); }
   .news-image img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: opacity .35s, transform .6s; }
   .news-image.switching img { opacity: .15; }
-  .news-badge { position: absolute; top: 20px; left: 20px; padding: 7px 14px; border-radius: 999px; background: var(--y); color: var(--b9); font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
-  .news-number { position: absolute; right: 20px; bottom: 12px; font-size: 4rem; font-weight: 800; line-height: 1; color: rgba(255, 255, 255, .85); text-shadow: 0 4px 20px rgba(0, 0, 0, .35); }
-  .news-content { display: flex; flex-direction: column; padding: 40px; }
-  .news-meta { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--b5); }
-  .news-content h3 { margin: 14px 0; font-size: clamp(1.4rem, 2.4vw, 1.9rem); line-height: 1.25; font-weight: 800; color: var(--b9); }
-  .news-content p { color: var(--mut); line-height: 1.7; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
-  .news-read { align-self: flex-start; margin-top: 22px; display: inline-flex; gap: 10px; padding: 12px 22px; border-radius: 999px; background: var(--b7); color: #fff !important; font-weight: 700; font-size: 14px; transition: .2s; }
+  .news-badge { position: absolute; z-index: 2; bottom: 24px; left: 50%; transform: translateX(-50%); padding: 8px 18px; border-radius: 999px; background: var(--y); color: var(--b9); font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
+  .news-content { position: relative; z-index: 1; display: flex; flex-direction: column; padding: 8px 0; }
+  .news-number { font-family: var(--hd); font-size: 5.5rem; font-weight: 800; line-height: .9; color: transparent; -webkit-text-stroke: 2px rgba(23,62,165,.28); }
+  .news-meta { margin-top: 8px; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--b5); }
+  .news-content h3 { margin: 12px 0; font-family: var(--hd); font-size: clamp(1.5rem, 2.6vw, 2.05rem); line-height: 1.2; font-weight: 800; letter-spacing: -.02em; color: var(--b9); }
+  .news-content p { color: var(--mut); line-height: 1.75; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+  .news-read { align-self: flex-start; margin-top: 24px; display: inline-flex; gap: 10px; align-items: center; padding: 13px 24px; border-radius: 999px; background: var(--b7); color: #fff !important; font-weight: 700; font-size: 14px; box-shadow: 0 12px 26px -10px rgba(23,62,165,.7); transition: .2s; }
   .news-read:hover { background: var(--b9); }
-  .news-progress { margin-top: auto; padding-top: 28px; }
-  .news-progress::before { content: ""; display: block; height: 4px; border-radius: 4px; background: var(--line); margin-bottom: -4px; }
-  .news-progress span { position: relative; display: block; height: 4px; border-radius: 4px; background: var(--y); width: 0; }
-  .news-thumbs { display: flex; gap: 12px; margin-top: 20px; overflow-x: auto; padding: 4px 2px 10px; scrollbar-width: thin; }
-  .news-thumb { flex: 0 0 210px; padding: 0; text-align: left; border-radius: 16px; overflow: hidden; background: #fff; border: 2px solid transparent; outline: 1px solid var(--line); cursor: pointer; opacity: .7; transition: .2s; font: inherit; }
-  .news-thumb:hover, .news-thumb.active { opacity: 1; border-color: var(--y); }
-  .news-thumb img { width: 100%; height: 100px; object-fit: cover; }
-  .news-thumb span { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; padding: 10px 12px 12px; font-size: 12.5px; font-weight: 600; line-height: 1.4; color: var(--ink); }
+  .news-progress { margin-top: 30px; height: 5px; border-radius: 5px; background: rgba(23,62,165,.15); overflow: hidden; }
+  .news-progress span { display: block; height: 100%; border-radius: 5px; background: var(--y); width: 0; }
+  .news-thumbs { display: flex; justify-content: safe center; gap: 14px; margin-top: 46px; overflow-x: auto; padding: 12px 8px; scrollbar-width: none; }
+  .news-thumb { flex: none; width: 70px; height: 70px; padding: 0; border-radius: 50%; overflow: hidden; border: 4px solid #fff; background: #fff; cursor: pointer; opacity: .65; box-shadow: 0 8px 18px -8px rgba(23,62,165,.5); transition: transform .2s, opacity .2s, box-shadow .2s; }
+  .news-thumb:hover { opacity: 1; transform: translateY(-3px); }
+  .news-thumb.active { opacity: 1; transform: scale(1.18); box-shadow: 0 0 0 4px var(--y), 0 12px 22px -8px rgba(23,62,165,.6); }
+  .news-thumb img { width: 100%; height: 100%; object-fit: cover; }
 
   /* ---------- video ---------- */
-  .vid-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
-  .vid { border-radius: 22px; overflow: hidden; background: #fff; border: 1px solid var(--line); transition: transform .25s, box-shadow .25s; }
-  .vid:hover { transform: translateY(-6px); box-shadow: 0 26px 50px -28px rgba(15, 23, 42, .4); }
-  .vid-thumb { position: relative; display: block; aspect-ratio: 16 / 9; background: #0a1b55; overflow: hidden; }
+  .vid-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 44px 28px; }
+  .vid { transition: transform .25s; }
+  .vid:hover { transform: translateY(-6px); }
+  .vid-thumb { position: relative; display: block; aspect-ratio: 16 / 10; overflow: hidden; background: var(--b9); border-radius: 120px 28px 120px 28px; border: 5px solid rgba(255,255,255,.9); box-shadow: 0 26px 44px -22px rgba(0,0,0,.6); }
   .vid-thumb img { width: 100%; height: 100%; object-fit: cover; transition: transform .5s; }
-  .vid:hover .vid-thumb img { transform: scale(1.06); }
-  .vid-thumb::after { content: ""; position: absolute; inset: 0; background: linear-gradient(transparent 40%, rgba(10, 27, 85, .6)); }
-  .vid-play { position: absolute; z-index: 1; inset: 0; margin: auto; width: 62px; height: 62px; border-radius: 50%; display: grid; place-items: center; background: var(--y); color: var(--b9); font-size: 18px; padding-left: 3px; box-shadow: 0 10px 30px rgba(0, 0, 0, .3); }
-  .vid-status { position: absolute; z-index: 1; top: 14px; left: 14px; padding: 5px 12px; border-radius: 999px; background: rgba(10, 27, 85, .85); color: #fff; font-size: 11px; font-weight: 700; letter-spacing: .08em; }
-  .vid-body { padding: 20px 22px 24px; }
-  .vid-body h3 { font-size: 1.02rem; font-weight: 700; line-height: 1.4; color: var(--b9); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-  .vid-body p { margin-top: 8px; font-size: .88rem; line-height: 1.6; color: var(--mut); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-  .vid-watch { display: inline-flex; gap: 8px; margin-top: 14px; font-size: 14px; font-weight: 700; color: var(--b7); }
+  .vid:hover .vid-thumb img { transform: scale(1.07); }
+  .vid-thumb::after { content: ""; position: absolute; inset: 0; background: linear-gradient(transparent 40%, rgba(10,27,85,.55)); }
+  .vid-play { position: absolute; z-index: 1; inset: 0; margin: auto; width: 66px; height: 66px; border-radius: 50%; display: grid; place-items: center; background: var(--y); color: var(--b9); font-size: 19px; padding-left: 3px; box-shadow: 0 0 0 9px rgba(255,210,31,.3), 0 12px 30px rgba(0,0,0,.35); transition: transform .25s; }
+  .vid:hover .vid-play { transform: scale(1.12); }
+  .vid-status { position: absolute; z-index: 1; bottom: 14px; left: 50%; transform: translateX(-50%); padding: 5px 14px; border-radius: 999px; background: rgba(10,27,85,.88); color: #fff; font-size: 11px; font-weight: 700; letter-spacing: .08em; }
+  .vid-body { padding: 22px 8px 0; text-align: center; }
+  .vid-body h3 { font-size: 1.05rem; font-weight: 700; line-height: 1.4; color: #fff; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .vid-body p { margin-top: 8px; font-size: .88rem; line-height: 1.6; color: rgba(255,255,255,.75); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .vid-watch { display: inline-flex; gap: 8px; margin-top: 12px; font-size: 14px; font-weight: 700; color: var(--y); }
 
-  /* ---------- partner ---------- */
+  /* ---------- partner: logo bulat ---------- */
   .partner { background: var(--bg); }
-  .pt-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 18px; }
-  .pt { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; padding: 28px 20px 22px; border-radius: 22px; background: #fff; border: 1px solid var(--line); transition: transform .25s, border-color .25s, box-shadow .25s; }
-  .pt:hover { transform: translateY(-5px); border-color: var(--y); box-shadow: 0 22px 44px -26px rgba(23, 62, 165, .45); }
-  .pt-logo { width: 100%; height: 84px; display: grid; place-items: center; margin-bottom: 8px; font-size: 34px; color: #b6c0d9; }
-  .pt-logo img { max-height: 84px; max-width: 80%; object-fit: contain; }
+  .pt-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 40px 24px; }
+  .pt { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; transition: transform .25s; }
+  .pt:hover { transform: translateY(-6px); }
+  .pt-logo { width: 132px; height: 132px; margin-bottom: 12px; border-radius: 50%; display: grid; place-items: center; font-size: 38px; color: #b6c0d9; background: #fff; border: 5px solid #fff; box-shadow: 0 0 0 4px rgba(23,62,165,.1), 0 20px 34px -16px rgba(23,62,165,.45); transition: box-shadow .25s; }
+  .pt:hover .pt-logo { box-shadow: 0 0 0 4px var(--y), 0 24px 38px -16px rgba(23,62,165,.5); }
+  .pt-logo img { max-height: 70%; max-width: 70%; object-fit: contain; }
   .pt-label { font-size: 10.5px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--b5); }
-  .pt strong { font-size: .98rem; line-height: 1.4; color: var(--b9); }
-  .pt-go { margin-top: 8px; font-size: 12.5px; font-weight: 600; color: var(--mut); }
-  .pt:hover .pt-go { color: var(--b7); }
+  .pt strong { font-size: .98rem; line-height: 1.4; color: var(--b9); max-width: 200px; }
 
-  /* ---------- modal notifikasi ---------- */
-  .notif { position: fixed; inset: 0; z-index: 9999; display: grid; place-items: center; padding: 16px; background: rgba(8, 16, 46, .78); backdrop-filter: blur(6px); transition: opacity .25s; }
-  .notif.notification-hidden { opacity: 0; pointer-events: none; }
-  .notif-box { position: relative; display: flex; flex-direction: column; width: min(680px, 100%); max-height: calc(100vh - 32px); border-radius: 28px; overflow: hidden; background: #fff; border-top: 6px solid var(--y); box-shadow: 0 40px 90px rgba(0, 0, 0, .5); }
-  .notif-slider { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
-  .notification-slide { display: none; }
-  .notification-slide.active { display: block; animation: notifIn .3s ease; }
-  @keyframes notifIn { from { opacity: 0; transform: translateY(8px); } }
+  /* ---------- modal notifikasi: buku ---------- */
+  .notif { position: fixed; inset: 0; z-index: 9999; display: grid; place-items: center; padding: 16px; background: rgba(8,16,46,.8); backdrop-filter: blur(6px); animation: veilIn .4s both; }
+  .notif.closing { animation: veilOut .4s .85s both; }
+  .book { position: relative; width: min(680px, 100%); perspective: 2400px; animation: bookIn .75s cubic-bezier(.2,.8,.2,1) both; }
+  .notif.closing .book { animation: bookOut .45s .8s ease both; }
+
+  .book-page { position: relative; display: flex; flex-direction: column; max-height: calc(100vh - 32px); border-radius: 28px; overflow: hidden; background: #fff; border-top: 6px solid var(--y); box-shadow: 0 40px 90px rgba(0,0,0,.5);
+    animation: pageShade 1.9s both; }
+
+  .book-cover { position: absolute; inset: 0; z-index: 6; border-radius: 28px; transform-origin: left center; transform-style: preserve-3d; pointer-events: none;
+    animation: coverOpen 1.7s .55s cubic-bezier(.65,.02,.25,1) both; }
+  .notif.closing .book-cover { animation: coverClose .7s ease both; }
+  .cover-face { position: absolute; inset: 0; border-radius: inherit; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+  .cover-front { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: #fff; text-align: center;
+    background: radial-gradient(500px 300px at 80% 0, rgba(255,210,31,.25), transparent 60%), linear-gradient(135deg, var(--b9), var(--b7)); box-shadow: 0 30px 80px rgba(0,0,0,.45); }
+  .cover-front::before { content: ""; position: absolute; inset: 18px; border-radius: 18px; border: 2px dashed rgba(255,210,31,.6); }
+  .cover-front::after { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 26px; border-radius: 28px 0 0 28px; background: linear-gradient(90deg, rgba(0,0,0,.4), transparent); }
+  .cover-logo { width: 104px; height: 104px; margin-bottom: 8px; border-radius: 50%; display: grid; place-items: center; background: #fff; box-shadow: 0 0 0 8px rgba(255,210,31,.45); }
+  .cover-logo img { width: 66%; height: 66%; object-fit: contain; }
+  .cover-front strong { font-family: var(--hd); font-size: 2rem; font-weight: 800; letter-spacing: -.02em; }
+  .cover-front small { font-size: 12px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--y); }
+  .cover-back { transform: rotateY(180deg); background: #fffaf0; box-shadow: inset -34px 0 46px -24px rgba(0,0,0,.3); }
+
+  .notif-slider { flex: 1 1 auto; min-height: 0; overflow-y: auto; perspective: 1800px; }
+  .notification-slide { display: none; transform-origin: left center; }
+  .notification-slide.active { display: block; }
+  .notification-slide.flip { animation: pageFwd .7s cubic-bezier(.25,.8,.25,1) both; }
+  .notif-slider.back .notification-slide { transform-origin: right center; }
+  .notif-slider.back .notification-slide.flip { animation-name: pageBack; }
   .notif-media { display: grid; place-items: center; background: var(--bg); }
   .notif-media img { width: 100%; height: auto; max-height: 68vh; object-fit: contain; }
   .notif-fallback { display: grid; place-items: center; height: 220px; font-size: 64px; color: var(--y); background: linear-gradient(135deg, var(--b9), var(--b7)); }
-  .notif-info { padding: 22px 26px 10px; }
-  .notif-info h2 { font-size: 1.25rem; font-weight: 800; line-height: 1.3; color: var(--b9); }
-  .notif-info h2::after { content: ""; display: block; width: 44px; height: 4px; border-radius: 4px; background: var(--y); margin-top: 10px; }
+  .notif-info { padding: 22px 28px 12px; }
+  .notif-info h2 { font-size: 1.3rem; font-weight: 800; line-height: 1.3; color: var(--b9); }
+  .notif-info h2::after { content: ""; display: block; width: 44px; height: 5px; border-radius: 5px; background: var(--y); margin-top: 10px; }
   .notif-info p { margin-top: 12px; font-size: .95rem; line-height: 1.65; color: var(--mut); }
-  .notif-close { position: absolute; top: 16px; right: 16px; z-index: 3; width: 40px; height: 40px; border-radius: 50%; border: 2px solid #fff; cursor: pointer; background: var(--b7); color: #fff; box-shadow: 0 6px 18px rgba(0, 0, 0, .3); transition: transform .2s, background .2s; }
+  .notif-close { position: absolute; top: 16px; right: 16px; z-index: 3; width: 42px; height: 42px; border-radius: 50%; border: 3px solid #fff; cursor: pointer; background: var(--b7); color: #fff; box-shadow: 0 6px 18px rgba(0,0,0,.3); transition: transform .2s, background .2s; }
   .notif-close:hover { background: var(--b9); transform: rotate(90deg); }
   .notif-foot { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 20px; border-top: 1px solid var(--line); background: #fff; }
   .notif-foot.single { justify-content: center; }
-  .notif-arrow { flex: none; width: 40px; height: 40px; border-radius: 50%; border: 1.5px solid var(--b7); background: #fff; color: var(--b7); cursor: pointer; transition: .2s; }
+  .notif-arrow { flex: none; width: 42px; height: 42px; border-radius: 50%; border: 0; background: var(--bg); color: var(--b7); cursor: pointer; transition: .2s; }
   .notif-arrow:hover { background: var(--b7); color: #fff; }
   .notif-dots { flex: 1; display: flex; justify-content: center; align-items: center; gap: 8px; }
-  .notification-dot { width: 9px; height: 9px; padding: 0; border: 0; border-radius: 99px; background: #c5d3f3; cursor: pointer; transition: .2s; }
-  .notification-dot.active { width: 28px; background: var(--b7); }
-
-  /* ---------- tema biru & kuning ---------- */
-  .head h2::after { content: ""; display: block; width: 64px; height: 5px; border-radius: 5px; background: var(--y); margin-top: 16px; }
-  .head.center h2::after { margin-inline: auto; }
-  .hl { color: var(--b5); }
-  .float i { background: var(--b7); color: var(--y); }
-  .ung-icon { background: var(--b7); color: var(--y); }
-  .ung { border-top: 4px solid var(--y); }
-  .berita, .partner { background: var(--bg); }
-
-  /* section biru: prinsip & video */
-  .prinsip, .video { position: relative; color: #fff; background: radial-gradient(700px 380px at 100% 0, rgba(255, 210, 31, .18), transparent 60%), linear-gradient(150deg, var(--b9), var(--b7)); }
-  .prinsip .head h2, .video .head h2 { color: #fff; }
-  .prinsip .head p, .video .head p { color: rgba(255, 255, 255, .82); }
-  .prinsip .eyebrow, .video .eyebrow { color: var(--y); }
-  .prinsip .hl, .video .hl { color: var(--y); }
-  .pr { background: rgba(255, 255, 255, .08); border-color: rgba(255, 255, 255, .2); }
-  .pr:hover { background: rgba(255, 255, 255, .15); border-color: var(--y); }
-  .pr h3 { color: #fff; }
-  .pr p { color: rgba(255, 255, 255, .8); }
-  .pr-tag { color: var(--y); }
-  .pr-n { -webkit-text-stroke: 1.5px rgba(255, 210, 31, .6); }
-  .vid { border: 0; }
-  .vid-body h3 { color: var(--b9); }
-
-  /* pita kuning pemisah section biru */
-  .prinsip::before, .video::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 8px; background: repeating-linear-gradient(135deg, var(--y) 0 18px, var(--b9) 18px 36px); }
-  .inv { border: 2px solid var(--y); }
-  .btn-line { border-color: var(--b7); }
+  .notification-dot { width: 10px; height: 10px; padding: 0; border: 0; border-radius: 99px; background: #c5d3f3; cursor: pointer; transition: .25s; }
+  .notification-dot.active { width: 30px; background: var(--b7); }
 
   /* ---------- responsive ---------- */
   @media (max-width: 1040px) {
-    .pr-grid { grid-template-columns: repeat(3, 1fr); }
+    .pr-grid { grid-template-columns: repeat(3, 1fr); row-gap: 44px; }
+    .pr-grid::before { display: none; }
     .ung-grid, .vid-grid { grid-template-columns: repeat(2, 1fr); }
+    .ung:nth-child(3n+2) { margin-top: 0; }
   }
   @media (max-width: 900px) {
     .sec { padding: 64px 0; }
-    .hero { padding: calc(var(--nav) + 48px) 0 130px; border-radius: 0 0 36px 36px; }
-    .svc-sec { margin-top: -72px; }
+    .sec.wv { padding: 110px 0; }
+    .hero { padding: 48px 0 130px; }
     .hero .wrap, .inv, .news-main { grid-template-columns: 1fr; }
+    .hero .wrap { gap: 40px; }
     .hero-art { max-width: 340px; }
     .f1 { left: 0; } .f2 { right: 0; }
-    .svc-grid { grid-template-columns: repeat(2, 1fr); }
-    .hero .wrap { gap: 40px; }
-    .inv { padding: 24px; gap: 28px; border-radius: 28px; }
-    .news-image { min-height: 260px; }
-    .news-content { padding: 26px; }
+    .inv { gap: 40px; }
+    .news-main { gap: 32px; }
+    .news-image { min-height: 280px; border-radius: 120px 32px 120px 32px; }
+    .news-number { font-size: 4rem; }
     .pdf iframe { height: 520px; }
   }
   @media (max-width: 640px) {
-    .svc-grid, .ung-grid, .vid-grid { grid-template-columns: 1fr; }
-    .svc-sec .wrap { padding: 18px; border-radius: 24px; }
-    .svc-head { flex-direction: column; align-items: flex-start; }
+    .ung-grid, .vid-grid { grid-template-columns: 1fr; }
+    .svc-grid { grid-template-columns: repeat(2, 1fr); }
     .pr-grid { grid-template-columns: 1fr 1fr; }
     .head-row { flex-direction: column; align-items: flex-start; gap: 0; }
-    .arrows { margin-bottom: 24px; }
+    .arrows { margin-bottom: 28px; }
     .pdf-bar { flex-wrap: wrap; }
-    .btn { width: 100%; }
-    .btn.btn-sm { width: auto; }
     .hero-cta .btn { flex: 1 1 100%; }
-    .more .btn { width: auto; }
+    .inv-stats { justify-content: center; }
+    .stat { width: 108px; height: 108px; }
+    .wave { height: 44px; }
   }
   @media (prefers-reduced-motion: reduce) {
-    .home * { transition: none !important; animation: none !important; }
+    .home *, .home *::before, .home *::after { transition: none !important; animation: none !important; }
+    .book-cover { display: none; }
   }
 </style>
 
 
-<script define:vars={{ slider, berita }}>
-
-document.addEventListener(
-  "DOMContentLoaded",
-  () => {
-
-    /* =====================================================
-       NEWS
-    ===================================================== */
-
-    const newsImage =
-      document.getElementById("newsImage");
-
-    const newsCategory =
-      document.getElementById("newsCategory");
-
-    const newsNumber =
-      document.getElementById("newsNumber");
-
-    const newsMeta =
-      document.getElementById("newsMeta");
-
-    const newsTitle =
-      document.getElementById("newsTitle");
-
-    const newsDescription =
-      document.getElementById("newsDescription");
-
-    const newsLink =
-      document.getElementById("newsLink");
-
-    const newsProgress =
-      document.getElementById("newsProgress");
-
-    const newsPhoto =
-      document.querySelector(".news-image");
-
-    const newsThumbs =
-      Array.from(
-        document.querySelectorAll(".news-thumb")
-      );
-
-    const newsNext =
-      document.getElementById("newsNext");
-
-    const newsPrev =
-      document.getElementById("newsPrev");
-
-
-    if (
-      berita.length &&
-      newsImage &&
-      newsTitle
-    ){
-
-      let newsIndex = 0;
-
-      let newsTimer = null;
-
-
-      function cleanText(value){
-
-        if (!value) {
-          return "";
-        }
-
-        return String(value)
-          .replace(/<[^>]*>/g, "")
-          .replace(/&nbsp;/gi, " ")
-          .replace(/&amp;/gi, "&")
-          .replace(/&quot;/gi, '"')
-          .replace(/&#39;/gi, "'")
-          .replace(/\s+/g, " ")
-          .trim();
-
-      }
-
-
-      function shortText(value){
-
-        const text =
-          cleanText(value);
-
-
-        if (text.length <= 220) {
-          return text;
-        }
-
-
-        return (
-          text.substring(0,220)
-          + "..."
-        );
-
-      }
-
-
-      function dateText(value){
-
-        if (!value) {
-          return "";
-        }
-
-
-        const date =
-          new Date(value);
-
-
-        if (
-          Number.isNaN(
-            date.getTime()
-          )
-        ){
-
-          return value;
-
-        }
-
-
-        return date.toLocaleDateString(
-          "id-ID",
-          {
-            day:"2-digit",
-            month:"long",
-            year:"numeric"
-          }
-        );
-
-      }
-
-
-      function renderNews(index){
-
-        newsIndex =
-          (
-            index + berita.length
-          )
-          % berita.length;
-
-
-        const item =
-          berita[newsIndex];
-
-
-        /*
-         * Hanya satu card.
-         * Tidak ada translateX.
-         */
-
-        newsPhoto?.classList.add(
-          "switching"
-        );
-
-
-        setTimeout(
-          () => {
-
-            newsImage.src =
-  item.picture
-    ? `https://dpm-ptsp.surabaya.go.id/fileberita/${item.picture}`
-    : "";
-
-
-            newsImage.alt =
-              item.title || "Berita";
-
-
-            newsCategory.textContent =
-              item.category_title
-              || "BERITA";
-
-
-            newsNumber.textContent =
-              String(newsIndex + 1)
-                .padStart(2,"0");
-
-
-            newsMeta.textContent =
-              `${
-                item.category_title
-                || "BERITA"
-              } • ${
-                dateText(item.date)
-              }`;
-
-
-            newsTitle.textContent =
-              item.title || "";
-
-
-            newsDescription.textContent =
-              shortText(
-                item.content
-              );
-
-
-            newsLink.href =
-              (item.href || "#");
-
-
-            newsThumbs.forEach(
-              (thumb, i) => {
-
-                thumb.classList.toggle(
-                  "active",
-                  i === newsIndex
-                );
-
-              }
-            );
-
-
-            if (newsProgress){
-
-              newsProgress.style.animation =
-                "none";
-
-              void newsProgress.offsetWidth;
-
-              newsProgress.style.animation =
-                "newsProgress 5s linear";
-
-            }
-
-
-            newsPhoto?.classList.remove(
-              "switching"
-            );
-
-          },
-          180
-        );
-
-      }
-
-
-      function nextNews(){
-
-        renderNews(
-          newsIndex + 1
-        );
-
-        restartNews();
-
-      }
-
-
-      function prevNews(){
-
-        renderNews(
-          newsIndex - 1
-        );
-
-        restartNews();
-
-      }
-
-
-      function restartNews(){
-
-        clearInterval(newsTimer);
-
-
-        if (berita.length > 1){
-
-          newsTimer =
-            setInterval(
-              () => {
-
-                renderNews(
-                  newsIndex + 1
-                );
-
-              },
-              5000
-            );
-
-        }
-
-      }
-
-
-      /* THUMBNAIL */
-
-      newsThumbs.forEach(
-        (thumb, index) => {
-
-          thumb.addEventListener(
-            "click",
-            () => {
-
-              renderNews(index);
-
-              restartNews();
-
-            }
-          );
-
-        }
-      );
-
-
-      /* NEXT */
-
-      newsNext?.addEventListener(
-        "click",
-        () => {
-
-          nextNews();
-
-        }
-      );
-
-
-      /* PREV */
-
-      newsPrev?.addEventListener(
-        "click",
-        () => {
-
-          prevNews();
-
-        }
-      );
-
-
-      /* SWIPE */
-
-      let startX = 0;
-
-
-      newsPhoto?.addEventListener(
-        "touchstart",
-        event => {
-
-          startX =
-            event.touches[0].clientX;
-
-        },
-        {
-          passive:true
-        }
-      );
-
-
-      newsPhoto?.addEventListener(
-        "touchend",
-        event => {
-
-          const endX =
-            event.changedTouches[0].clientX;
-
-
-          const distance =
-            startX - endX;
-
-
-          if (
-  Math.abs(distance) < 50
-){
-  return;
-}
-
-
-          if (distance > 0){
-
-            nextNews();
-
-          }else{
-
-            prevNews();
-
-          }
-
-        },
-        {
-          passive:true
-        }
-      );
-
-
-      /* INIT */
-
-      renderNews(0);
-
-      restartNews();
-
-    }
-
-  }
-);
-/* =====================================================
-   MODAL NOTIFIKASI DATABASE
-===================================================== */
-
-</script>
-<script>
-document.addEventListener("click", function (e) {
-
-  /* ============================
-     NEXT
-  ============================ */
-
-  const next = e.target.closest("#notificationNext");
-
-  if (next) {
-
-    e.preventDefault();
-    e.stopPropagation();
-
-    const slides =
-      document.querySelectorAll(
-        "#notificationModal .notification-slide"
-      );
-
-    const dots =
-      document.querySelectorAll(
-        "#notificationModal .notification-dot"
-      );
-
-    if (slides.length < 2) return;
-
-    let current = 0;
-
-    slides.forEach((slide, i) => {
-
-      if (
-        slide.classList.contains("active")
-      ) {
-        current = i;
-      }
-
-    });
-
-    current =
-      (current + 1) %
-      slides.length;
-
-    slides.forEach((slide, i) => {
-
-      slide.classList.toggle(
-        "active",
-        i === current
-      );
-
-    });
-
-    dots.forEach((dot, i) => {
-
-      dot.classList.toggle(
-        "active",
-        i === current
-      );
-
-    });
-
-    return;
-  }
-
-
-  /* ============================
-     PREV
-  ============================ */
-
-  const prev = e.target.closest("#notificationPrev");
-
-  if (prev) {
-
-    e.preventDefault();
-    e.stopPropagation();
-
-    const slides =
-      document.querySelectorAll(
-        "#notificationModal .notification-slide"
-      );
-
-    const dots =
-      document.querySelectorAll(
-        "#notificationModal .notification-dot"
-      );
-
-    if (slides.length < 2) return;
-
-    let current = 0;
-
-    slides.forEach((slide, i) => {
-
-      if (
-        slide.classList.contains("active")
-      ) {
-        current = i;
-      }
-
-    });
-
-    current =
-      (current - 1 + slides.length) %
-      slides.length;
-
-    slides.forEach((slide, i) => {
-
-      slide.classList.toggle(
-        "active",
-        i === current
-      );
-
-    });
-
-    dots.forEach((dot, i) => {
-
-      dot.classList.toggle(
-        "active",
-        i === current
-      );
-
-    });
-
-    return;
-  }
-
-
-  /* ============================
-     DOT
-  ============================ */
-
-  const dot =
-    e.target.closest(
-      "#notificationModal .notification-dot"
-    );
-
-  if (dot) {
-
-    e.preventDefault();
-    e.stopPropagation();
-
-    const slides =
-      document.querySelectorAll(
-        "#notificationModal .notification-slide"
-      );
-
-    const dots =
-      document.querySelectorAll(
-        "#notificationModal .notification-dot"
-      );
-
-    const index =
-      Number(
-        dot.dataset.slide
-      );
-
-    slides.forEach((slide, i) => {
-
-      slide.classList.toggle(
-        "active",
-        i === index
-      );
-
-    });
-
-    dots.forEach((item, i) => {
-
-      item.classList.toggle(
-        "active",
-        i === index
-      );
-
-    });
-
-    return;
-  }
-
-
-  /* ============================
-     CLOSE
-  ============================ */
-
-  const close =
-    e.target.closest(
-      "#notificationClose"
-    );
-
-  if (close) {
-
-    e.preventDefault();
-    e.stopPropagation();
-
-    const modal =
-      document.getElementById(
-        "notificationModal"
-      );
-
-    if (!modal) return;
-
-    modal.classList.add(
-      "notification-hidden"
-    );
-
-    modal.setAttribute(
-      "aria-hidden",
-      "true"
-    );
+<script define:vars={{ berita }}>
+document.addEventListener("DOMContentLoaded", () => {
+  const $ = (id) => document.getElementById(id);
+  const newsImage = $("newsImage");
+  const newsTitle = $("newsTitle");
+  if (!berita.length || !newsImage || !newsTitle) return;
+
+  const newsCategory = $("newsCategory");
+  const newsNumber = $("newsNumber");
+  const newsMeta = $("newsMeta");
+  const newsDescription = $("newsDescription");
+  const newsLink = $("newsLink");
+  const newsProgress = $("newsProgress");
+  const newsPhoto = document.querySelector(".news-image");
+  const newsThumbs = Array.from(document.querySelectorAll(".news-thumb"));
+
+  let newsIndex = 0;
+  let newsTimer = null;
+
+  const cleanText = (v) => !v ? "" : String(v)
+    .replace(/<[^>]*>/g, "").replace(/&nbsp;/gi, " ").replace(/&amp;/gi, "&")
+    .replace(/&quot;/gi, '"').replace(/&#39;/gi, "'").replace(/\s+/g, " ").trim();
+
+  const shortText = (v) => {
+    const t = cleanText(v);
+    return t.length <= 220 ? t : t.substring(0, 220) + "...";
+  };
+
+  const dateText = (v) => {
+    if (!v) return "";
+    const d = new Date(v);
+    return Number.isNaN(d.getTime()) ? v
+      : d.toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" });
+  };
+
+  function renderNews(index) {
+    newsIndex = (index + berita.length) % berita.length;
+    const item = berita[newsIndex];
+    newsPhoto?.classList.add("switching");
 
     setTimeout(() => {
+      newsImage.src = item.picture ? `https://dpm-ptsp.surabaya.go.id/fileberita/${item.picture}` : "";
+      newsImage.alt = item.title || "Berita";
+      newsCategory.textContent = item.category_title || "BERITA";
+      newsNumber.textContent = String(newsIndex + 1).padStart(2, "0");
+      newsMeta.textContent = `${item.category_title || "BERITA"} • ${dateText(item.date)}`;
+      newsTitle.textContent = item.title || "";
+      newsDescription.textContent = shortText(item.content);
+      newsLink.href = item.href || "#";
 
-      modal.style.display = "none";
+      newsThumbs.forEach((t, i) => {
+        t.classList.toggle("active", i === newsIndex);
+        if (i === newsIndex) t.scrollIntoView({ block: "nearest", inline: "center", behavior: "smooth" });
+      });
 
-    }, 250);
-
-    return;
+      if (newsProgress) {
+        newsProgress.style.animation = "none";
+        void newsProgress.offsetWidth;
+        newsProgress.style.animation = "newsProgress 5s linear";
+      }
+      newsPhoto?.classList.remove("switching");
+    }, 180);
   }
 
-
-  /* ============================
-     NANTI SAJA
-  ============================ */
-
-  const later =
-    e.target.closest(
-      "#notificationModal .notification-later"
-    );
-
-  if (later) {
-
-    e.preventDefault();
-    e.stopPropagation();
-
-    const modal =
-      document.getElementById(
-        "notificationModal"
-      );
-
-    if (!modal) return;
-
-    modal.classList.add(
-      "notification-hidden"
-    );
-
-    modal.setAttribute(
-      "aria-hidden",
-      "true"
-    );
-
-    setTimeout(() => {
-
-      modal.style.display = "none";
-
-    }, 250);
-
-    return;
+  function restartNews() {
+    clearInterval(newsTimer);
+    if (berita.length > 1) newsTimer = setInterval(() => renderNews(newsIndex + 1), 5000);
   }
 
+  const go = (i) => { renderNews(i); restartNews(); };
+
+  newsThumbs.forEach((t, i) => t.addEventListener("click", () => go(i)));
+  $("newsNext")?.addEventListener("click", () => go(newsIndex + 1));
+  $("newsPrev")?.addEventListener("click", () => go(newsIndex - 1));
+
+  let startX = 0;
+  newsPhoto?.addEventListener("touchstart", (e) => { startX = e.touches[0].clientX; }, { passive: true });
+  newsPhoto?.addEventListener("touchend", (e) => {
+    const dist = startX - e.changedTouches[0].clientX;
+    if (Math.abs(dist) < 50) return;
+    go(newsIndex + (dist > 0 ? 1 : -1));
+  }, { passive: true });
+
+  renderNews(0);
+  restartNews();
 });
 </script>
+
 <script>
-  document.addEventListener("DOMContentLoaded", () => {
+/* =====================================================
+   MODAL NOTIFIKASI: buka & tutup seperti buku
+===================================================== */
+const modal = document.getElementById("notificationModal");
 
-    const dropdown = document.getElementById("keunggulanDropdown");
-    const pdfFrame = document.getElementById("keunggulanPdf");
-    const title = document.getElementById("keunggulanTitle");
-    const download = document.getElementById("keunggulanDownload");
-    const closeBtn = document.getElementById("keunggulanClose");
+if (modal) {
+  const slider = modal.querySelector("#notificationSlider");
+  const slides = Array.from(modal.querySelectorAll(".notification-slide"));
+  const dots = Array.from(modal.querySelectorAll(".notification-dot"));
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    let activeButton = null;
-    let buttonViewportTop = 0;
+  let current = 0;
+  let closing = false;
 
+  document.body.style.overflow = "hidden";
 
-    // ==========================================
-    // BUKA PDF
-    // ==========================================
+  function show(index, dir = 1) {
+    if (slides.length < 2) return;
+    const next = (index + slides.length) % slides.length;
+    if (next === current) return;
 
-    document.querySelectorAll(".keunggulan-btn").forEach((button) => {
+    // maju = engsel di kiri, mundur = engsel di kanan
+    slider.classList.toggle("back", dir < 0);
 
-      button.addEventListener("click", () => {
-
-        // Simpan tombol aktif
-        activeButton = button;
-
-        // Simpan posisi tombol relatif terhadap layar
-        buttonViewportTop = button.getBoundingClientRect().top;
-
-        const pdfLink = button.dataset.link;
-        const pdfTitle = button.dataset.title;
-
-        // Set judul
-        title.textContent = pdfTitle;
-
-        // Set PDF
-        pdfFrame.src = pdfLink;
-
-        // Set download
-        download.href = pdfLink;
-
-        // Tampilkan PDF
-        dropdown.classList.remove("hidden");
-
-
-        // Scroll ke PDF
-        setTimeout(() => {
-
-          dropdown.scrollIntoView({
-            behavior: "smooth",
-            block: "start"
-          });
-
-        }, 100);
-
-      });
-
+    slides.forEach((s, i) => {
+      s.classList.remove("flip");
+      s.classList.toggle("active", i === next);
     });
+    void slides[next].offsetWidth;
+    if (!reduce) slides[next].classList.add("flip");
+    dots.forEach((d, i) => d.classList.toggle("active", i === next));
 
+    current = next;
+    slider.scrollTop = 0;
+  }
 
-    // ==========================================
-    // CLOSE PDF + KEMBALIKAN POSISI
-    // ==========================================
+  function closeBook() {
+    if (closing) return;
+    closing = true;
+    modal.classList.add("closing");
+    modal.setAttribute("aria-hidden", "true");
+    setTimeout(() => {
+      modal.style.display = "none";
+      document.body.style.overflow = "";
+    }, reduce ? 0 : 1300);
+  }
 
-    closeBtn.addEventListener("click", () => {
+  modal.addEventListener("click", (e) => {
+    const t = e.target;
+    if (!(t instanceof Element)) return;
 
-      // Tutup dropdown dulu
-      dropdown.classList.add("hidden");
+    if (t.closest("#notificationNext")) { e.preventDefault(); show(current + 1, 1); return; }
+    if (t.closest("#notificationPrev")) { e.preventDefault(); show(current - 1, -1); return; }
 
-      // Kosongkan PDF
-      pdfFrame.src = "";
+    const dot = t.closest(".notification-dot");
+    if (dot) { e.preventDefault(); const n = Number(dot.getAttribute("data-slide")); show(n, n >= current ? 1 : -1); return; }
 
+    if (t.closest("#notificationClose") || t.closest(".notification-later")) {
+      e.preventDefault();
+      closeBook();
+      return;
+    }
 
-      // Tunggu browser update layout
-      requestAnimationFrame(() => {
-
-        requestAnimationFrame(() => {
-
-          if (activeButton) {
-
-            // Posisi tombol setelah layout berubah
-            const currentTop =
-              activeButton.getBoundingClientRect().top;
-
-            // Hitung perbedaan posisi
-            const difference =
-              currentTop - buttonViewportTop;
-
-
-            // Geser halaman supaya tombol
-            // kembali ke posisi visual sebelumnya
-            window.scrollBy({
-              top: difference,
-              behavior: "smooth"
-            });
-
-          }
-
-        });
-
-      });
-
-    });
-
+    // klik area gelap di luar buku
+    if (t === modal) closeBook();
   });
+
+  document.addEventListener("keydown", (e) => {
+    if (closing || modal.style.display === "none") return;
+    if (e.key === "Escape") closeBook();
+    if (e.key === "ArrowRight") show(current + 1, 1);
+    if (e.key === "ArrowLeft") show(current - 1, -1);
+  });
+}
+</script>
+
+<script>
+/* =====================================================
+   PDF KEUNGGULAN
+===================================================== */
+document.addEventListener("DOMContentLoaded", () => {
+  const dropdown = document.getElementById("keunggulanDropdown");
+  const pdfFrame = document.getElementById("keunggulanPdf");
+  const title = document.getElementById("keunggulanTitle");
+  const download = document.getElementById("keunggulanDownload");
+  const closeBtn = document.getElementById("keunggulanClose");
+
+  let activeButton = null;
+  let buttonViewportTop = 0;
+
+  document.querySelectorAll(".keunggulan-btn").forEach((button) => {
+    button.addEventListener("click", () => {
+      activeButton = button;
+      buttonViewportTop = button.getBoundingClientRect().top;
+
+      const pdfLink = button.dataset.link;
+      title.textContent = button.dataset.title;
+      pdfFrame.src = pdfLink;
+      download.href = pdfLink;
+      dropdown.classList.remove("hidden");
+
+      setTimeout(() => dropdown.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
+    });
+  });
+
+  closeBtn?.addEventListener("click", () => {
+    dropdown.classList.add("hidden");
+    pdfFrame.src = "";
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (!activeButton) return;
+        const diff = activeButton.getBoundingClientRect().top - buttonViewportTop;
+        window.scrollBy({ top: diff, behavior: "smooth" });
+      });
+    });
+  });
+});
 </script>
 </MainLayout>
