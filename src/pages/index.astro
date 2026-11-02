@@ -285,11 +285,6 @@ const fallbackApps = [
 ];
 const services = aplikasi.length > 0 ? aplikasi : fallbackApps;
 
-/* pembatas gelombang antar-section */
-const wave = (pos, fill) =>
-  `<svg class="wave wave-${pos}" viewBox="0 0 1440 90" preserveAspectRatio="none" aria-hidden="true" style="fill:${fill}"><path d="M0,0H1440V38C1260,88 1080,8 900,34C720,60 540,92 360,56C220,28 100,50 0,70Z"/></svg>`;
-const WHITE = "#ffffff";
-const SOFT = "#eef3ff";
 ---
 
 <MainLayout title="DPMPTSP Kota Surabaya">
@@ -373,7 +368,6 @@ const SOFT = "#eef3ff";
       <div class="float f3"><i class="fas fa-shield-halved"></i><div><strong>Bebas Pungli</strong><span>WBK &amp; WBBM</span></div></div>
     </div>
   </div>
-  <Fragment set:html={wave("b", WHITE)} />
 </section>
 
 <!-- ============ LAYANAN DIGITAL ============ -->
@@ -409,7 +403,6 @@ const SOFT = "#eef3ff";
 
 <!-- ============ KEUNGGULAN ============ -->
 <section id="keunggulan-investasi" class="sec wv keunggulan" style={`--bgimg:url("${bgInvestasi}")`}>
-  <Fragment set:html={wave("t", WHITE)} />
   <div class="wrap">
     <div class="head center">
       <span class="eyebrow">Potensi Investasi Surabaya</span>
@@ -463,7 +456,6 @@ const SOFT = "#eef3ff";
 
 <!-- ============ PRINSIP ============ -->
 <section class="sec wv prinsip">
-  <Fragment set:html={wave("t", SOFT)} />
   <div class="wrap">
     <div class="head center">
       <span class="eyebrow">Nilai Pelayanan Publik</span>
@@ -484,7 +476,6 @@ const SOFT = "#eef3ff";
       ))}
     </div>
   </div>
-  <Fragment set:html={wave("b", WHITE)} />
 </section>
 
 <!-- ============ INVESTASI ============ -->
@@ -524,7 +515,6 @@ const SOFT = "#eef3ff";
 
 <!-- ============ BERITA ============ -->
 <section class="sec wv berita">
-  <Fragment set:html={wave("t", WHITE)} />
   <div class="wrap">
     <div class="head-row">
       <div class="head">
@@ -573,7 +563,6 @@ const SOFT = "#eef3ff";
 
 <!-- ============ VIDEO ============ -->
 <section class="sec wv video">
-  <Fragment set:html={wave("t", SOFT)} />
   <div class="wrap">
     <div class="head center">
       <span class="eyebrow">Media Informasi</span>
@@ -604,7 +593,6 @@ const SOFT = "#eef3ff";
 
     <div class="more"><a href="/video" class="btn btn-y">Lihat Semua Video <i class="fas fa-arrow-right"></i></a></div>
   </div>
-  <Fragment set:html={wave("b", SOFT)} />
 </section>
 
 <!-- ============ INSTANSI TERKAIT ============ -->
@@ -701,16 +689,11 @@ const SOFT = "#eef3ff";
   .home h1, .home h2 { font-family: var(--hd); }
   .wrap { max-width: 1200px; margin: 0 auto; padding: 0 20px; position: relative; }
   .sec { position: relative; padding: 88px 0; }
-  .sec.wv { padding: 140px 0; }
+  .sec.wv { padding: 96px 0; }
   .hidden { display: none; }
   .empty { text-align: center; color: var(--mut); padding: 40px 0; }
   .empty.light { color: rgba(255,255,255,.8); }
   .alert { margin-bottom: 24px; padding: 14px 18px; border-radius: 24px; background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; }
-
-  /* ---------- gelombang pembatas ---------- */
-  .wave { position: absolute; left: 0; width: 100%; height: 70px; display: block; pointer-events: none; z-index: 1; }
-  .wave-t { top: -1px; }
-  .wave-b { bottom: -1px; transform: rotate(180deg); }
 
   /* ---------- shared ---------- */
   .eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--b7); }
@@ -735,7 +718,7 @@ const SOFT = "#eef3ff";
   .btn-sm { padding: 9px 18px; font-size: 13px; }
 
   /* ---------- hero ---------- */
-  .hero { position: relative; overflow: hidden; color: #fff; padding: 72px 0 170px;
+  .hero { position: relative; overflow: hidden; color: #fff; padding: 72px 0 150px; border-radius: 0 0 50% 50% / 0 0 56px 56px;
     background: radial-gradient(800px 480px at 90% 0, rgba(255,210,31,.26), transparent 60%), radial-gradient(600px 400px at 0 100%, rgba(47,99,224,.5), transparent 60%), linear-gradient(135deg, var(--b9), var(--b7) 65%, #2456c9); }
   .bubble { position: absolute; border-radius: 50%; pointer-events: none; animation: drift 14s ease-in-out infinite; }
   .b1 { width: 340px; height: 340px; left: -120px; top: -120px; border: 54px solid rgba(255,255,255,.07); }
@@ -865,7 +848,7 @@ const SOFT = "#eef3ff";
   .news-read:hover { background: var(--b9); }
   .news-progress { margin-top: 30px; height: 5px; border-radius: 5px; background: rgba(23,62,165,.15); overflow: hidden; }
   .news-progress span { display: block; height: 100%; border-radius: 5px; background: var(--y); width: 0; }
-  .news-thumbs { display: flex; justify-content: safe center; gap: 14px; margin-top: 46px; overflow-x: auto; padding: 12px 8px; scrollbar-width: none; }
+  .news-thumbs { position: relative; display: flex; justify-content: safe center; gap: 14px; margin-top: 46px; overflow-x: auto; padding: 12px 8px; scrollbar-width: none; }
   .news-thumb { flex: none; width: 70px; height: 70px; padding: 0; border-radius: 50%; overflow: hidden; border: 4px solid #fff; background: #fff; cursor: pointer; opacity: .65; box-shadow: 0 8px 18px -8px rgba(23,62,165,.5); transition: transform .2s, opacity .2s, box-shadow .2s; }
   .news-thumb:hover { opacity: 1; transform: translateY(-3px); }
   .news-thumb.active { opacity: 1; transform: scale(1.18); box-shadow: 0 0 0 4px var(--y), 0 12px 22px -8px rgba(23,62,165,.6); }
@@ -953,7 +936,7 @@ const SOFT = "#eef3ff";
   }
   @media (max-width: 900px) {
     .sec { padding: 64px 0; }
-    .sec.wv { padding: 110px 0; }
+    .sec.wv { padding: 72px 0; }
     .hero { padding: 48px 0 130px; }
     .hero .wrap, .inv, .news-main { grid-template-columns: 1fr; }
     .hero .wrap { gap: 40px; }
@@ -975,7 +958,6 @@ const SOFT = "#eef3ff";
     .hero-cta .btn { flex: 1 1 100%; }
     .inv-stats { justify-content: center; }
     .stat { width: 108px; height: 108px; }
-    .wave { height: 44px; }
   }
   @media (prefers-reduced-motion: reduce) {
     .home *, .home *::before, .home *::after { transition: none !important; animation: none !important; }
@@ -999,6 +981,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const newsProgress = $("newsProgress");
   const newsPhoto = document.querySelector(".news-image");
   const newsThumbs = Array.from(document.querySelectorAll(".news-thumb"));
+  const thumbsBox = $("newsThumbs");
 
   let newsIndex = 0;
   let newsTimer = null;
@@ -1036,7 +1019,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
       newsThumbs.forEach((t, i) => {
         t.classList.toggle("active", i === newsIndex);
-        if (i === newsIndex) t.scrollIntoView({ block: "nearest", inline: "center", behavior: "smooth" });
+        if (i === newsIndex && thumbsBox) {
+          // geser hanya baris thumbnail, bukan seluruh halaman
+          const left = t.offsetLeft - (thumbsBox.clientWidth - t.clientWidth) / 2;
+          thumbsBox.scrollTo({ left: Math.max(0, left), behavior: "smooth" });
+        }
       });
 
       if (newsProgress) {
